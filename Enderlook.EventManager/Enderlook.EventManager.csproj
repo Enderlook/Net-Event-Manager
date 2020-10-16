@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <PackageId>Enderlook.EventManager</PackageId>
+    <AssemblyName>Enderlook.EventManager</AssemblyName>
+    <RootNamespace>Enderlook.EventManager</RootNamespace>
+    <Authors>Enderlook</Authors>
+    <Product>Enderlook.EventManager</Product>
+    <RepositoryUrl>https://github.com/Enderlook/Net-Event-Manager</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Version>0.1.0</Version>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>
