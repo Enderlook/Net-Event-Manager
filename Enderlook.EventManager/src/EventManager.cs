@@ -7,9 +7,9 @@ namespace Enderlook.EventManager
     /// Represent a type safe event manager where types are used as events types.
     /// </summary>
     /// <typeparam name="TEventBase">Base type of all events. Useful to determine a common ground.</typeparam>
-    public sealed class EventManager<TEventBase>
+    public sealed partial class EventManager<TEventBase>
     {
-        private Dictionary<Type, (Action, Delegate)> callbacks = new Dictionary<Type, (Action, Delegate)>();
+        private Dictionary<Type, TypeHandle> callbacks = new Dictionary<Type, TypeHandle>();
 
         /// <summary>
         /// Subscribes the callback <paramref name="callback"/> to execute when the event type <typeparamref name="TEvent"/> is raised.
@@ -22,13 +22,13 @@ namespace Enderlook.EventManager
                 throw new ArgumentNullException(nameof(callback));
 
             Type key = typeof(TEvent);
-            if (callbacks.TryGetValue(key, out (Action, Delegate) actions))
+            if (callbacks.TryGetValue(key, out TypeHandle handle))
             {
-                actions.Item2 = Delegate.Combine(actions.Item2, callback);
-                callbacks[key] = actions;
+                handle.Suscribe(callback);
+                callbacks[key] = handle;
             }
             else
-                callbacks[key] = (null, callback);
+                callbacks[key] = TypeHandle.Create(callback);
         }
 
         /// <inheritdoc cref="Subscribe{TEvent}(Action{TEvent})"/>
@@ -38,13 +38,13 @@ namespace Enderlook.EventManager
                 throw new ArgumentNullException(nameof(callback));
 
             Type key = typeof(TEvent);
-            if (callbacks.TryGetValue(key, out (Action, Delegate) actions))
+            if (callbacks.TryGetValue(key, out TypeHandle handle))
             {
-                actions.Item1 += callback;
-                callbacks[key] = actions;
+                handle.Suscribe(callback);
+                callbacks[key] = handle;
             }
             else
-                callbacks[key] = (callback, null);
+                callbacks[key] = TypeHandle.Create(callback);
         }
 
         /// <summary>
@@ -58,10 +58,10 @@ namespace Enderlook.EventManager
                 throw new ArgumentNullException(nameof(callback));
 
             Type key = typeof(TEvent);
-            if (callbacks.TryGetValue(key, out (Action, Delegate) actions))
+            if (callbacks.TryGetValue(key, out TypeHandle handle))
             {
-                actions.Item2 = Delegate.Remove(actions.Item2, callback);
-                callbacks[key] = actions;
+                handle.Unsuscribe(callback);
+                callbacks[key] = handle;
             }
         }
 
@@ -72,10 +72,10 @@ namespace Enderlook.EventManager
                 throw new ArgumentNullException(nameof(callback));
 
             Type key = typeof(TEvent);
-            if (callbacks.TryGetValue(key, out (Action, Delegate) actions))
+            if (callbacks.TryGetValue(key, out TypeHandle handle))
             {
-                actions.Item1 -= callback;
-                callbacks[key] = actions;
+                handle.Unsuscribe(callback);
+                callbacks[key] = handle;
             }
         }
 
@@ -86,12 +86,8 @@ namespace Enderlook.EventManager
         /// <param name="eventArgument">Arguments of this event</param>
         public void Raise<TEvent>(TEvent eventArgument) where TEvent : TEventBase
         {
-            if (callbacks.TryGetValue(typeof(TEvent), out (Action, Delegate) action))
-            {
-                action.Item1?.Invoke();
-                if (!(action.Item2 is null))
-                    ((Action<TEvent>)action.Item2)(eventArgument);
-            }
+            if (callbacks.TryGetValue(typeof(TEvent), out TypeHandle handle))
+                handle.Raise(eventArgument);
         }
     }
 }
