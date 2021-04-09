@@ -7,7 +7,7 @@ namespace Enderlook.EventManager
     /// Represent a type safe event manager where types are used as events types.
     /// </summary>
     /// <typeparam name="TEventBase">Base type of all events. Useful to determine a common ground.</typeparam>
-    public sealed partial class EventManager<TEventBase>
+    public sealed class EventManager<TEventBase>
     {
         private Dictionary<Type, TypeHandle> callbacks = new Dictionary<Type, TypeHandle>();
 
@@ -28,7 +28,11 @@ namespace Enderlook.EventManager
                 callbacks[key] = handle;
             }
             else
-                callbacks[key] = TypeHandle.Create(callback);
+            {
+                handle = TypeHandle.Create();
+                handle.Suscribe(callback);
+                callbacks[key] = handle;
+            }
         }
 
         /// <inheritdoc cref="Subscribe{TEvent}(Action{TEvent})"/>
@@ -44,7 +48,11 @@ namespace Enderlook.EventManager
                 callbacks[key] = handle;
             }
             else
-                callbacks[key] = TypeHandle.Create(callback);
+            {
+                handle = TypeHandle.Create();
+                handle.Suscribe(callback);
+                callbacks[key] = handle;
+            }
         }
 
         /// <summary>
