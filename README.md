@@ -4,6 +4,7 @@
 
 A type safe event manager library for .NET.
 Due the use of generic, this event manager doesn't suffer for boxing and unboxing of value types nor for casting errors of the consumers.
+Additionaly, closures of delegates can be stored apart in order to reuse the delegate and reduce allocations.
 
 The following example show all the functions of the event manager:
 ```cs
@@ -13,11 +14,11 @@ public static class Player
 
 	public static void Main()
 	{
-		eventManager.Subscribe<PlayerHurtEvent>(OnPlayerHurt);
+		eventManager.Subscribe<PlayerHurtEvent>("Ouch", OnPlayerHurt);
 
 		eventManager.Subscribe<PlayerPickedUpItemEvent>(OnPlayerPickedUpItem);
 
-		eventManager.Subscribe<PlayerPickedUpItemEvent>(OnPlayerPickedUpItem2);
+		eventManager.Subscribe<PlayerPickedUpItemEvent>(("Excalibur, "Mimic"), OnPlayerPickedUpItem2);
 
 		eventManager.Raise(new PlayerPickedUpItemEvent("Excalibur"));
 
@@ -32,17 +33,17 @@ public static class Player
 		eventManager.Raise(new PlayerPickedUpItemEvent("Mimic"));
 	}
 
-	private static void OnPlayerHurt()
-		=> Console.WriteLine("Ouch!");
+	private static void OnPlayerHurt(string closure)
+		=> Console.WriteLine(closure);
 
 	private static void OnPlayerPickedUpItem(PlayerPickedUpItemEvent @event)
 		=> Console.WriteLine($"Picked {@event.Item}");
 
-	private static void OnPlayerPickedUpItem2(PlayerPickedUpItemEvent @event)
+	private static void OnPlayerPickedUpItem2((string, string) closure, PlayerPickedUpItemEvent @event)
 	{
-		if (@event.Item == "Exalibur")
+		if (@event.Item == closure.Item1)
 			Console.WriteLine("Player picked up legendary sword!");
-		else if (@event.Item == "Mimic")
+		else if (@event.Item == closure.Item2)
 		{
 			Console.WriteLine("Oh no! You picked up a mimic!");
 			eventManager.Raise(new PlayerHurtEvent());

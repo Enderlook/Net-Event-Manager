@@ -12,8 +12,10 @@ namespace Enderlook.EventManager
     {
         private ReadWriterLock locker;
         private Dictionary<Type, TypeHandle> callbacks = new Dictionary<Type, TypeHandle>();
-        private Delegate[] a = Array.Empty<Delegate>();
-        private Delegate[] b = Array.Empty<Delegate>();
+        private TypeHandle.StructDelegate[] a = Array.Empty<TypeHandle.StructDelegate>();
+        private TypeHandle.StructDelegate[] b = Array.Empty<TypeHandle.StructDelegate>();
+        private TypeHandle.ClosureDelegate<object>[] c = Array.Empty<TypeHandle.ClosureDelegate<object>>();
+        private TypeHandle.ClosureDelegate<object>[] d = Array.Empty<TypeHandle.ClosureDelegate<object>>();
 
         /// <summary>
         /// Subscribes the callback <paramref name="callback"/> to execute when the event type <typeparamref name="TEvent"/> is raised.
@@ -24,6 +26,7 @@ namespace Enderlook.EventManager
         {
             if (callback is null)
                 ThrowNullCallback();
+
             GetOrCreateTypeHandler<TEvent>().Subscribe(callback);
         }
 
@@ -115,6 +118,112 @@ namespace Enderlook.EventManager
         }
 
         /// <summary>
+        /// Subscribes the callback <paramref name="callback"/> to execute when the event type <typeparamref name="TEvent"/> is raised.
+        /// </summary>
+        /// <param name="closure">Parameter to pass to <paramref name="callback"/>.</param>
+        /// <param name="callback">Callback to execute.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
+        public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback) where TEvent : TEventBase
+        {
+            if (callback is null)
+                ThrowNullCallback();
+
+            GetOrCreateTypeHandler<TEvent>().Subscribe(callback, closure);
+        }
+
+        /// <inheritdoc cref="Subscribe{TClosure, TEvent}(TClosure, Action{TClosure, TEvent})"/>
+        public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback) where TEvent : TEventBase
+        {
+            if (callback is null)
+                ThrowNullCallback();
+
+            GetOrCreateTypeHandler<TEvent>().Subscribe(callback, closure);
+        }
+
+        /// <summary>
+        /// Subscribes the callback <paramref name="callback"/> to execute only once when the event type <typeparamref name="TEvent"/> is raised.
+        /// </summary>
+        /// <param name="closure">Parameter to pass to <paramref name="callback"/>.</param>
+        /// <param name="callback">Callback to execute.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
+        public void SubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback) where TEvent : TEventBase
+        {
+            if (callback is null)
+                ThrowNullCallback();
+
+            GetOrCreateTypeHandler<TEvent>().SubscribeOnce(callback, closure);
+        }
+
+        /// <inheritdoc cref="SubscribeOnce{TEvent}(Action{TEvent})"/>
+        public void SubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure> callback) where TEvent : TEventBase
+        {
+            if (callback is null)
+                ThrowNullCallback();
+
+            GetOrCreateTypeHandler<TEvent>().SubscribeOnce(callback, closure);
+        }
+
+        /// <summary>
+        /// Unsubscribes a callback suscribed by <see cref="Subscribe{TEvent}(Action{TEvent})"/>.
+        /// </summary>
+        /// <param name="closure">Parameter to pass to <paramref name="callback"/>.</param>
+        /// <param name="callback">Callback to no longer execute.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
+        public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback) where TEvent : TEventBase
+        {
+            if (callback is null)
+                ThrowNullCallback();
+
+            if (TryGetTypeHandle<TEvent>(out TypeHandle handle))
+                handle.Unsubscribe(callback, closure);
+        }
+
+        /// <summary>
+        /// Unsubscribes a callback suscribed by <see cref="Subscribe{TEvent}(Action)"/>.
+        /// </summary>
+        /// <param name="closure">Parameter to pass to <paramref name="callback"/>.</param>
+        /// <param name="callback">Callback to no longer execute.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
+        public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback) where TEvent : TEventBase
+        {
+            if (callback is null)
+                ThrowNullCallback();
+
+            if (TryGetTypeHandle<TEvent>(out TypeHandle handle))
+                handle.Unsubscribe(callback, closure);
+        }
+
+        /// <summary>
+        /// Unsubscribes a callback suscribed by <see cref="SubscribeOnce{TEvent}(Action{TEvent})"/>.
+        /// </summary>
+        /// <param name="closure">Parameter to pass to <paramref name="callback"/>.</param>
+        /// <param name="callback">Callback to no longer execute.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
+        public void UnsubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback) where TEvent : TEventBase
+        {
+            if (callback is null)
+                ThrowNullCallback();
+
+            if (TryGetTypeHandle<TEvent>(out TypeHandle handle))
+                handle.UnsubscribeOnce(callback, closure);
+        }
+
+        /// <summary>
+        /// Unsubscribes a callback suscribed by <see cref="SubscribeOnce{TEvent}(Action)"/>.
+        /// </summary>
+        /// <param name="closure">Parameter to pass to <paramref name="callback"/>.</param>
+        /// <param name="callback">Callback to no longer execute.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
+        public void UnsubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure> callback) where TEvent : TEventBase
+        {
+            if (callback is null)
+                ThrowNullCallback();
+
+            if (TryGetTypeHandle<TEvent>(out TypeHandle handle))
+                handle.UnsubscribeOnce(callback, closure);
+        }
+
+        /// <summary>
         /// Raises an event type <typeparamref name="TEvent"/>.
         /// </summary>
         /// <typeparam name="TEvent"></typeparam>
@@ -133,7 +242,7 @@ namespace Enderlook.EventManager
                 locker.ReadEnd();
             }
             if (found)
-                handle.Raise(eventArgument, ref a, ref b);
+                handle.Raise(eventArgument, ref a, ref b, ref c, ref d);
         }
 
         /// <inheritdoc cref="IDisposable.Dispose"/>

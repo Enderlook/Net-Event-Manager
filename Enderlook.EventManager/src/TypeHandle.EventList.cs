@@ -3,9 +3,9 @@ using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
 {
-    internal partial class TypeHandle
+    internal sealed partial class TypeHandle
     {
-        internal struct EventList<T> : IDisposable where T : Delegate
+        internal struct EventList<T> : IDisposable where T : IDelegate<T>
         {
             private T[] toRun;
             private int toRunCount;

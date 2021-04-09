@@ -5,14 +5,13 @@ using System.Threading;
 
 namespace Enderlook.EventManager
 {
-    internal partial class TypeHandle
+    internal sealed partial class TypeHandle
     {
         private const int INITIAL_CAPACITY = 4;
         private const int GROW_FACTOR = 2;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InnerAdd<T>(ref T[] array, ref int count, T element)
-            where T : Delegate
         {
             T[] array_;
             do
@@ -46,7 +45,6 @@ namespace Enderlook.EventManager
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InnerSwap<T>(ref T[] array, ref int count, ref T[] newArray, out int newCount)
-             where T : Delegate
         {
             T[] array_;
             do
@@ -62,7 +60,7 @@ namespace Enderlook.EventManager
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void ExtractToRun<T>(ref T[] toRun, ref T[] toRemove, ref int toRunCount, ref int toRemoveCount, ref T[] toRunExtracted, ref T[] replacement, out int count)
-             where T : Delegate
+            where T : IDelegate<T>
         {
             InnerSwap(ref toRun, ref toRunCount, ref toRunExtracted, out count);
             InnerSwap(ref toRemove, ref toRemoveCount, ref replacement, out int countRemove);
