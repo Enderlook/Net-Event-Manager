@@ -21,6 +21,8 @@ public static class Player
 
 		eventManager.Raise(new PlayerPickedUpItemEvent("Excalibur"));
 
+		eventManager.SubscribeOnce<PlayerPickedUpItemEvent>(OnPlayerPickedUpItemOnce);
+
 		eventManager.Raise(new PlayerPickedUpItemEvent("Pencil"));
 
 		eventManager.Raise(new PlayerPickedUpItemEvent("Mimic"));
@@ -30,9 +32,11 @@ public static class Player
 		eventManager.Raise(new PlayerPickedUpItemEvent("Mimic"));
 	}
 
-	private static void OnPlayerHurt() => Console.WriteLine("Ouch!");
+	private static void OnPlayerHurt()
+		=> Console.WriteLine("Ouch!");
 
-	private static void OnPlayerPickedUpItem(PlayerPickedUpItemEvent @event) => Console.WriteLine($"Picked {@event.Item}");
+	private static void OnPlayerPickedUpItem(PlayerPickedUpItemEvent @event)
+		=> Console.WriteLine($"Picked {@event.Item}");
 
 	private static void OnPlayerPickedUpItem2(PlayerPickedUpItemEvent @event)
 	{
@@ -44,6 +48,9 @@ public static class Player
 			eventManager.Raise(new PlayerHurtEvent());
 		}
 	}
+	
+	private static void OnPlayerPickedUpItemOnce(PlayerPickedUpItemEvent @event)
+		=> Console.WriteLine($"This was registered to only execute once.");
 
 	public interface IPlayerEvents { }
 

@@ -1,84 +1,96 @@
 ﻿using System;
-using System.Buffers;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
 {
-    internal struct TypeHandle : IDisposable
+    internal partial class TypeHandle : IDisposable
     {
-        private static readonly Delegate[] emptyDelegate = new Delegate[0];
-        private const int INITIAL_CAPACITY = 4;
-        private const int GROW_FACTOR = 2;
+        private EventList<Delegate> parameterless = EventList<Delegate>.Create();
+        public void Subscribe(Action @delegate) => parameterless.Add(@delegate);
+        public void Unsubscribe(Action @delegate) => parameterless.Remove(@delegate);
 
-        private Delegate[] actions;
-        private int actionsCount;
+        private EventList<Delegate> parameters = EventList<Delegate>.Create();
+        public void Subscribe<T>(Action<T> @delegate) => parameters.Add(@delegate);
+        public void Unsubscribe<T>(Action<T> @delegate) => parameters.Remove(@delegate);
 
-        private Delegate[] delegates;
-        private int delegatesCount;
+        private EventListOnce<Delegate> parameterlessOnce = EventListOnce<Delegate>.Create();
+        public void SubscribeOnce(Action @delegate) => parameterlessOnce.Add(@delegate);
+        public void UnsubscribeOnce(Action @delegate) => parameterlessOnce.Remove(@delegate);
 
-        public static TypeHandle Create() => new TypeHandle()
+        private EventListOnce<Delegate> parametersOnce = EventListOnce<Delegate>.Create();
+        public void SubscribeOnce<T>(Action<T> @delegate) => parametersOnce.Add(@delegate);
+        public void UnsubscribeOnce<T>(Action<T> @delegate) => parametersOnce.Remove(@delegate);
+
+        public void Raise<T>(T argument, ref Delegate[] a, ref Delegate[] b)
         {
-            actions = emptyDelegate,
-            actionsCount = 0,
-            delegates = emptyDelegate,
-            delegatesCount = 0,
-        };
-
-        public void Raise<T>(T argument)
-        {
-            for (int i = 0; i < actionsCount; i++)
-                Unsafe.As<Action>(actions[i])();
-
-            for (int i = 0; i < delegatesCount; i++)
-                Unsafe.As<Action<T>>(delegates[i])(argument);
-
+            InnerRaise(ref parameterless, ref a, ref b, new Parameterless());
+            InnerRaise(ref parameters, ref a, ref b, argument);
+            InnerRaise(ref parameterlessOnce, ref a, ref b, new Parameterless());
+            InnerRaise(ref parametersOnce, ref a, ref b, argument);
         }
 
-        public void Suscribe(Action action)
-            => InnnerSuscribe(ref actions, ref actionsCount, action);
-
-        public void Suscribe(Delegate @delegate)
-            => InnnerSuscribe(ref delegates, ref delegatesCount, @delegate);
+        private struct Parameterless { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void InnnerSuscribe(ref Delegate[] array, ref int count, Delegate action)
+        private static void InnerRaise<T>(object @delegate, T argument)
         {
-            if (count == array.Length)
-            {
-                if (count == 0)
-                    array = ArrayPool<Delegate>.Shared.Rent(INITIAL_CAPACITY);
-                else
-                {
-                    Delegate[] newArray = ArrayPool<Delegate>.Shared.Rent(count * GROW_FACTOR);
-                    Array.Copy(array, newArray, count);
-                }
-            }
-            array[count++] = action;
+            if (typeof(T) == typeof(Parameterless))
+                Unsafe.As<Action>(@delegate)();
+            else
+                Unsafe.As<Action<T>>(@delegate)(argument);
         }
 
-        public void Unsuscribe(Action action) => InnnerUnsuscribe(actions, ref actionsCount, action);
-
-        public void Unsuscribe(Delegate @delegate) => InnnerUnsuscribe(delegates, ref delegatesCount, @delegate);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void InnnerUnsuscribe(Delegate[] array, ref int count, Delegate action)
+        private static void InnerRaise<T>(ref EventList<Delegate> list, ref Delegate[] a, ref Delegate[] b, T argument)
         {
+            list.ExtractToRun(ref a, ref b, out int count);
+            Delegate _ = a[count];
+            for (int i = 0; i < count; i++)
+                InnerRaise(a[i], argument);
+            list.InjectToRun(ref a, count);
+        }
+
+        private static void InnerRaise<T>(ref EventListOnce<Delegate> list, ref Delegate[] a, ref Delegate[] b, T argument)
+        {
+            list.ExtractToRun(ref a, ref b, out int count, out int countRemove);
+            Delegate _ = a[count];
+            _ = b[countRemove];
             for (int i = 0; i < count; i++)
             {
-                if (array[i].Equals(action))
+                Delegate element = a[i];
+                for (int j = countRemove - 1; j >= 0; j--)
                 {
-                    count--;
-                    if (i < count)
-                        Array.Copy(array, i + 1, array, i, count - i);
-                    array[count] = null;
+                    if (element == b[j])
+                    {
+                        Array.Copy(b, j + 1, b, j, countRemove - j);
+                        countRemove--;
+                        goto next;
+                    }
                 }
+                InnerRaise(element, argument);
+                next:;
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            ArrayPool<Delegate>.Shared.Return(actions);
-            ArrayPool<Delegate>.Shared.Return(delegates);
+            parameters.Dispose();
+            parameterless.Dispose();
+            parametersOnce.Dispose();
+            parameterlessOnce.Dispose();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Purge(ref Delegate[] a, ref Delegate[] b)
+        {
+            parameterless.ExtractToRun(ref a, ref b, out int count);
+            parameterless.InjectToRun(ref a, count);
+            parameters.ExtractToRun(ref a, ref b, out count);
+            parameters.InjectToRun(ref a, count);
+            parameterlessOnce.ExtractToRunRemoved(ref a, ref b, out count);
+            parameterlessOnce.InjectToRun(ref a, count);
+            parametersOnce.ExtractToRunRemoved(ref a, ref b, out count);
+            parametersOnce.InjectToRun(ref a, count);
         }
     }
 }
