@@ -7,7 +7,7 @@ namespace Enderlook.EventManager
     /// Represent a type safe event manager where types are used as events types.
     /// </summary>
     /// <typeparam name="TEventBase">Base type of all events. Useful to determine a common ground.</typeparam>
-    public sealed class EventManager<TEventBase>
+    public sealed class EventManager<TEventBase> : IDisposable
     {
         private Dictionary<Type, TypeHandle> callbacks = new Dictionary<Type, TypeHandle>();
 
@@ -96,6 +96,14 @@ namespace Enderlook.EventManager
         {
             if (callbacks.TryGetValue(typeof(TEvent), out TypeHandle handle))
                 handle.Raise(eventArgument);
+        }
+
+        /// <inheritdoc cref="IDisposable.Dispose"/>
+        public void Dispose()
+        {
+            foreach (TypeHandle handle in callbacks.Values)
+                handle.Dispose();
+            callbacks.Clear();
         }
     }
 }

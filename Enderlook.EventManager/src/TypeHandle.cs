@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Buffers;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
 {
-    internal struct TypeHandle
+    internal struct TypeHandle : IDisposable
     {
         private static readonly Delegate[] emptyDelegate = new Delegate[0];
         private const int INITIAL_CAPACITY = 4;
@@ -45,10 +46,10 @@ namespace Enderlook.EventManager
             if (count == array.Length)
             {
                 if (count == 0)
-                    array = new Delegate[INITIAL_CAPACITY];
+                    array = ArrayPool<Delegate>.Shared.Rent(INITIAL_CAPACITY);
                 else
                 {
-                    Delegate[] newArray = new Delegate[count * GROW_FACTOR];
+                    Delegate[] newArray = ArrayPool<Delegate>.Shared.Rent(count * GROW_FACTOR);
                     Array.Copy(array, newArray, count);
                 }
             }
@@ -72,6 +73,12 @@ namespace Enderlook.EventManager
                     array[count] = null;
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            ArrayPool<Delegate>.Shared.Return(actions);
+            ArrayPool<Delegate>.Shared.Return(delegates);
         }
     }
 }
