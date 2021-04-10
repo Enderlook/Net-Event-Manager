@@ -41,7 +41,7 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            TDelegate[] empty = Array.Empty<TDelegate>();
+            TDelegate[] empty = Utility.Container<TDelegate, TEvent>.empty;
             TDelegate[] empty2 = empty;
             Utility.InnerSwap(ref toRun, ref toRunCount, ref empty, out int _);
             Utility.InnerSwap(ref toRemove, ref toRemoveCount, ref empty2, out int _);
