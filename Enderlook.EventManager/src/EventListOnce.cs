@@ -23,18 +23,20 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove(TDelegate element) => Utility.InnerAdd(ref toRemove, ref toRemoveCount, element);
 
-        public void ExtractToRun(ref TDelegate[] toRunExtracted, ref TDelegate[] toRemoveExtracted, out int count, out int countRemove)
+        public void ExtractToRun(ref TDelegate[] toRunExtracted, out int toRunCount, ref TDelegate[] toRemoveExtracted, out int toRemoveCount)
         {
-            Utility.InnerSwap(ref toRun, ref toRunCount, ref toRunExtracted, out count);
-            Utility.InnerSwap(ref toRemove, ref toRemoveCount, ref toRemoveExtracted, out countRemove);
+            Utility.InnerSwap(ref toRun, ref this.toRunCount, ref toRunExtracted, out toRunCount);
+            Utility.InnerSwap(ref toRemove, ref this.toRemoveCount, ref toRemoveExtracted, out toRemoveCount);
         }
 
-        public void ExtractToRunRemoved(ref TDelegate[] toRunExtracted, ref TDelegate[] replacement, out int count)
-            => Utility.ExtractToRun<TDelegate, TEvent>(ref toRun, ref toRemove, ref toRunCount, ref toRemoveCount, ref toRunExtracted, ref replacement, out count);
+        public void ExtractToRunRemoved(ref TDelegate[] toRunExtracted, out int toRunCount, ref TDelegate[] removedArray, out int removedArrayCount)
+            => Utility.ExtractToRun<TDelegate, TEvent>(
+                ref toRun, ref this.toRunCount, ref toRemove, ref toRemoveCount,
+                ref toRunExtracted, out toRunCount, ref removedArray, out removedArrayCount);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void InjectToRun(ref TDelegate[] array, int count)
-            => Utility.InjectToRun(ref toRun, ref toRunCount, ref array, count);
+        public void InjectToRun(ref TDelegate[] array, ref int count)
+            => Utility.Drain(ref toRun, ref toRunCount, ref array, ref count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
