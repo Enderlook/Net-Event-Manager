@@ -5,19 +5,26 @@ using System.Threading;
 
 namespace Enderlook.EventManager
 {
-    internal sealed partial class TypeHandle
+    internal static class Utility
     {
         private const int INITIAL_CAPACITY = 4;
         private const int GROW_FACTOR = 2;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void InnerAdd<T>(ref T[] array, ref int count, T element)
+        private static T Get<T>(ref T value) where T : class
         {
-            T[] array_;
+            T value_;
             do
             {
-                array_ = Interlocked.Exchange(ref array, null);
-            } while (array_ is null);
+                value_ = Interlocked.Exchange(ref value, null);
+            } while (value_ is null);
+            return value_;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InnerAdd<T>(ref T[] array, ref int count, T element)
+        {
+            T[] array_ = Get(ref array);
 
             try
             {
@@ -44,13 +51,9 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void InnerSwap<T>(ref T[] array, ref int count, ref T[] newArray, out int newCount)
+        public static void InnerSwap<T>(ref T[] array, ref int count, ref T[] newArray, out int newCount)
         {
-            T[] array_;
-            do
-            {
-                array_ = Interlocked.Exchange(ref array, null);
-            } while (array_ is null);
+            T[] array_ = Get(ref array);
 
             newCount = count;
             count = 0;
@@ -59,8 +62,8 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ExtractToRun<T>(ref T[] toRun, ref T[] toRemove, ref int toRunCount, ref int toRemoveCount, ref T[] toRunExtracted, ref T[] replacement, out int count)
-            where T : IDelegate<T>
+        public static void ExtractToRun<TDelegate, TEvent>(ref TDelegate[] toRun, ref TDelegate[] toRemove, ref int toRunCount, ref int toRemoveCount, ref TDelegate[] toRunExtracted, ref TDelegate[] replacement, out int count)
+            where TDelegate : IDelegate<TDelegate, TEvent>
         {
             InnerSwap(ref toRun, ref toRunCount, ref toRunExtracted, out count);
             InnerSwap(ref toRemove, ref toRemoveCount, ref replacement, out int countRemove);
@@ -68,11 +71,11 @@ namespace Enderlook.EventManager
             {
                 // TODO: Time complexity of this could be reduced by sorting the arrays. Research if that may be worth.
                 int j = 0;
-                T _ = toRunExtracted[count];
+                TDelegate _ = toRunExtracted[count];
                 _ = replacement[countRemove];
                 for (int i = 0; i < count; i++)
                 {
-                    T element = toRunExtracted[i];
+                    TDelegate element = toRunExtracted[i];
                     for (int k = countRemove - 1; k >= 0; k--)
                     {
                         if (element.Equals(replacement[k]))
@@ -89,7 +92,8 @@ namespace Enderlook.EventManager
             }
         }
 
-        private static void InjectToRun<T>(ref T[] toRun, ref int toRunCount, ref T[] array, int count)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InjectToRun<T>(ref T[] toRun, ref int toRunCount, ref T[] array, int count)
         {
             T[] array_;
             do
@@ -133,6 +137,37 @@ namespace Enderlook.EventManager
                 ArrayPool<T>.Shared.Return(from);
                 toRunCount = totalCount;
                 toRun = newArray;
+            }
+        }
+
+        public static void InnerRaise<TEvent, TDelegate>(ref EventList<TDelegate, TEvent> list, ref TDelegate[] a, int count, TEvent argument)
+            where TDelegate : IDelegate<TDelegate, TEvent>
+        {
+            TDelegate _ = a[count];
+            for (int i = 0; i < count; i++)
+                a[i].Invoke(argument);
+            list.InjectToRun(ref a, count);
+        }
+
+        public static void InnerRaise<TEvent, TDelegate>(ref TDelegate[] a, ref TDelegate[] b, int count, int countRemove, TEvent argument)
+            where TDelegate : IDelegate<TDelegate, TEvent>
+        {
+            TDelegate _ = a[count];
+            _ = b[countRemove];
+            for (int i = 0; i < count; i++)
+            {
+                TDelegate element = a[i];
+                for (int j = countRemove - 1; j >= 0; j--)
+                {
+                    if (element.Equals(b[j]))
+                    {
+                        Array.Copy(b, j + 1, b, j, countRemove - j);
+                        countRemove--;
+                        goto next;
+                    }
+                }
+                element.Invoke(argument);
+                next:;
             }
         }
     }
