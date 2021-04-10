@@ -129,10 +129,10 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (!typeof(TClosure).IsValueType)
-                GetOrCreateTypeHandler<TEvent>().Subscribe(callback, closure);
-            else
+            if (typeof(TClosure).IsValueType)
                 GetOrCreateClosureHandler<TClosure, TEvent>().handle.Subscribe(callback, closure);
+            else
+                GetOrCreateTypeHandler<TEvent>().Subscribe(callback, closure);
         }
 
         /// <inheritdoc cref="Subscribe{TClosure, TEvent}(TClosure, Action{TClosure, TEvent})"/>
@@ -141,10 +141,10 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (!typeof(TClosure).IsValueType)
-                GetOrCreateTypeHandler<TEvent>().Subscribe(callback, closure);
-            else
+            if (typeof(TClosure).IsValueType)
                 GetOrCreateClosureHandler<TClosure, TEvent>().handle.Subscribe(callback, closure);
+            else
+                GetOrCreateTypeHandler<TEvent>().Subscribe(callback, closure);
         }
 
         /// <summary>
@@ -158,10 +158,10 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (!typeof(TClosure).IsValueType)
-                GetOrCreateTypeHandler<TEvent>().Subscribe(callback, closure);
-            else
+            if (typeof(TClosure).IsValueType)
                 GetOrCreateClosureHandler<TClosure, TEvent>().handle.Subscribe(callback, closure);
+            else
+                GetOrCreateTypeHandler<TEvent>().Subscribe(callback, closure);
         }
 
         /// <inheritdoc cref="SubscribeOnce{TEvent}(Action{TEvent})"/>
@@ -170,10 +170,10 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (!typeof(TClosure).IsValueType)
-                GetOrCreateTypeHandler<TEvent>().Subscribe(callback, closure);
-            else
+            if (typeof(TClosure).IsValueType)
                 GetOrCreateClosureHandler<TClosure, TEvent>().handle.Subscribe(callback, closure);
+            else
+                GetOrCreateTypeHandler<TEvent>().Subscribe(callback, closure);
         }
 
         /// <summary>
@@ -187,15 +187,15 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (!typeof(TClosure).IsValueType)
-            {
-                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
-                    handle.Unsubscribe(callback, closure);
-            }
-            else
+            if (typeof(TClosure).IsValueType)
             {
                 if (TryGetClosureHandle(out HeapClosureHandle<TClosure, TEvent> handle))
                     handle.handle.Subscribe(callback, closure);
+            }
+            else
+            {
+                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
+                    handle.Unsubscribe(callback, closure);
             }
         }
 
@@ -210,15 +210,15 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (!typeof(TClosure).IsValueType)
-            {
-                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
-                    handle.Unsubscribe(callback, closure);
-            }
-            else
+            if (typeof(TClosure).IsValueType)
             {
                 if (TryGetClosureHandle(out HeapClosureHandle<TClosure, TEvent> handle))
                     handle.handle.Subscribe(callback, closure);
+            }
+            else
+            {
+                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
+                    handle.Unsubscribe(callback, closure);
             }
         }
 
@@ -233,15 +233,15 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (!typeof(TClosure).IsValueType)
-            {
-                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
-                    handle.Unsubscribe(callback, closure);
-            }
-            else
+            if (typeof(TClosure).IsValueType)
             {
                 if (TryGetClosureHandle(out HeapClosureHandle<TClosure, TEvent> handle))
                     handle.handle.Subscribe(callback, closure);
+            }
+            else
+            {
+                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
+                    handle.Unsubscribe(callback, closure);
             }
         }
 
@@ -256,15 +256,15 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (!typeof(TClosure).IsValueType)
-            {
-                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
-                    handle.Unsubscribe(callback, closure);
-            }
-            else
+            if (typeof(TClosure).IsValueType)
             {
                 if (TryGetClosureHandle(out HeapClosureHandle<TClosure, TEvent> handle))
                     handle.handle.Subscribe(callback, closure);
+            }
+            else
+            {
+                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
+                    handle.Unsubscribe(callback, closure);
             }
         }
 
