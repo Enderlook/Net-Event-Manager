@@ -5,14 +5,14 @@ using System.Threading;
 
 namespace Enderlook.EventManager
 {
-    internal abstract class TypeHandle : IDisposable
+    internal abstract class SimpleHandle : IDisposable
     {
         public abstract void Dispose();
 
         public abstract void Purge();
     }
 
-    internal sealed class TypeHandle<TEvent> : TypeHandle
+    internal sealed class SimpleHandle<TEvent> : SimpleHandle
     {
         private static readonly HeapClosureHandleBase<TEvent>[] empty = new HeapClosureHandleBase<TEvent>[0];
 

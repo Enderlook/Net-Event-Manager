@@ -11,7 +11,7 @@ namespace Enderlook.EventManager
     public sealed class EventManager<TEventBase> : IDisposable
     {
         private ReadWriterLock simpleCallbacksLocker;
-        // `object` is actually `TypeHandle<TEvent>`.
+        // `object` is actually `SimpleHandle<TEvent>`.
         private readonly Dictionary<Type, object> simpleCallbacks = new Dictionary<Type, object>();
 
         private ReadWriterLock closureCallbacksLocker;
@@ -72,7 +72,7 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (TryGetTypeHandle(out TypeHandle<TEvent> handle))
+            if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
                 handle.Unsubscribe(callback);
         }
 
@@ -86,7 +86,7 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (TryGetTypeHandle(out TypeHandle<TEvent> handle))
+            if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
                 handle.Unsubscribe(callback);
         }
 
@@ -100,7 +100,7 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (TryGetTypeHandle(out TypeHandle<TEvent> handle))
+            if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
                 handle.UnsubscribeOnce(callback);
         }
 
@@ -114,7 +114,7 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (TryGetTypeHandle(out TypeHandle<TEvent> handle))
+            if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
                 handle.UnsubscribeOnce(callback);
         }
 
@@ -189,7 +189,7 @@ namespace Enderlook.EventManager
 
             if (!typeof(TClosure).IsValueType)
             {
-                if (TryGetTypeHandle(out TypeHandle<TEvent> handle))
+                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
                     handle.Unsubscribe(callback, closure);
             }
             else
@@ -212,7 +212,7 @@ namespace Enderlook.EventManager
 
             if (!typeof(TClosure).IsValueType)
             {
-                if (TryGetTypeHandle(out TypeHandle<TEvent> handle))
+                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
                     handle.Unsubscribe(callback, closure);
             }
             else
@@ -235,7 +235,7 @@ namespace Enderlook.EventManager
 
             if (!typeof(TClosure).IsValueType)
             {
-                if (TryGetTypeHandle(out TypeHandle<TEvent> handle))
+                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
                     handle.Unsubscribe(callback, closure);
             }
             else
@@ -258,7 +258,7 @@ namespace Enderlook.EventManager
 
             if (!typeof(TClosure).IsValueType)
             {
-                if (TryGetTypeHandle(out TypeHandle<TEvent> handle))
+                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
                     handle.Unsubscribe(callback, closure);
             }
             else
@@ -275,7 +275,7 @@ namespace Enderlook.EventManager
         /// <param name="eventArgument">Arguments of this event</param>
         public void Raise<TEvent>(TEvent eventArgument) where TEvent : TEventBase
         {
-            if (TryGetTypeHandle(out TypeHandle<TEvent> simpleHandler))
+            if (TryGetTypeHandle(out SimpleHandle<TEvent> simpleHandler))
                 simpleHandler.Raise(eventArgument);
         }
 
@@ -288,7 +288,7 @@ namespace Enderlook.EventManager
                 closureCallbacksLocker.WriteBegin();
                 try
                 {
-                    foreach (TypeHandle handle in simpleCallbacks.Values)
+                    foreach (SimpleHandle handle in simpleCallbacks.Values)
                         handle.Dispose();
                     simpleCallbacks.Clear();
                     closureCallbacks.Clear();
@@ -315,7 +315,7 @@ namespace Enderlook.EventManager
                 closureCallbacksLocker.WriteBegin();
                 try
                 {
-                    foreach (TypeHandle handle in simpleCallbacks.Values)
+                    foreach (SimpleHandle handle in simpleCallbacks.Values)
                         handle.Purge();
                 }
                 finally
@@ -330,7 +330,7 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private TypeHandle<TEvent> GetOrCreateTypeHandler<TEvent>()
+        private SimpleHandle<TEvent> GetOrCreateTypeHandler<TEvent>()
         {
             Type key = typeof(TEvent);
 
@@ -338,7 +338,7 @@ namespace Enderlook.EventManager
             try
             {
                 if (simpleCallbacks.TryGetValue(key, out object obj))
-                    return Unsafe.As<TypeHandle<TEvent>>(obj);
+                    return Unsafe.As<SimpleHandle<TEvent>>(obj);
             }
             finally
             {
@@ -349,8 +349,8 @@ namespace Enderlook.EventManager
             try
             {
                 if (simpleCallbacks.TryGetValue(key, out object obj))
-                    return Unsafe.As<TypeHandle<TEvent>>(obj);
-                TypeHandle<TEvent> handle = new TypeHandle<TEvent>();
+                    return Unsafe.As<SimpleHandle<TEvent>>(obj);
+                SimpleHandle<TEvent> handle = new SimpleHandle<TEvent>();
                 simpleCallbacks[key] = handle;
                 return handle;
             }
@@ -361,7 +361,7 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TryGetTypeHandle<TEvent>(out TypeHandle<TEvent> handle)
+        private bool TryGetTypeHandle<TEvent>(out SimpleHandle<TEvent> handle)
         {
             Type key = typeof(TEvent);
             simpleCallbacksLocker.ReadBegin();
@@ -372,7 +372,7 @@ namespace Enderlook.EventManager
                     handle = null;
                     return false;
                 }
-                handle = Unsafe.As<TypeHandle<TEvent>>(obj);
+                handle = Unsafe.As<SimpleHandle<TEvent>>(obj);
                 return true;
             }
             finally
