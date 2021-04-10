@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
 {
-    internal readonly struct ClosureDelegate<TClosure, TEvent> : IDelegate<ClosureDelegate<TClosure, TEvent>, TEvent>
+    internal readonly struct ClosureDelegate<TClosure, TEvent>
     {
         public readonly Action<TClosure, TEvent> @delegate;
         public readonly TClosure closure;

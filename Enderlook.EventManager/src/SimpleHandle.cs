@@ -15,45 +15,45 @@ namespace Enderlook.EventManager
     {
         private static readonly HeapClosureHandleBase<TEvent>[] empty = new HeapClosureHandleBase<TEvent>[0];
 
-        private EventList<SimpleDelegate<Parameterless>, Parameterless> parameterless = EventList<SimpleDelegate<Parameterless>, Parameterless>.Create();
-        private EventList<SimpleDelegate<TEvent>, TEvent> parameters = EventList<SimpleDelegate<TEvent>, TEvent>.Create();
-        private EventListOnce<SimpleDelegate<Parameterless>, Parameterless> parameterlessOnce = EventListOnce<SimpleDelegate<Parameterless>, Parameterless>.Create();
-        private EventListOnce<SimpleDelegate<TEvent>, TEvent> parametersOnce = EventListOnce<SimpleDelegate<TEvent>, TEvent>.Create();
+        private EventList<Action, Parameterless> parameterless = EventList<Action, Parameterless>.Create();
+        private EventList<Action<TEvent>, TEvent> parameters = EventList<Action<TEvent>, TEvent>.Create();
+        private EventListOnce<Action, Parameterless> parameterlessOnce = EventListOnce<Action, Parameterless>.Create();
+        private EventListOnce<Action<TEvent>, TEvent> parametersOnce = EventListOnce<Action<TEvent>, TEvent>.Create();
         private ClosureHandle<object, TEvent> referenceClosures = ClosureHandle<object, TEvent>.Create();
         private HeapClosureHandleBase<TEvent>[] valueClosures = empty;
         private int valueClosuresCount;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Subscribe(Action @delegate)
-            => parameterless.Add(new SimpleDelegate<Parameterless>(Unsafe.As<Action<Parameterless>>(@delegate)));
+            => parameterless.Add(@delegate);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unsubscribe(Action @delegate)
-            => parameterless.Remove(new SimpleDelegate<Parameterless>(Unsafe.As<Action<Parameterless>>(@delegate)));
+            => parameterless.Remove(@delegate);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Subscribe(Action<TEvent> @delegate)
-            => parameters.Add(new SimpleDelegate<TEvent>(@delegate));
+            => parameters.Add(@delegate);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unsubscribe(Action<TEvent> @delegate)
-            => parameters.Remove(new SimpleDelegate<TEvent>(@delegate));
+            => parameters.Remove(@delegate);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SubscribeOnce(Action @delegate)
-            => parameterlessOnce.Add(new SimpleDelegate<Parameterless>(Unsafe.As<Action<Parameterless>>(@delegate)));
+            => parameterlessOnce.Add(@delegate);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void UnsubscribeOnce(Action @delegate)
-            => parameterlessOnce.Remove(new SimpleDelegate<Parameterless>(Unsafe.As<Action<Parameterless>>(@delegate)));
+            => parameterlessOnce.Remove(@delegate);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SubscribeOnce(Action<TEvent> @delegate)
-            => parametersOnce.Add(new SimpleDelegate<TEvent>(@delegate));
+            => parametersOnce.Add(@delegate);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void UnsubscribeOnce(Action<TEvent> @delegate)
-            => parametersOnce.Remove(new SimpleDelegate<TEvent>(@delegate));
+            => parametersOnce.Remove(@delegate);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Subscribe<TClosure>(Action<TClosure> @delegate, TClosure closure)
