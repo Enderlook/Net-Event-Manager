@@ -283,25 +283,13 @@ namespace Enderlook.EventManager
         public void Dispose()
         {
             simpleCallbacksLocker.WriteBegin();
-            try
-            {
-                closureCallbacksLocker.WriteBegin();
-                try
-                {
-                    foreach (SimpleHandle handle in simpleCallbacks.Values)
-                        handle.Dispose();
-                    simpleCallbacks.Clear();
-                    closureCallbacks.Clear();
-                }
-                finally
-                {
-                    closureCallbacksLocker.WriteEnd();
-                }
-            }
-            finally
-            {
-                simpleCallbacksLocker.WriteEnd();
-            }
+            closureCallbacksLocker.WriteBegin();
+            foreach (SimpleHandle handle in simpleCallbacks.Values)
+                handle.Dispose();
+            simpleCallbacks.Clear();
+            closureCallbacks.Clear();
+            closureCallbacksLocker.WriteEnd();
+            simpleCallbacksLocker.WriteEnd();
         }
 
         /// <summary>
@@ -310,23 +298,11 @@ namespace Enderlook.EventManager
         public void Purge()
         {
             simpleCallbacksLocker.ReadBegin();
-            try
-            {
-                closureCallbacksLocker.ReadBegin();
-                try
-                {
-                    foreach (SimpleHandle handle in simpleCallbacks.Values)
-                        handle.Purge();
-                }
-                finally
-                {
-                    closureCallbacksLocker.ReadEnd();
-                }
-            }
-            finally
-            {
-                simpleCallbacksLocker.ReadEnd();
-            }
+            closureCallbacksLocker.ReadBegin();
+            foreach (SimpleHandle handle in simpleCallbacks.Values)
+                handle.Purge();
+            closureCallbacksLocker.ReadEnd();
+            simpleCallbacksLocker.ReadEnd();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
