@@ -29,7 +29,7 @@ namespace Enderlook.EventManager
             T[] array_ = Steal(ref array);
 
             int count_ = count;
-            if (count_ == array.Length)
+            if (count_ == array_.Length)
             {
                 if (count_ == 0)
                     array_ = ArrayPool<T>.Shared.Rent(INITIAL_CAPACITY);
@@ -55,7 +55,7 @@ namespace Enderlook.EventManager
             count = 0;
             array = Array.Empty<T>();
 
-            Array.Clear(array, 0, oldCount);
+            Array.Clear(array_, 0, oldCount);
             ArrayPool<T>.Shared.Return(array_);
         }
 
@@ -79,11 +79,14 @@ namespace Enderlook.EventManager
             Extract(ref toRemove, ref toRemoveCount, out T[] toRemoveExtracted, out int countRemove);
             if (countRemove > 0)
             {
+                if (toRunExtractedCount == 0)
+                    return;
+
                 EqualityComparer<T> comparer = EqualityComparer<T>.Default;
                 // TODO: Time complexity of this could be reduced by sorting the arrays. Research if that may be worth.
                 int j = 0;
-                T _ = toRunExtracted[toRunExtractedCount];
-                _ = toRemoveExtracted[countRemove];
+                T _ = toRunExtracted[toRunExtractedCount - 1];
+                _ = toRemoveExtracted[countRemove - 1];
                 for (int i = 0; i < toRunExtractedCount; i++)
                 {
                     T element = toRunExtracted[i];
@@ -132,9 +135,10 @@ namespace Enderlook.EventManager
             }
 
             int totalCount = fromCount + toCount;
-            if (totalCount < to.Length)
+            if (totalCount <= to.Length)
             {
-                Array.Copy(from, 0, to, toCount + 1, fromCount);
+                if (fromCount > 0)
+                    Array.Copy(from, 0, to, toCount + 1, fromCount);
                 source = from;
                 sourceCount = fromCount;
                 destiantionCount = totalCount;
@@ -142,6 +146,7 @@ namespace Enderlook.EventManager
             }
             else
             {
+                Debug.Assert(fromCount > 0);
                 T[] newArray = ArrayPool<T>.Shared.Rent(totalCount * GROW_FACTOR);
                 Array.Copy(from, newArray, fromCount);
                 Array.Copy(to, 0, newArray, fromCount + 1, toCount);
@@ -192,13 +197,17 @@ namespace Enderlook.EventManager
                     Unsafe.As<Action<TClosure, TEvent>>(closure.@delegate)(closure.closure, argument);
                 }
             }
-            Debug.Fail("Impossible state.");
+            else
+                Debug.Fail("Impossible state.");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RaiseArray<TDelegate, TEvent, TMode, TClosure>(ref TDelegate[] a, int count, TEvent argument)
         {
-            TDelegate _ = a[count];
+            if (count == 0)
+                return;
+
+            TDelegate _ = a[count - 1];
             for (int i = 0; i < count; i++)
                 Execute<TDelegate, TEvent, TMode, TClosure>(a[i], argument);
         }
@@ -206,9 +215,21 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RaiseArray<TDelegate, TEvent, TMode, TClosure>(TDelegate[] a, TDelegate[] b, int count, int countRemove, TEvent argument)
         {
-            TDelegate _ = a[count];
-            _ = b[countRemove];
+            if (count == 0)
+                return;
+
+            TDelegate _ = a[count - 1];
+
             EqualityComparer<TDelegate> comparer = EqualityComparer<TDelegate>.Default;
+
+            if (countRemove == 0)
+            {
+                for (int i = 0; i < count; i++)
+                    Execute<TDelegate, TEvent, TMode, TClosure>(a[i], argument);
+                return;
+            }
+
+            _ = b[countRemove - 1];
             for (int i = 0; i < count; i++)
             {
                 TDelegate element = a[i];
