@@ -9,14 +9,14 @@ namespace Enderlook.EventManager
         /* We store instances of `Action`.
          * The lack of the delegate type in the `ClosureDelegate` type allow us to avoid the generic instantiation of ArrayPool<Action<TEvent>>.
          * And so we store less unused arrays on the pool.*/
-        public EventList<ClosureDelegate<TClosure>> parameterless;
-        public EventList<ClosureDelegate<TClosure>> parameters;
+        private EventList<ClosureDelegate<TClosure>> parameterless;
+        private EventList<ClosureDelegate<TClosure>> parameters;
 
         /* We store instances of `Action<TEvent>`.
          * The lack of the delegate type in the `ClosureDelegate` type allow us to avoid the generic instantiation of ArrayPool<Action<TEvent>>.
          * And so we store less unused arrays on the pool.*/
-        public EventListOnce<ClosureDelegate<TClosure>> parameterlessOnce;
-        public EventListOnce<ClosureDelegate<TClosure>> parametersOnce;
+        private EventListOnce<ClosureDelegate<TClosure>> parameterlessOnce;
+        private EventListOnce<ClosureDelegate<TClosure>> parametersOnce;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ClosureHandle<TClosure, TEvent> Create() => new ClosureHandle<TClosure, TEvent>()
