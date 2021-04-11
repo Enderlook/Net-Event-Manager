@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Enderlook.EventManager
 {
@@ -7,13 +8,16 @@ namespace Enderlook.EventManager
         private int locked;
         private int readers;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Lock()
         {
             while (Interlocked.Exchange(ref locked, 1) != 0) ;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Unlock() => locked = 0;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ReadBegin()
         {
             Lock();
@@ -21,6 +25,7 @@ namespace Enderlook.EventManager
             Unlock();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ReadEnd()
         {
             Lock();
@@ -28,6 +33,7 @@ namespace Enderlook.EventManager
             Unlock();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WriteBegin()
         {
             while (true)
@@ -40,6 +46,7 @@ namespace Enderlook.EventManager
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WriteEnd() => Unlock();
     }
 }

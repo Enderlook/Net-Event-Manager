@@ -14,6 +14,6 @@ namespace Enderlook.EventManager
 
         public abstract void Raise(in HandleSnapshoot handleSnapshoot, TEvent argument);
 
-        public abstract void CleanAfterRaise(in HandleSnapshoot handleSnapshoot);
+        public abstract void ClearAfterRaise(in HandleSnapshoot handleSnapshoot);
     }
 }

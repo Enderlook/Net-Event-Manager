@@ -234,6 +234,7 @@ namespace Enderlook.EventManager
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Raise<TEvent, TDelegate, TMode, TClosure>(
             ref EventList<TDelegate> parameterless, ref EventList<TDelegate> parameters,
             TEvent argument,
@@ -261,6 +262,7 @@ namespace Enderlook.EventManager
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CleanAfterRaise<TDelegate>(
             ref EventList<TDelegate> parameterless, ref EventList<TDelegate> parameters,
             TDelegate[] parameterless1, int parameterlessCount1,
@@ -282,6 +284,7 @@ namespace Enderlook.EventManager
             ArrayPool<TDelegate>.Shared.Return(parametersOnce2);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Purge<TDelegate>(ref EventList<TDelegate> parameterless, ref EventList<TDelegate> parameters,
                                             ref EventListOnce<TDelegate> parameterlessOnce, ref EventListOnce<TDelegate> parametersOnce)
         {

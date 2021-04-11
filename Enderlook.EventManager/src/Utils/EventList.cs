@@ -11,6 +11,7 @@ namespace Enderlook.EventManager
         private TDelegate[] toRemove;
         private int toRemoveCount;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EventList<TDelegate> Create() => new EventList<TDelegate>()
         {
             toRun = Array.Empty<TDelegate>(),
@@ -23,6 +24,7 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove(TDelegate element) => Utility.Add(ref toRemove, ref toRemoveCount, element);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ExtractToRun(out TDelegate[] toRunExtracted, out int toRunCount)
             => Utility.ExtractToRun(ref toRun, ref this.toRunCount, ref toRemove, ref toRemoveCount, out toRunExtracted, out toRunCount);
 

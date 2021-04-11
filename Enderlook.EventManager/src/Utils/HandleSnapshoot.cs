@@ -39,6 +39,7 @@ namespace Enderlook.EventManager
             this.parametersOnceCount2 = parametersOnceCount2;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static HandleSnapshoot Create<TDelegate>(
             ref EventList<TDelegate> parameterless,
             ref EventList<TDelegate> parameters,

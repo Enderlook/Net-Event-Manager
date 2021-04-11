@@ -22,6 +22,6 @@ namespace Enderlook.EventManager
         public override void Raise(in HandleSnapshoot handleSnapshoot, TEvent argument) => handle.Raise(handleSnapshoot, argument);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override void CleanAfterRaise(in HandleSnapshoot handleSnapshoot) => handle.CleanAfterRaise(handleSnapshoot);
+        public override void ClearAfterRaise(in HandleSnapshoot handleSnapshoot) => handle.ClearAfterRaise(handleSnapshoot);
     }
 }

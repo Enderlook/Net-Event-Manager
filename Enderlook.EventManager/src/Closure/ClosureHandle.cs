@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -59,7 +60,6 @@ namespace Enderlook.EventManager
         public void UnsubscribeOnce(Action<TClosure, TEvent> @delegate, TClosure closure)
             => parametersOnce.Remove(new ClosureDelegate<TClosure>(@delegate, closure));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
             parameters.Dispose();
@@ -68,7 +68,6 @@ namespace Enderlook.EventManager
             parameterlessOnce.Dispose();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Purge()
             => Utility.Purge(ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce);
 
@@ -121,8 +120,7 @@ namespace Enderlook.EventManager
             );
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CleanAfterRaise(in HandleSnapshoot handleSnapshoot)
+        public void ClearAfterRaise(in HandleSnapshoot handleSnapshoot)
         {
             Debug.Assert(handleSnapshoot.parameterless1 is ClosureDelegate<TClosure>[]);
             Debug.Assert(handleSnapshoot.parameterlessOnce1 is ClosureDelegate<TClosure>[]);

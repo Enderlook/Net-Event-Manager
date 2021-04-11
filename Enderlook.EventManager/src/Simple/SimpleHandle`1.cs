@@ -115,7 +115,8 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddValueClosure(HeapClosureHandleBase<TEvent> closure) => Utility.Add(ref valueClosures, ref valueClosuresCount, closure);
+        public void AddValueClosure(HeapClosureHandleBase<TEvent> closure)
+            => Utility.Add(ref valueClosures, ref valueClosuresCount, closure);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(TEvent argument)
@@ -144,26 +145,31 @@ namespace Enderlook.EventManager
                     for (; i < valueClosuresCount; i++)
                         valueClosures[i].Raise(snapshoots[index++], argument);
                 }
-                finally
+                catch
                 {
-                    // Even if an event crash, we can't just loose all registered listeners.
-                    // That is why this is inside a try/finally.
-                    // However, we don't check the snapshoot of this instance because that is already treated inside Raise.
-
-                    if (index == 1)
-                        referenceClosures.CleanAfterRaise(snapshoots[index++]);
-
-                    for (; i < valueClosuresCount; i++)
-                        valueClosures[i].CleanAfterRaise(snapshoots[index++]);
+                    ClearOnError(snapshoots, ref index, ref i);
                 }
             }
             finally
             {
                 ArrayPool<HandleSnapshoot>.Shared.Return(snapshoots);
             }
+
+            void ClearOnError(HandleSnapshoot[] snapshoots, ref int index, ref int i)
+            {
+                // Even if an event crash, we can't just loose all registered listeners.
+                // That is why this is inside a try/catch.
+                // However, we don't check the snapshoot of this instance because that is already treated inside Raise.
+                // This is in a catch instead of finally, because the Raise method already produces the cleaning
+
+                if (index == 1)
+                    referenceClosures.ClearAfterRaise(snapshoots[index++]);
+
+                for (; i < valueClosuresCount; i++)
+                    valueClosures[i].ClearAfterRaise(snapshoots[index++]);
+            }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override void Dispose()
         {
             parameters.Dispose();
@@ -177,7 +183,6 @@ namespace Enderlook.EventManager
                 valueClosures[i].Dispose();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override void Purge()
         {
             Utility.Purge(ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce);
