@@ -124,9 +124,7 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(TEvent argument)
         {
-            while (Interlocked.Exchange(ref isRaising, 1) != 0) ;
-
-            try
+            lock (this)
             {
                 int handles = 0;
                 handles++; // SimpleHandle
@@ -161,10 +159,6 @@ namespace Enderlook.EventManager
                 {
                     ArrayPool<HandleSnapshoot>.Shared.Return(snapshoots);
                 }
-            }
-            finally
-            {
-                isRaising = 0;
             }
 
             void ClearOnError(HandleSnapshoot[] snapshoots, ref int index, ref int i)
