@@ -217,40 +217,31 @@ namespace Enderlook.EventManager
             }
         }
 
-        public static class Container<T>
-        {
-            public static readonly T[] empty = new T[0];
-            public static T[] array1 = empty;
-            public static T[] array2 = empty;
-            public static T[] array3 = empty;
-            public static T[] array4 = empty;
-        }
-
-        public static void Raise<TEvent, TParameterless, TParameters, TMode, TClosure>(
-            ref EventList<TParameterless> parameterless,
-            ref EventList<TParameters> parameters,
-            ref EventListOnce<TParameterless> parameterlessOnce,
-            ref EventListOnce<TParameters> parametersOnce,
+        public static void Raise<TEvent, TDelegate, TMode, TClosure>(
+            ref EventList<TDelegate> parameterless,
+            ref EventList<TDelegate> parameters,
+            ref EventListOnce<TDelegate> parameterlessOnce,
+            ref EventListOnce<TDelegate> parametersOnce,
             TEvent argument)
         {
-            TParameterless[] parameterless1 = Interlocked.Exchange(ref Container<TParameterless>.array1, Container<TParameterless>.empty);
-            TParameterless[] parameterless2 = Interlocked.Exchange(ref Container<TParameterless>.array2, Container<TParameterless>.empty);
-            TParameterless[] parameterlessOnce1 = Interlocked.Exchange(ref Container<TParameterless>.array3, Container<TParameterless>.empty);
-            TParameterless[] parameterlessOnce2 = Interlocked.Exchange(ref Container<TParameterless>.array4, Container<TParameterless>.empty);
-            TParameters[] parameters1 = Interlocked.Exchange(ref Container<TParameters>.array1, Container<TParameters>.empty);
-            TParameters[] parameters2 = Interlocked.Exchange(ref Container<TParameters>.array2, Container<TParameters>.empty);
-            TParameters[] parametersOnce1 = Interlocked.Exchange(ref Container<TParameters>.array3, Container<TParameters>.empty);
-            TParameters[] parametersOnce2 = Interlocked.Exchange(ref Container<TParameters>.array4, Container<TParameters>.empty);
+            TDelegate[] parameterless1 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parameterless2 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parameterlessOnce1 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parameterlessOnce2 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parameters1 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parameters2 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parametersOnce1 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parametersOnce2 = ConcurrentPool.Rent<TDelegate>();
 
             parameterless.ExtractToRun(ref parameterless1, out int parameterlessCount1, ref parameterless2, out int parameterlessCount2);
             parameterlessOnce.ExtractToRun(ref parameterlessOnce1, out int parameterlessOnceCount1, ref parameterlessOnce2, out int parameterlessOnceCount2);
             parameters.ExtractToRun(ref parameters1, out int parametersCount1, ref parameters2, out int parametersCount2);
             parametersOnce.ExtractToRun(ref parametersOnce1, out int parametersOnceCount1, ref parametersOnce2, out int parametersOnceCount2);
 
-            InnerRaise<TParameterless, HasNoParameter, TMode, TClosure>(ref parameterless1, parameterlessCount1, new HasNoParameter());
-            InnerRaise<TParameterless, HasNoParameter, TMode, TClosure>(ref parameterlessOnce1, parametersCount1, new HasNoParameter());
-            InnerRaise<TParameters, TEvent, TMode, TClosure>(ref parameters1, parametersCount1, argument);
-            InnerRaise<TParameters, TEvent, TMode, TClosure>(ref parametersOnce1, parametersOnceCount1, argument);
+            InnerRaise<TDelegate, HasNoParameter, TMode, TClosure>(ref parameterless1, parameterlessCount1, new HasNoParameter());
+            InnerRaise<TDelegate, HasNoParameter, TMode, TClosure>(ref parameterlessOnce1, parametersCount1, new HasNoParameter());
+            InnerRaise<TDelegate, TEvent, TMode, TClosure>(ref parameters1, parametersCount1, argument);
+            InnerRaise<TDelegate, TEvent, TMode, TClosure>(ref parametersOnce1, parametersOnceCount1, argument);
 
             parameterless.InjectToRun(ref parameterless1, ref parameterlessCount1);
             parameterlessOnce.InjectToRun(ref parameterlessOnce1, ref parameterlessOnceCount1);
@@ -263,20 +254,20 @@ namespace Enderlook.EventManager
                      parametersCount1, parametersCount2, parametersOnceCount1, parametersOnceCount2);
         }
 
-        public static void Purge<TParameterless, TParameters>(
-            ref EventList<TParameterless> parameterless,
-            ref EventList<TParameters> parameters,
-            ref EventListOnce<TParameterless> parameterlessOnce,
-            ref EventListOnce<TParameters> parametersOnce)
+        public static void Purge<TDelegate>(
+            ref EventList<TDelegate> parameterless,
+            ref EventList<TDelegate> parameters,
+            ref EventListOnce<TDelegate> parameterlessOnce,
+            ref EventListOnce<TDelegate> parametersOnce)
         {
-            TParameterless[] parameterless1 = Interlocked.Exchange(ref Container<TParameterless>.array1, Container<TParameterless>.empty);
-            TParameterless[] parameterless2 = Interlocked.Exchange(ref Container<TParameterless>.array2, Container<TParameterless>.empty);
-            TParameterless[] parameterlessOnce1 = Interlocked.Exchange(ref Container<TParameterless>.array3, Container<TParameterless>.empty);
-            TParameterless[] parameterlessOnce2 = Interlocked.Exchange(ref Container<TParameterless>.array4, Container<TParameterless>.empty);
-            TParameters[] parameters1 = Interlocked.Exchange(ref Container<TParameters>.array1, Container<TParameters>.empty);
-            TParameters[] parameters2 = Interlocked.Exchange(ref Container<TParameters>.array2, Container<TParameters>.empty);
-            TParameters[] parametersOnce1 = Interlocked.Exchange(ref Container<TParameters>.array3, Container<TParameters>.empty);
-            TParameters[] parametersOnce2 = Interlocked.Exchange(ref Container<TParameters>.array4, Container<TParameters>.empty);
+            TDelegate[] parameterless1 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parameterless2 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parameterlessOnce1 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parameterlessOnce2 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parameters1 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parameters2 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parametersOnce1 = ConcurrentPool.Rent<TDelegate>();
+            TDelegate[] parametersOnce2 = ConcurrentPool.Rent<TDelegate>();
 
             parameterless.ExtractToRun(ref parameterless1, out int parameterlessCount1, ref parameterless2, out int parameterlessCount2);
             parameterless.InjectToRun(ref parameterless1, ref parameterlessCount1);
@@ -296,9 +287,9 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Cleaning<TParameterless, TParameters>(
-            TParameterless[] parameterless1, TParameterless[] parameterless2, TParameterless[] parameterlessOnce1, TParameterless[] parameterlessOnce2,
-            TParameters[] parameters1, TParameters[] parameters2, TParameters[] parametersOnce1, TParameters[] parametersOnce2,
+        private static void Cleaning<TDelegate>(
+            TDelegate[] parameterless1, TDelegate[] parameterless2, TDelegate[] parameterlessOnce1, TDelegate[] parameterlessOnce2,
+            TDelegate[] parameters1, TDelegate[] parameters2, TDelegate[] parametersOnce1, TDelegate[] parametersOnce2,
             int parameterlessCount1, int parameterlessCount2, int parameterlessOnceCount1, int parameterlessOnceCount2,
             int parametersCount1, int parametersCount2, int parametersOnceCount1, int parametersOnceCount2)
         {
@@ -311,23 +302,14 @@ namespace Enderlook.EventManager
             Array.Clear(parametersOnce1, 0, parametersOnceCount1);
             Array.Clear(parametersOnce2, 0, parametersOnceCount2);
 
-            TParameterless[] array = Interlocked.Exchange(ref Container<TParameterless>.array1, parameterless1);
-            TParameterless[] array1 = Interlocked.Exchange(ref Container<TParameterless>.array2, parameterless2);
-            TParameterless[] array2 = Interlocked.Exchange(ref Container<TParameterless>.array3, parameterlessOnce1);
-            TParameterless[] array3 = Interlocked.Exchange(ref Container<TParameterless>.array4, parameterlessOnce2);
-            TParameters[] array4 = Interlocked.Exchange(ref Container<TParameters>.array1, parameters1);
-            TParameters[] array5 = Interlocked.Exchange(ref Container<TParameters>.array2, parameters2);
-            TParameters[] array6 = Interlocked.Exchange(ref Container<TParameters>.array3, parametersOnce1);
-            TParameters[] array7 = Interlocked.Exchange(ref Container<TParameters>.array4, parametersOnce2);
-
-            ArrayPool<TParameterless>.Shared.Return(array);
-            ArrayPool<TParameterless>.Shared.Return(array1);
-            ArrayPool<TParameterless>.Shared.Return(array2);
-            ArrayPool<TParameterless>.Shared.Return(array3);
-            ArrayPool<TParameters>.Shared.Return(array4);
-            ArrayPool<TParameters>.Shared.Return(array5);
-            ArrayPool<TParameters>.Shared.Return(array6);
-            ArrayPool<TParameters>.Shared.Return(array7);
+            ConcurrentPool.Return(parameterless1);
+            ConcurrentPool.Return(parameterless2);
+            ConcurrentPool.Return(parameterlessOnce1);
+            ConcurrentPool.Return(parameterlessOnce2);
+            ConcurrentPool.Return(parameters1);
+            ConcurrentPool.Return(parameters2);
+            ConcurrentPool.Return(parametersOnce1);
+            ConcurrentPool.Return(parametersOnce2);
         }
     }
 }

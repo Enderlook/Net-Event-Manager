@@ -93,7 +93,7 @@ namespace Enderlook.EventManager
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(TEvent argument)
-            => Utility.Raise<TEvent, ClosureDelegate<TClosure>, ClosureDelegate<TClosure>, IsClosure, TClosure>(
+            => Utility.Raise<TEvent, ClosureDelegate<TClosure>, IsClosure, TClosure>(
                 ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce, argument);
     }
 }

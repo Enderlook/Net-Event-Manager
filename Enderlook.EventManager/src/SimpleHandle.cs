@@ -15,8 +15,11 @@ namespace Enderlook.EventManager
     {
         private static readonly HeapClosureHandleBase<TEvent>[] empty = new HeapClosureHandleBase<TEvent>[0];
 
-        private EventList<Action> parameterless = EventList<Action>.Create();
-        private EventListOnce<Action> parameterlessOnce = EventListOnce<Action>.Create();
+        /* In `Delegate` we actually store instances of `Action`.
+         * But this upcast allow us to avoid the generic instantiation of ArrayPool<Action>.
+         * And so we store less unused arrays on the pool.*/
+        private EventList<Delegate> parameterless = EventList<Delegate>.Create();
+        private EventListOnce<Delegate> parameterlessOnce = EventListOnce<Delegate>.Create();
 
         /* In `Delegate` we actually store instances of `Action<TEvent>`.
          * But this upcast allow us to avoid the generic instantiation of ArrayPool<Action<TEvent>>.
@@ -123,7 +126,7 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(TEvent argument)
         {
-            Utility.Raise<TEvent, Action, Delegate, IsSimple, Unused>(
+            Utility.Raise<TEvent, Delegate, IsSimple, Unused>(
                 ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce, argument);
 
             referenceClosures.Raise(argument);

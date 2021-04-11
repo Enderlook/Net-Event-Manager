@@ -40,7 +40,7 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            TDelegate[] empty = Utility.Container<TDelegate>.empty;
+            TDelegate[] empty = ConcurrentPool.Empty<TDelegate>();
             TDelegate[] empty2 = empty;
             Utility.InnerSwap(ref toRun, ref toRunCount, ref empty, out int _);
             Utility.InnerSwap(ref toRemove, ref toRemoveCount, ref empty2, out int _);
