@@ -310,10 +310,10 @@ namespace Enderlook.EventManager
         /// </summary>
         public void Purge()
         {
-            simpleCallbacksLocker.WriteBegin();
+            simpleCallbacksLocker.ReadBegin();
             try
             {
-                closureCallbacksLocker.WriteBegin();
+                closureCallbacksLocker.ReadBegin();
                 try
                 {
                     foreach (SimpleHandle handle in simpleCallbacks.Values)
@@ -321,12 +321,12 @@ namespace Enderlook.EventManager
                 }
                 finally
                 {
-                    closureCallbacksLocker.WriteEnd();
+                    closureCallbacksLocker.ReadEnd();
                 }
             }
             finally
             {
-                simpleCallbacksLocker.WriteEnd();
+                simpleCallbacksLocker.ReadEnd();
             }
         }
 
