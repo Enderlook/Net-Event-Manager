@@ -336,34 +336,28 @@ namespace Enderlook.EventManager
             Type key = typeof(TEvent);
 
             simpleCallbacksLocker.ReadBegin();
-            try
             {
                 if (simpleCallbacks.TryGetValue(key, out object obj))
                 {
+                    simpleCallbacksLocker.ReadEnd();
                     Debug.Assert(obj is SimpleHandle<TEvent>);
                     return Unsafe.As<SimpleHandle<TEvent>>(obj);
                 }
             }
-            finally
-            {
-                simpleCallbacksLocker.ReadEnd();
-            }
+            simpleCallbacksLocker.ReadEnd();
 
             simpleCallbacksLocker.WriteBegin();
-            try
             {
                 if (simpleCallbacks.TryGetValue(key, out object obj))
                 {
+                    simpleCallbacksLocker.WriteEnd();
                     Debug.Assert(obj is SimpleHandle<TEvent>);
                     return Unsafe.As<SimpleHandle<TEvent>>(obj);
                 }
                 SimpleHandle<TEvent> handle = new SimpleHandle<TEvent>();
                 simpleCallbacks[key] = handle;
-                return handle;
-            }
-            finally
-            {
                 simpleCallbacksLocker.WriteEnd();
+                return handle;
             }
         }
 
@@ -372,21 +366,16 @@ namespace Enderlook.EventManager
         {
             Type key = typeof(TEvent);
             simpleCallbacksLocker.ReadBegin();
-            try
-            {
-                if (!simpleCallbacks.TryGetValue(key, out object obj))
-                {
-                    handle = null;
-                    return false;
-                }
-                Debug.Assert(obj is SimpleHandle<TEvent>);
-                handle = Unsafe.As<SimpleHandle<TEvent>>(obj);
-                return true;
-            }
-            finally
+            if (!simpleCallbacks.TryGetValue(key, out object obj))
             {
                 simpleCallbacksLocker.ReadEnd();
+                handle = null;
+                return false;
             }
+            Debug.Assert(obj is SimpleHandle<TEvent>);
+            handle = Unsafe.As<SimpleHandle<TEvent>>(obj);
+            simpleCallbacksLocker.ReadEnd();
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -395,37 +384,26 @@ namespace Enderlook.EventManager
             (Type, Type) key = (typeof(TClosure), typeof(TEvent));
 
             closureCallbacksLocker.ReadBegin();
-            try
-            {
-                if (closureCallbacks.TryGetValue(key, out object handle))
-                {
-                    Debug.Assert(handle is HeapClosureHandle<TClosure, TEvent>);
-                    return Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(handle);
-                }
-            }
-            finally
+            if (closureCallbacks.TryGetValue(key, out object obj))
             {
                 closureCallbacksLocker.ReadEnd();
+                Debug.Assert(obj is HeapClosureHandle<TClosure, TEvent>);
+                return Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(obj);
             }
+            closureCallbacksLocker.ReadEnd();
 
             closureCallbacksLocker.WriteBegin();
-            try
-            {
-                if (closureCallbacks.TryGetValue(key, out object obj))
-                {
-                    Debug.Assert(obj is HeapClosureHandle<TClosure, TEvent>);
-                    return Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(obj);
-                }
-
-                HeapClosureHandle<TClosure, TEvent> handle = new HeapClosureHandle<TClosure, TEvent>();
-                closureCallbacks[key] = handle;
-                GetOrCreateTypeHandler<TEvent>().AddValueClosure(handle);
-                return handle;
-            }
-            finally
+            if (closureCallbacks.TryGetValue(key, out obj))
             {
                 closureCallbacksLocker.WriteEnd();
+                Debug.Assert(obj is HeapClosureHandle<TClosure, TEvent>);
+                return Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(obj);
             }
+            HeapClosureHandle<TClosure, TEvent> handle = new HeapClosureHandle<TClosure, TEvent>();
+            closureCallbacks[key] = handle;
+            GetOrCreateTypeHandler<TEvent>().AddValueClosure(handle);
+            closureCallbacksLocker.WriteEnd();
+            return handle;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -433,21 +411,16 @@ namespace Enderlook.EventManager
         {
             (Type, Type) key = (typeof(TClosure), typeof(TEvent));
             closureCallbacksLocker.ReadBegin();
-            try
-            {
-                if (!closureCallbacks.TryGetValue(key, out object obj))
-                {
-                    handle = null;
-                    return false;
-                }
-                Debug.Assert(obj is HeapClosureHandle<TClosure, TEvent>);
-                handle = Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(obj);
-                return true;
-            }
-            finally
+            if (!closureCallbacks.TryGetValue(key, out object obj))
             {
                 closureCallbacksLocker.ReadEnd();
+                handle = null;
+                    return false;
             }
+            Debug.Assert(obj is HeapClosureHandle<TClosure, TEvent>);
+            handle = Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(obj);
+            closureCallbacksLocker.ReadEnd();
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

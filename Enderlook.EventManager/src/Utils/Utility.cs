@@ -28,28 +28,22 @@ namespace Enderlook.EventManager
         {
             T[] array_ = Steal(ref array);
 
-            try
+            int count_ = count;
+            if (count_ == array.Length)
             {
-                int count_ = count;
-                if (count_ == array.Length)
+                if (count_ == 0)
+                    array_ = ArrayPool<T>.Shared.Rent(INITIAL_CAPACITY);
+                else
                 {
-                    if (count_ == 0)
-                        array_ = ArrayPool<T>.Shared.Rent(INITIAL_CAPACITY);
-                    else
-                    {
-                        T[] newArray = ArrayPool<T>.Shared.Rent(count_ * GROW_FACTOR);
-                        Array.Copy(array_, newArray, count_);
-                        ArrayPool<T>.Shared.Return(array_);
-                        array_ = newArray;
-                    }
+                    T[] newArray = ArrayPool<T>.Shared.Rent(count_ * GROW_FACTOR);
+                    Array.Copy(array_, newArray, count_);
+                    ArrayPool<T>.Shared.Return(array_);
+                    array_ = newArray;
                 }
-                array_[count_++] = element;
-                count = count_;
             }
-            finally
-            {
-                array = array_;
-            }
+            array_[count_++] = element;
+            count = count_;
+            array = array_;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
