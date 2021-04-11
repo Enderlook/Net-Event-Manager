@@ -107,3 +107,44 @@ public sealed class EventManager : IDisposable
 	/// but haven't executed `Raise<TEvent>` yet and want to release their references.
 	public void Purge()
 }
+```
+
+## Changelog
+
+### v0.1.0
+
+Initial Release
+
+### v0.2.0
+
+- Remove `TEventBase` generic parameter from `EventManager<TEventBase>`.
+- Become `EventManager` thread-safe.
+- Increase perfomance in `EventManager` subscribe and unsubscribe methods by replacing `Delegate.Combine` and `Delegate.Remove` with pooled arrays of delegates.
+- Add the following APIs:
+```cs
+public sealed partial class EventManager : IDisposable
+{
+	/// Subscribes an action to run when the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
+	public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback)
+	public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback)
+	public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback)
+	public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback)
+	
+	/// Subscribes an action to run the next time the event `TEvent` is raised.
+	public void SubscribeOnce<TEvent>(Action<TEvent> callback)
+	public void SubscribeOnce<TEvent>(Action callback)
+	public void UnsubscribeOnce<TEvent>(Action<TEvent> callback)
+	public void UnsubscribeOnce<TEvent>(Action callback)
+		
+	/// Subscribes an action to run the next time the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
+	public void SubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback)
+	public void SubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure> callback)
+	public void UnsubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback)
+	public void UnsubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure> callback)
+	
+	/// Forces the purge of removed delegates to avoid memory leaks.
+	/// This method is only required to execute, if you unsubscribed too many listeners of a given `TEvent`
+	/// but haven't executed `Raise<TEvent>` yet and want to release their references.
+	public void Purge()
+}
+```
