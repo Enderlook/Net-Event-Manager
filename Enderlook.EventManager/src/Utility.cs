@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -82,6 +83,7 @@ namespace Enderlook.EventManager
             Extract(ref toRemove, ref toRemoveCount, out T[] toRemoveExtracted, out int countRemove);
             if (countRemove > 0)
             {
+                EqualityComparer<T> comparer = EqualityComparer<T>.Default;
                 // TODO: Time complexity of this could be reduced by sorting the arrays. Research if that may be worth.
                 int j = 0;
                 T _ = toRunExtracted[toRunExtractedCount];
@@ -91,7 +93,7 @@ namespace Enderlook.EventManager
                     T element = toRunExtracted[i];
                     for (int k = countRemove - 1; k >= 0; k--)
                     {
-                        if (element.Equals(toRemoveExtracted[k]))
+                        if (comparer.Equals(element, toRemoveExtracted[k]))
                         {
                             Array.Copy(toRemoveExtracted, k + 1, toRemoveExtracted, k, countRemove - k);
                             countRemove--;
@@ -194,6 +196,7 @@ namespace Enderlook.EventManager
                     Unsafe.As<Action<TClosure, TEvent>>(closure.@delegate)(closure.closure, argument);
                 }
             }
+            Debug.Fail("Impossible state.");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -209,12 +212,13 @@ namespace Enderlook.EventManager
         {
             TDelegate _ = a[count];
             _ = b[countRemove];
+            EqualityComparer<TDelegate> comparer = EqualityComparer<TDelegate>.Default;
             for (int i = 0; i < count; i++)
             {
                 TDelegate element = a[i];
                 for (int j = countRemove - 1; j >= 0; j--)
                 {
-                    if (element.Equals(b[j]))
+                    if (comparer.Equals(element, b[j]))
                     {
                         Array.Copy(b, j + 1, b, j, countRemove - j);
                         countRemove--;
