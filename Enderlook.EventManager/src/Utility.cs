@@ -208,7 +208,7 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InnerRaise<TDelegate, TEvent, TMode, TClosure>(ref TDelegate[] a, ref TDelegate[] b, int count, int countRemove, TEvent argument)
+        public static void InnerRaise<TDelegate, TEvent, TMode, TClosure>(TDelegate[] a, TDelegate[] b, int count, int countRemove, TEvent argument)
         {
             TDelegate _ = a[count];
             _ = b[countRemove];
@@ -230,6 +230,12 @@ namespace Enderlook.EventManager
 
                 next:;
             }
+
+            Array.Clear(a, 0, count);
+            ArrayPool<TDelegate>.Shared.Return(a);
+
+            Array.Clear(b, 0, countRemove);
+            ArrayPool<TDelegate>.Shared.Return(b);
         }
 
         public static void Raise<TEvent, TDelegate, TMode, TClosure>(
@@ -245,14 +251,12 @@ namespace Enderlook.EventManager
             parametersOnce.ExtractToRun(out TDelegate[] parametersOnce1, out int parametersOnceCount1, out TDelegate[] parametersOnce2, out int parametersOnceCount2);
 
             InnerRaise<TDelegate, HasNoParameter, TMode, TClosure>(ref parameterless1, parameterlessCount1, new HasNoParameter());
-            InnerRaise<TDelegate, HasNoParameter, TMode, TClosure>(ref parameterlessOnce1, parametersCount1, new HasNoParameter());
+            InnerRaise<TDelegate, HasNoParameter, TMode, TClosure>(parameterlessOnce1, parameterlessOnce2, parameterlessOnceCount1, parameterlessOnceCount2, new HasNoParameter());
             InnerRaise<TDelegate, TEvent, TMode, TClosure>(ref parameters1, parametersCount1, argument);
-            InnerRaise<TDelegate, TEvent, TMode, TClosure>(ref parametersOnce1, parametersOnceCount1, argument);
+            InnerRaise<TDelegate, TEvent, TMode, TClosure>(parametersOnce1, parametersOnce2, parametersOnceCount1, parametersOnceCount2, argument);
 
             parameterless.InjectToRun(parameterless1, parameterlessCount1);
-            parameterlessOnce.InjectToRun(parameterlessOnce1, parameterlessOnceCount1);
             parameters.InjectToRun(parameters1, parametersCount1);
-            parametersOnce.InjectToRun(parametersOnce1, parametersOnceCount1);
         }
 
         public static void Purge<TDelegate>(
