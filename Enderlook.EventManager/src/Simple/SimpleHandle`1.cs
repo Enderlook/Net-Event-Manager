@@ -5,13 +5,6 @@ using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
 {
-    internal abstract class SimpleHandle : IDisposable
-    {
-        public abstract void Dispose();
-
-        public abstract void Purge();
-    }
-
     internal sealed class SimpleHandle<TEvent> : SimpleHandle
     {
         private static readonly HeapClosureHandleBase<TEvent>[] empty = new HeapClosureHandleBase<TEvent>[0];
