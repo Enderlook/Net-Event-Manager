@@ -25,51 +25,58 @@ namespace Enderlook.EventManager
 
     internal struct ClosureHandle<TClosure, TEvent> : IDisposable
     {
-        public EventList<ClosureDelegate<TClosure, Parameterless>> parameterless;
-        public EventList<ClosureDelegate<TClosure, TEvent>> parameters;
-        public EventListOnce<ClosureDelegate<TClosure, Parameterless>> parameterlessOnce;
-        public EventListOnce<ClosureDelegate<TClosure, TEvent>> parametersOnce;
+        /* We store instances of `Action`.
+         * The lack of the delegate type in the `ClosureDelegate` type allow us to avoid the generic instantiation of ArrayPool<Action<TEvent>>.
+         * And so we store less unused arrays on the pool.*/
+        public EventList<ClosureDelegate<TClosure>> parameterless;
+        public EventList<ClosureDelegate<TClosure>> parameters;
+
+        /* We store instances of `Action<TEvent>`.
+         * The lack of the delegate type in the `ClosureDelegate` type allow us to avoid the generic instantiation of ArrayPool<Action<TEvent>>.
+         * And so we store less unused arrays on the pool.*/
+        public EventListOnce<ClosureDelegate<TClosure>> parameterlessOnce;
+        public EventListOnce<ClosureDelegate<TClosure>> parametersOnce;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ClosureHandle<TClosure, TEvent> Create() => new ClosureHandle<TClosure, TEvent>()
         {
-            parameterless = EventList<ClosureDelegate<TClosure, Parameterless>>.Create(),
-            parameters = EventList<ClosureDelegate<TClosure, TEvent>>.Create(),
-            parameterlessOnce = EventListOnce<ClosureDelegate<TClosure, Parameterless>>.Create(),
-            parametersOnce = EventListOnce<ClosureDelegate<TClosure, TEvent>>.Create(),
+            parameterless = EventList<ClosureDelegate<TClosure>>.Create(),
+            parameters = EventList<ClosureDelegate<TClosure>>.Create(),
+            parameterlessOnce = EventListOnce<ClosureDelegate<TClosure>>.Create(),
+            parametersOnce = EventListOnce<ClosureDelegate<TClosure>>.Create(),
         };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Subscribe(Action<TClosure> @delegate, TClosure closure)
-            => parameterless.Add(new ClosureDelegate<TClosure, Parameterless>(Unsafe.As<Action<TClosure, Parameterless>>(@delegate), closure));
+            => parameterless.Add(new ClosureDelegate<TClosure>(@delegate, closure));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unsubscribe(Action<TClosure> @delegate, TClosure closure)
-            => parameterless.Remove(new ClosureDelegate<TClosure, Parameterless>(Unsafe.As<Action<TClosure, Parameterless>>(@delegate), closure));
+            => parameterless.Remove(new ClosureDelegate<TClosure>(@delegate, closure));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Subscribe(Action<TClosure, TEvent> @delegate, TClosure closure)
-            => parameters.Add(new ClosureDelegate<TClosure, TEvent>(@delegate, closure));
+            => parameters.Add(new ClosureDelegate<TClosure>(@delegate, closure));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unsubscribe(Action<TClosure, TEvent> @delegate, TClosure closure)
-            => parameters.Remove(new ClosureDelegate<TClosure, TEvent>(@delegate, closure));
+            => parameters.Remove(new ClosureDelegate<TClosure>(@delegate, closure));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SubscribeOnce(Action<TClosure> @delegate, TClosure closure)
-            => parameterlessOnce.Add(new ClosureDelegate<TClosure, Parameterless>(Unsafe.As<Action<TClosure, Parameterless>>(@delegate), closure));
+            => parameterlessOnce.Add(new ClosureDelegate<TClosure>(@delegate, closure));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void UnsubscribeOnce(Action<TClosure> @delegate, TClosure closure)
-            => parameterlessOnce.Remove(new ClosureDelegate<TClosure, Parameterless>(Unsafe.As<Action<TClosure, Parameterless>>(@delegate), closure));
+            => parameterlessOnce.Remove(new ClosureDelegate<TClosure>(@delegate, closure));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SubscribeOnce(Action<TClosure, TEvent> @delegate, TClosure closure)
-            => parametersOnce.Add(new ClosureDelegate<TClosure, TEvent>(@delegate, closure));
+            => parametersOnce.Add(new ClosureDelegate<TClosure>(@delegate, closure));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void UnsubscribeOnce(Action<TClosure, TEvent> @delegate, TClosure closure)
-            => parametersOnce.Remove(new ClosureDelegate<TClosure, TEvent>(@delegate, closure));
+            => parametersOnce.Remove(new ClosureDelegate<TClosure>(@delegate, closure));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
@@ -86,6 +93,7 @@ namespace Enderlook.EventManager
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(TEvent argument)
-            => Utility.Raise(ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce, argument);
+            => Utility.Raise<TEvent, ClosureDelegate<TClosure>, ClosureDelegate<TClosure>, IsClosure, TClosure>(
+                ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce, argument);
     }
 }

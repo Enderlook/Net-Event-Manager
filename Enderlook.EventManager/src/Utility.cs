@@ -148,25 +148,53 @@ namespace Enderlook.EventManager
             }
         }
 
-        public static void InnerRaise<TEvent, TDelegate>(ref TDelegate[] a, int count, TEvent argument)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void Execute<TDelegate, TEvent, TMode, TClosure>(TDelegate @delegate, TEvent argument)
         {
-            TDelegate _ = a[count];
-            for (int i = 0; i < count; i++)
+            if (typeof(TMode) == typeof(IsSimple))
             {
-                if (typeof(TEvent) == typeof(Parameterless))
+                Debug.Assert(typeof(TClosure) == typeof(Unused));
+                if (typeof(TEvent) == typeof(HasNoParameter))
                 {
-                    Debug.Assert(a[i] is Action);
-                    Unsafe.As<Action>(a[i])();
+                    Debug.Assert(@delegate is Action);
+                    Unsafe.As<Action>(@delegate)();
                 }
                 else
                 {
-                    Debug.Assert(a[i] is Action<TEvent>);
-                    Unsafe.As<Action<TEvent>>(a[i])(argument);
+                    Debug.Assert(@delegate is Action<TEvent>);
+                    Unsafe.As<Action<TEvent>>(@delegate)(argument);
+                }
+            }
+            else if (typeof(TMode) == typeof(IsClosure))
+            {
+                Debug.Assert(typeof(TClosure) != typeof(Unused));
+
+                Debug.Assert(@delegate is ClosureDelegate<TClosure>);
+                ClosureDelegate<TClosure> closure = Unsafe.As<TDelegate, ClosureDelegate<TClosure>>(ref @delegate);
+
+                if (typeof(TEvent) == typeof(HasNoParameter))
+                {
+                    Debug.Assert(closure.@delegate is Action<TClosure>);
+                    Unsafe.As<Action<TClosure>>(closure.@delegate)(closure.closure);
+                }
+                else
+                {
+                    Debug.Assert(closure.@delegate is Action<TClosure, TEvent>);
+                    Unsafe.As<Action<TClosure, TEvent>>(closure.@delegate)(closure.closure, argument);
                 }
             }
         }
 
-        public static void InnerRaise<TEvent, TDelegate>(ref TDelegate[] a, ref TDelegate[] b, int count, int countRemove, TEvent argument)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InnerRaise<TDelegate, TEvent, TMode, TClosure>(ref TDelegate[] a, int count, TEvent argument)
+        {
+            TDelegate _ = a[count];
+            for (int i = 0; i < count; i++)
+                Execute<TDelegate, TEvent, TMode, TClosure>(a[i], argument);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void InnerRaise<TDelegate, TEvent, TMode, TClosure>(ref TDelegate[] a, ref TDelegate[] b, int count, int countRemove, TEvent argument)
         {
             TDelegate _ = a[count];
             _ = b[countRemove];
@@ -183,16 +211,7 @@ namespace Enderlook.EventManager
                     }
                 }
 
-                if (typeof(TEvent) == typeof(Parameterless))
-                {
-                    Debug.Assert(element is Action);
-                    Unsafe.As<Action>(element)();
-                }
-                else
-                {
-                    Debug.Assert(element is Action<TEvent>);
-                    Unsafe.As<Action<TEvent>>(element)(argument);
-                }
+                Execute<TDelegate, TEvent, TMode, TClosure>(element, argument);
 
                 next:;
             }
@@ -207,7 +226,7 @@ namespace Enderlook.EventManager
             public static T[] array4 = empty;
         }
 
-        public static void Raise<TEvent, TParameterless, TParameters>(
+        public static void Raise<TEvent, TParameterless, TParameters, TMode, TClosure>(
             ref EventList<TParameterless> parameterless,
             ref EventList<TParameters> parameters,
             ref EventListOnce<TParameterless> parameterlessOnce,
@@ -228,10 +247,10 @@ namespace Enderlook.EventManager
             parameters.ExtractToRun(ref parameters1, out int parametersCount1, ref parameters2, out int parametersCount2);
             parametersOnce.ExtractToRun(ref parametersOnce1, out int parametersOnceCount1, ref parametersOnce2, out int parametersOnceCount2);
 
-            InnerRaise(ref parameterless1, parameterlessCount1, new Parameterless());
-            InnerRaise(ref parameterlessOnce1, parametersCount1, new Parameterless());
-            InnerRaise(ref parameters1, parametersCount1, argument);
-            InnerRaise(ref parametersOnce1, parametersOnceCount1, argument);
+            InnerRaise<TParameterless, HasNoParameter, TMode, TClosure>(ref parameterless1, parameterlessCount1, new HasNoParameter());
+            InnerRaise<TParameterless, HasNoParameter, TMode, TClosure>(ref parameterlessOnce1, parametersCount1, new HasNoParameter());
+            InnerRaise<TParameters, TEvent, TMode, TClosure>(ref parameters1, parametersCount1, argument);
+            InnerRaise<TParameters, TEvent, TMode, TClosure>(ref parametersOnce1, parametersOnceCount1, argument);
 
             parameterless.InjectToRun(ref parameterless1, ref parameterlessCount1);
             parameterlessOnce.InjectToRun(ref parameterlessOnce1, ref parameterlessOnceCount1);
