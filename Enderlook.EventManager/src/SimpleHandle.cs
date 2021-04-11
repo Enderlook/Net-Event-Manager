@@ -15,10 +15,10 @@ namespace Enderlook.EventManager
     {
         private static readonly HeapClosureHandleBase<TEvent>[] empty = new HeapClosureHandleBase<TEvent>[0];
 
-        private EventList<Action, Parameterless> parameterless = EventList<Action, Parameterless>.Create();
-        private EventList<Action<TEvent>, TEvent> parameters = EventList<Action<TEvent>, TEvent>.Create();
-        private EventListOnce<Action, Parameterless> parameterlessOnce = EventListOnce<Action, Parameterless>.Create();
-        private EventListOnce<Action<TEvent>, TEvent> parametersOnce = EventListOnce<Action<TEvent>, TEvent>.Create();
+        private EventList<Action> parameterless = EventList<Action>.Create();
+        private EventList<Action<TEvent>> parameters = EventList<Action<TEvent>>.Create();
+        private EventListOnce<Action> parameterlessOnce = EventListOnce<Action>.Create();
+        private EventListOnce<Action<TEvent>> parametersOnce = EventListOnce<Action<TEvent>>.Create();
         private ClosureHandle<object, TEvent> referenceClosures = ClosureHandle<object, TEvent>.Create();
         private HeapClosureHandleBase<TEvent>[] valueClosures = empty;
         private int valueClosuresCount;

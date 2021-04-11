@@ -208,10 +208,10 @@ namespace Enderlook.EventManager
         }
 
         public static void Raise<TEvent, TParameterless, TParameters>(
-            ref EventList<TParameterless, Parameterless> parameterless,
-            ref EventList<TParameters, TEvent> parameters,
-            ref EventListOnce<TParameterless, Parameterless> parameterlessOnce,
-            ref EventListOnce<TParameters, TEvent> parametersOnce,
+            ref EventList<TParameterless> parameterless,
+            ref EventList<TParameters> parameters,
+            ref EventListOnce<TParameterless> parameterlessOnce,
+            ref EventListOnce<TParameters> parametersOnce,
             TEvent argument)
         {
             TParameterless[] parameterless1 = Interlocked.Exchange(ref Container<TParameterless>.array1, Container<TParameterless>.empty);
@@ -238,18 +238,17 @@ namespace Enderlook.EventManager
             parameters.InjectToRun(ref parameters1, ref parametersCount1);
             parametersOnce.InjectToRun(ref parametersOnce1, ref parametersOnceCount1);
 
-            Cleaning(
-                parameterless1, parameterless2, parameterlessOnce1, parameterlessOnce2,
-                parameters1, parameters2, parametersOnce1, parametersOnce2,
-                parameterlessCount1, parameterlessCount2, parameterlessOnceCount1, parameterlessOnceCount2,
-                parametersCount1, parametersCount2, parametersOnceCount1, parametersOnceCount2);
+            Cleaning(parameterless1, parameterless2, parameterlessOnce1, parameterlessOnce2,
+                     parameters1, parameters2, parametersOnce1, parametersOnce2,
+                     parameterlessCount1, parameterlessCount2, parameterlessOnceCount1, parameterlessOnceCount2,
+                     parametersCount1, parametersCount2, parametersOnceCount1, parametersOnceCount2);
         }
 
-        public static void Purge<TEvent, TParameterless, TParameters>(
-            ref EventList<TParameterless, Parameterless> parameterless,
-            ref EventList<TParameters, TEvent> parameters,
-            ref EventListOnce<TParameterless, Parameterless> parameterlessOnce,
-            ref EventListOnce<TParameters, TEvent> parametersOnce)
+        public static void Purge<TParameterless, TParameters>(
+            ref EventList<TParameterless> parameterless,
+            ref EventList<TParameters> parameters,
+            ref EventListOnce<TParameterless> parameterlessOnce,
+            ref EventListOnce<TParameters> parametersOnce)
         {
             TParameterless[] parameterless1 = Interlocked.Exchange(ref Container<TParameterless>.array1, Container<TParameterless>.empty);
             TParameterless[] parameterless2 = Interlocked.Exchange(ref Container<TParameterless>.array2, Container<TParameterless>.empty);

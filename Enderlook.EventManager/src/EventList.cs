@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
 {
-    internal struct EventList<TDelegate, TEvent> : IDisposable
+    internal struct EventList<TDelegate> : IDisposable
     {
         private TDelegate[] toRun;
         private int toRunCount;
@@ -11,7 +11,7 @@ namespace Enderlook.EventManager
         private TDelegate[] toRemove;
         private int toRemoveCount;
 
-        public static EventList<TDelegate, TEvent> Create() => new EventList<TDelegate, TEvent>()
+        public static EventList<TDelegate> Create() => new EventList<TDelegate>()
         {
             toRun = Array.Empty<TDelegate>(),
             toRemove = Array.Empty<TDelegate>(),

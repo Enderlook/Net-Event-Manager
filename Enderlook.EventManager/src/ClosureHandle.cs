@@ -25,18 +25,18 @@ namespace Enderlook.EventManager
 
     internal struct ClosureHandle<TClosure, TEvent> : IDisposable
     {
-        public EventList<ClosureDelegate<TClosure, Parameterless>, Parameterless> parameterless;
-        public EventList<ClosureDelegate<TClosure, TEvent>, TEvent> parameters;
-        public EventListOnce<ClosureDelegate<TClosure, Parameterless>, Parameterless> parameterlessOnce;
-        public EventListOnce<ClosureDelegate<TClosure, TEvent>, TEvent> parametersOnce;
+        public EventList<ClosureDelegate<TClosure, Parameterless>> parameterless;
+        public EventList<ClosureDelegate<TClosure, TEvent>> parameters;
+        public EventListOnce<ClosureDelegate<TClosure, Parameterless>> parameterlessOnce;
+        public EventListOnce<ClosureDelegate<TClosure, TEvent>> parametersOnce;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ClosureHandle<TClosure, TEvent> Create() => new ClosureHandle<TClosure, TEvent>()
         {
-            parameterless = EventList<ClosureDelegate<TClosure, Parameterless>, Parameterless>.Create(),
-            parameters = EventList<ClosureDelegate<TClosure, TEvent>, TEvent>.Create(),
-            parameterlessOnce = EventListOnce<ClosureDelegate<TClosure, Parameterless>, Parameterless>.Create(),
-            parametersOnce = EventListOnce<ClosureDelegate<TClosure, TEvent>, TEvent>.Create(),
+            parameterless = EventList<ClosureDelegate<TClosure, Parameterless>>.Create(),
+            parameters = EventList<ClosureDelegate<TClosure, TEvent>>.Create(),
+            parameterlessOnce = EventListOnce<ClosureDelegate<TClosure, Parameterless>>.Create(),
+            parametersOnce = EventListOnce<ClosureDelegate<TClosure, TEvent>>.Create(),
         };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
