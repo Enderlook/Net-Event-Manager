@@ -53,14 +53,16 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Swap<T>(ref T[] array, ref int count, ref T[] newArray, out int newCount)
+        public static void InjectEmpty<T>(ref T[] array, ref int count)
         {
             T[] array_ = Steal(ref array);
 
-            newCount = count;
+            int oldCount = count;
             count = 0;
-            array = newArray;
-            newArray = array_;
+            array = Array.Empty<T>();
+
+            Array.Clear(array, 0, oldCount);
+            ArrayPool<T>.Shared.Return(array_);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
