@@ -121,7 +121,7 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddValueClosure(HeapClosureHandleBase<TEvent> closure) => Utility.InnerAdd(ref valueClosures, ref valueClosuresCount, closure);
+        public void AddValueClosure(HeapClosureHandleBase<TEvent> closure) => Utility.Add(ref valueClosures, ref valueClosuresCount, closure);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(TEvent argument)

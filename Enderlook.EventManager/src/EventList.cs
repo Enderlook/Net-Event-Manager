@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
@@ -18,26 +19,25 @@ namespace Enderlook.EventManager
         };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(TDelegate element) => Utility.InnerAdd(ref toRun, ref toRunCount, element);
+        public void Add(TDelegate element) => Utility.Add(ref toRun, ref toRunCount, element);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(TDelegate element) => Utility.InnerAdd(ref toRemove, ref toRemoveCount, element);
+        public void Remove(TDelegate element) => Utility.Add(ref toRemove, ref toRemoveCount, element);
 
-        public void ExtractToRun(ref TDelegate[] toRunExtracted, out int toRunCount, ref TDelegate[] removedArray, out int removedArrayCount)
-            => Utility.ExtractToRun(ref toRun, ref this.toRunCount, ref toRemove, ref toRemoveCount,
-                                    ref toRunExtracted, out toRunCount, ref removedArray, out removedArrayCount);
+        public void ExtractToRun(out TDelegate[] toRunExtracted, out int toRunCount)
+            => Utility.ExtractToRun(ref toRun, ref this.toRunCount, ref toRemove, ref toRemoveCount, out toRunExtracted, out toRunCount);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void InjectToRun(ref TDelegate[] array, ref int count)
-            => Utility.Drain(ref toRun, ref toRunCount, ref array, ref count);
+        public void InjectToRun(TDelegate[] array, int count)
+            => Utility.Drain(ref toRun, ref toRunCount, array, count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            TDelegate[] empty = ConcurrentPool.Empty<TDelegate>();
+            TDelegate[] empty = Array.Empty<TDelegate>();
             TDelegate[] empty2 = empty;
-            Utility.InnerSwap(ref toRun, ref toRunCount, ref empty, out int _);
-            Utility.InnerSwap(ref toRemove, ref toRemoveCount, ref empty2, out int _);
+            Utility.Swap(ref toRun, ref toRunCount, ref empty, out int _);
+            Utility.Swap(ref toRemove, ref toRemoveCount, ref empty2, out int _);
         }
     }
 }

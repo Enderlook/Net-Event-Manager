@@ -23,7 +23,7 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InnerAdd<T>(ref T[] array, ref int count, T element)
+        public static void Add<T>(ref T[] array, ref int count, T element)
         {
             T[] array_ = Steal(ref array);
 
@@ -52,7 +52,7 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InnerSwap<T>(ref T[] array, ref int count, ref T[] newArray, out int newCount)
+        public static void Swap<T>(ref T[] array, ref int count, ref T[] newArray, out int newCount)
         {
             T[] array_ = Steal(ref array);
 
@@ -63,14 +63,23 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Extract<T>(ref T[] array, ref int count, out T[] newArray, out int newCount)
+        {
+            T[] array_ = Steal(ref array);
+
+            newCount = count;
+            count = 0;
+            array = ArrayPool<T>.Shared.Rent(newCount);
+            newArray = array_;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ExtractToRun<T>(
             ref T[] toRun, ref int toRunCount, ref T[] toRemove, ref int toRemoveCount,
-            ref T[] toRunExtracted, out int toRunExtractedCount, ref T[] removedArray, out int removedArrayCount)
+            out T[] toRunExtracted, out int toRunExtractedCount)
         {
-            ref T[] toRemoveExtracted = ref removedArray;
-
-            InnerSwap(ref toRun, ref toRunCount, ref toRunExtracted, out toRunExtractedCount);
-            InnerSwap(ref toRemove, ref toRemoveCount, ref toRemoveExtracted, out int countRemove);
+            Extract(ref toRun, ref toRunCount, out toRunExtracted, out toRunExtractedCount);
+            Extract(ref toRemove, ref toRemoveCount, out T[] toRemoveExtracted, out int countRemove);
             if (countRemove > 0)
             {
                 // TODO: Time complexity of this could be reduced by sorting the arrays. Research if that may be worth.
@@ -94,12 +103,10 @@ namespace Enderlook.EventManager
                 }
                 toRunExtractedCount = j;
             }
-
-            removedArrayCount = countRemove;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Drain<T>(ref T[] destination, ref int destiantionCount, ref T[] source, ref int sourceCount)
+        public static void Drain<T>(ref T[] destination, ref int destiantionCount, T[] source, int sourceCount)
         {
             T[] array_;
             do
@@ -142,10 +149,14 @@ namespace Enderlook.EventManager
                 Array.Copy(to, 0, newArray, fromCount + 1, toCount);
                 source = to;
                 sourceCount = toCount;
+                Array.Clear(from, 0, fromCount);
                 ArrayPool<T>.Shared.Return(from);
                 destiantionCount = totalCount;
                 destination = newArray;
             }
+
+            Array.Clear(source, 0, sourceCount);
+            ArrayPool<T>.Shared.Return(source);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -224,34 +235,20 @@ namespace Enderlook.EventManager
             ref EventListOnce<TDelegate> parametersOnce,
             TEvent argument)
         {
-            TDelegate[] parameterless1 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parameterless2 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parameterlessOnce1 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parameterlessOnce2 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parameters1 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parameters2 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parametersOnce1 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parametersOnce2 = ConcurrentPool.Rent<TDelegate>();
-
-            parameterless.ExtractToRun(ref parameterless1, out int parameterlessCount1, ref parameterless2, out int parameterlessCount2);
-            parameterlessOnce.ExtractToRun(ref parameterlessOnce1, out int parameterlessOnceCount1, ref parameterlessOnce2, out int parameterlessOnceCount2);
-            parameters.ExtractToRun(ref parameters1, out int parametersCount1, ref parameters2, out int parametersCount2);
-            parametersOnce.ExtractToRun(ref parametersOnce1, out int parametersOnceCount1, ref parametersOnce2, out int parametersOnceCount2);
+            parameterless.ExtractToRun(out TDelegate[] parameterless1, out int parameterlessCount1);
+            parameterlessOnce.ExtractToRun(out TDelegate[] parameterlessOnce1, out int parameterlessOnceCount1, out TDelegate[] parameterlessOnce2, out int parameterlessOnceCount2);
+            parameters.ExtractToRun(out TDelegate[] parameters1, out int parametersCount1);
+            parametersOnce.ExtractToRun(out TDelegate[] parametersOnce1, out int parametersOnceCount1, out TDelegate[] parametersOnce2, out int parametersOnceCount2);
 
             InnerRaise<TDelegate, HasNoParameter, TMode, TClosure>(ref parameterless1, parameterlessCount1, new HasNoParameter());
             InnerRaise<TDelegate, HasNoParameter, TMode, TClosure>(ref parameterlessOnce1, parametersCount1, new HasNoParameter());
             InnerRaise<TDelegate, TEvent, TMode, TClosure>(ref parameters1, parametersCount1, argument);
             InnerRaise<TDelegate, TEvent, TMode, TClosure>(ref parametersOnce1, parametersOnceCount1, argument);
 
-            parameterless.InjectToRun(ref parameterless1, ref parameterlessCount1);
-            parameterlessOnce.InjectToRun(ref parameterlessOnce1, ref parameterlessOnceCount1);
-            parameters.InjectToRun(ref parameters1, ref parametersCount1);
-            parametersOnce.InjectToRun(ref parametersOnce1, ref parametersOnceCount1);
-
-            Cleaning(parameterless1, parameterless2, parameterlessOnce1, parameterlessOnce2,
-                     parameters1, parameters2, parametersOnce1, parametersOnce2,
-                     parameterlessCount1, parameterlessCount2, parameterlessOnceCount1, parameterlessOnceCount2,
-                     parametersCount1, parametersCount2, parametersOnceCount1, parametersOnceCount2);
+            parameterless.InjectToRun(parameterless1, parameterlessCount1);
+            parameterlessOnce.InjectToRun(parameterlessOnce1, parameterlessOnceCount1);
+            parameters.InjectToRun(parameters1, parametersCount1);
+            parametersOnce.InjectToRun(parametersOnce1, parametersOnceCount1);
         }
 
         public static void Purge<TDelegate>(
@@ -260,56 +257,15 @@ namespace Enderlook.EventManager
             ref EventListOnce<TDelegate> parameterlessOnce,
             ref EventListOnce<TDelegate> parametersOnce)
         {
-            TDelegate[] parameterless1 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parameterless2 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parameterlessOnce1 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parameterlessOnce2 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parameters1 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parameters2 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parametersOnce1 = ConcurrentPool.Rent<TDelegate>();
-            TDelegate[] parametersOnce2 = ConcurrentPool.Rent<TDelegate>();
+            parameterless.ExtractToRun(out TDelegate[] parameterless1, out int parameterlessCount1);
+            parameterless.InjectToRun(parameterless1, parameterlessCount1);
+            parameterlessOnce.ExtractToRunRemoved(out TDelegate[] parameterlessOnce1, out int parameterlessOnceCount1);
+            parameterlessOnce.InjectToRun(parameterlessOnce1, parameterlessOnceCount1);
 
-            parameterless.ExtractToRun(ref parameterless1, out int parameterlessCount1, ref parameterless2, out int parameterlessCount2);
-            parameterless.InjectToRun(ref parameterless1, ref parameterlessCount1);
-            parameterlessOnce.ExtractToRun(ref parameterlessOnce1, out int parameterlessOnceCount1, ref parameterlessOnce2, out int parameterlessOnceCount2);
-            parameterlessOnce.InjectToRun(ref parameterlessOnce1, ref parameterlessOnceCount1);
-
-            parameters.ExtractToRun(ref parameters1, out int parametersCount1, ref parameters2, out int parametersCount2);
-            parameters.InjectToRun(ref parameters1, ref parametersCount1);
-            parametersOnce.ExtractToRun(ref parametersOnce1, out int parametersOnceCount1, ref parametersOnce2, out int parametersOnceCount2);
-            parametersOnce.InjectToRun(ref parametersOnce1, ref parametersOnceCount1);
-
-            Cleaning(
-                parameterless1, parameterless2, parameterlessOnce1, parameterlessOnce2,
-                parameters1, parameters2, parametersOnce1, parametersOnce2,
-                parameterlessCount1, parameterlessCount2, parameterlessOnceCount1, parameterlessOnceCount2,
-                parametersCount1, parametersCount2, parametersOnceCount1, parametersOnceCount2);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Cleaning<TDelegate>(
-            TDelegate[] parameterless1, TDelegate[] parameterless2, TDelegate[] parameterlessOnce1, TDelegate[] parameterlessOnce2,
-            TDelegate[] parameters1, TDelegate[] parameters2, TDelegate[] parametersOnce1, TDelegate[] parametersOnce2,
-            int parameterlessCount1, int parameterlessCount2, int parameterlessOnceCount1, int parameterlessOnceCount2,
-            int parametersCount1, int parametersCount2, int parametersOnceCount1, int parametersOnceCount2)
-        {
-            Array.Clear(parameterless1, 0, parameterlessCount1);
-            Array.Clear(parameterless2, 0, parameterlessCount2);
-            Array.Clear(parameterlessOnce1, 0, parameterlessOnceCount1);
-            Array.Clear(parameterlessOnce2, 0, parameterlessOnceCount2);
-            Array.Clear(parameters1, 0, parametersCount1);
-            Array.Clear(parameters2, 0, parametersCount2);
-            Array.Clear(parametersOnce1, 0, parametersOnceCount1);
-            Array.Clear(parametersOnce2, 0, parametersOnceCount2);
-
-            ConcurrentPool.Return(parameterless1);
-            ConcurrentPool.Return(parameterless2);
-            ConcurrentPool.Return(parameterlessOnce1);
-            ConcurrentPool.Return(parameterlessOnce2);
-            ConcurrentPool.Return(parameters1);
-            ConcurrentPool.Return(parameters2);
-            ConcurrentPool.Return(parametersOnce1);
-            ConcurrentPool.Return(parametersOnce2);
+            parameters.ExtractToRun(out TDelegate[] parameters1, out int parametersCount1);
+            parameters.InjectToRun(parameters1, parametersCount1);
+            parametersOnce.ExtractToRunRemoved(out TDelegate[] parametersOnce1, out int parametersOnceCount1);
+            parametersOnce.InjectToRun(parametersOnce1, parametersOnceCount1);
         }
     }
 }
