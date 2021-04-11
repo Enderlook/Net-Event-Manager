@@ -81,7 +81,12 @@ namespace Enderlook.EventManager
             {
                 if (toRunExtractedCount == 0)
                     return;
+                Remove(toRunExtracted, ref toRunExtractedCount, toRemoveExtracted, ref countRemove);
+            }
 
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static void Remove(T[] toRunExtracted, ref int toRunExtractedCount, T[] toRemoveExtracted, ref int countRemove)
+            {
                 EqualityComparer<T> comparer = EqualityComparer<T>.Default;
                 // TODO: Time complexity of this could be reduced by sorting the arrays. Research if that may be worth.
                 int j = 0;
@@ -107,59 +112,76 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Drain<T>(ref T[] destination, ref int destiantionCount, T[] source, int sourceCount)
+        public static void Drain<T>(ref T[] destination, ref int destinationCount, T[] source, int sourceCount)
         {
-            T[] array_;
-            do
-            {
-                array_ = Interlocked.Exchange(ref destination, null);
-            } while (array_ is null);
+            if (sourceCount == 0)
+                return;
 
-            T[] from;
-            T[] to;
-            int fromCount;
-            int toCount;
-            if (source.Length > array_.Length)
+            T[] array_ = Steal(ref destination);
+
+            if (destinationCount == 0)
             {
-                to = source;
-                toCount = sourceCount;
-                from = array_;
-                fromCount = destiantionCount;
-            }
-            else
-            {
-                from = source;
-                fromCount = sourceCount;
-                to = array_;
-                toCount = destiantionCount;
+                destinationCount = sourceCount;
+                destination = source;
+                ArrayPool<T>.Shared.Return(array_);
+                return;
             }
 
-            int totalCount = fromCount + toCount;
-            if (totalCount <= to.Length)
-            {
-                if (fromCount > 0)
-                    Array.Copy(from, 0, to, toCount + 1, fromCount);
-                source = from;
-                sourceCount = fromCount;
-                destiantionCount = totalCount;
-                destination = to;
-            }
-            else
-            {
-                Debug.Assert(fromCount > 0);
-                T[] newArray = ArrayPool<T>.Shared.Rent(totalCount * GROW_FACTOR);
-                Array.Copy(from, newArray, fromCount);
-                Array.Copy(to, 0, newArray, fromCount + 1, toCount);
-                source = to;
-                sourceCount = toCount;
-                Array.Clear(from, 0, fromCount);
-                ArrayPool<T>.Shared.Return(from);
-                destiantionCount = totalCount;
-                destination = newArray;
-            }
+            Merge(out destination, ref destinationCount, ref source, ref sourceCount, array_);
 
-            Array.Clear(source, 0, sourceCount);
-            ArrayPool<T>.Shared.Return(source);
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static void Merge(out T[] destination, ref int destinationCount, ref T[] source, ref int sourceCount, T[] array_)
+            {
+                T[] from;
+                T[] to;
+                int fromCount;
+                int toCount;
+                if (source.Length > array_.Length)
+                {
+                    to = source;
+                    toCount = sourceCount;
+                    from = array_;
+                    fromCount = destinationCount;
+                }
+                else
+                {
+                    from = source;
+                    fromCount = sourceCount;
+                    to = array_;
+                    toCount = destinationCount;
+                }
+
+                int totalCount = fromCount + toCount;
+                if (totalCount <= to.Length)
+                {
+                    if (fromCount > 0)
+                        Array.Copy(from, 0, to, toCount + 1, fromCount);
+                    source = from;
+                    sourceCount = fromCount;
+                    destinationCount = totalCount;
+                    destination = to;
+                }
+                else
+                    ResizeAndCopy(out destination, out destinationCount, out source, out sourceCount, from, to, fromCount, toCount, totalCount);
+
+                Array.Clear(source, 0, sourceCount);
+                ArrayPool<T>.Shared.Return(source);
+
+                [MethodImpl(MethodImplOptions.NoInlining)]
+                static void ResizeAndCopy(out T[] destination, out int destinationCount, out T[] source, out int sourceCount, T[] from, T[] to, int fromCount, int toCount, int totalCount)
+                {
+                    Debug.Assert(fromCount > 0);
+                    T[] newArray = ArrayPool<T>.Shared.Rent(totalCount * GROW_FACTOR);
+                    Array.Copy(from, newArray, fromCount);
+                    Array.Copy(to, 0, newArray, fromCount + 1, toCount);
+                    source = to;
+                    sourceCount = toCount;
+                    Array.Clear(from, 0, fromCount);
+                    ArrayPool<T>.Shared.Return(from);
+                    destinationCount = totalCount;
+                    destination = newArray;
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
