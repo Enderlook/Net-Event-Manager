@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Enderlook.EventManager
 {
@@ -25,6 +26,8 @@ namespace Enderlook.EventManager
 
         private HeapClosureHandleBase<TEvent>[] valueClosures = empty;
         private int valueClosuresCount;
+
+        private int isRaising;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Subscribe(Action @delegate)
@@ -121,38 +124,47 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(TEvent argument)
         {
-            int handles = 0;
-            handles++; // SimpleHandle
-            handles++; // Reference Closures Handles
-            handles += valueClosuresCount;
+            while (Interlocked.Exchange(ref isRaising, 1) != 0) ;
 
-            HandleSnapshoot[] snapshoots = ArrayPool<HandleSnapshoot>.Shared.Rent(handles);
             try
             {
-                // Create snapshoot of listeners.
-                int index = 0;
-                snapshoots[index++] = HandleSnapshoot.Create(ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce);
-                snapshoots[index++] = referenceClosures.ExtractSnapshoot();
-                int i = 0;
-                for (; i < valueClosuresCount; i++)
-                    snapshoots[index++] = valueClosures[i].ExtractSnapshoot();
+                int handles = 0;
+                handles++; // SimpleHandle
+                handles++; // Reference Closures Handles
+                handles += valueClosuresCount;
 
+                HandleSnapshoot[] snapshoots = ArrayPool<HandleSnapshoot>.Shared.Rent(handles);
                 try
                 {
-                    index = i = 0;
-                    snapshoots[index++].Raise<TEvent, Delegate, IsSimple, Unused>(ref parameterless, ref parameters, argument);
-                    referenceClosures.Raise(snapshoots[index++], argument);
+                    // Create snapshoot of listeners.
+                    int index = 0;
+                    snapshoots[index++] = HandleSnapshoot.Create(ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce);
+                    snapshoots[index++] = referenceClosures.ExtractSnapshoot();
+                    int i = 0;
                     for (; i < valueClosuresCount; i++)
-                        valueClosures[i].Raise(snapshoots[index++], argument);
+                        snapshoots[index++] = valueClosures[i].ExtractSnapshoot();
+
+                    try
+                    {
+                        index = i = 0;
+                        snapshoots[index++].Raise<TEvent, Delegate, IsSimple, Unused>(ref parameterless, ref parameters, argument);
+                        referenceClosures.Raise(snapshoots[index++], argument);
+                        for (; i < valueClosuresCount; i++)
+                            valueClosures[i].Raise(snapshoots[index++], argument);
+                    }
+                    catch
+                    {
+                        ClearOnError(snapshoots, ref index, ref i);
+                    }
                 }
-                catch
+                finally
                 {
-                    ClearOnError(snapshoots, ref index, ref i);
+                    ArrayPool<HandleSnapshoot>.Shared.Return(snapshoots);
                 }
             }
             finally
             {
-                ArrayPool<HandleSnapshoot>.Shared.Return(snapshoots);
+                isRaising = 0;
             }
 
             void ClearOnError(HandleSnapshoot[] snapshoots, ref int index, ref int i)
