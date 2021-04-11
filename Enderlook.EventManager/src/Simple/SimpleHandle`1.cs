@@ -132,14 +132,30 @@ namespace Enderlook.EventManager
                 int index = 0;
                 snapshoots[index++] = HandleSnapshoot.Create(ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce);
                 snapshoots[index++] = referenceClosures.ExtractSnapshoot();
-                for (int i = 0; i < valueClosuresCount; i++)
+                int i = 0;
+                for (; i < valueClosuresCount; i++)
                     snapshoots[index++] = valueClosures[i].ExtractSnapshoot();
 
-                index = 0;
-                snapshoots[index++].Raise<TEvent, Delegate, IsSimple, Unused>(ref parameterless, ref parameters, argument);
-                referenceClosures.Raise(snapshoots[index++], argument);
-                for (int i = 0; i < valueClosuresCount; i++)
-                    valueClosures[i].Raise(snapshoots[index++], argument);
+                try
+                {
+                    index = i = 0;
+                    snapshoots[index++].Raise<TEvent, Delegate, IsSimple, Unused>(ref parameterless, ref parameters, argument);
+                    referenceClosures.Raise(snapshoots[index++], argument);
+                    for (; i < valueClosuresCount; i++)
+                        valueClosures[i].Raise(snapshoots[index++], argument);
+                }
+                finally
+                {
+                    // Even if an event crash, we can't just loose all registered listeners.
+                    // That is why this is inside a try/finally.
+                    // However, we don't check the snapshoot of this instance because that is already treated inside Raise.
+
+                    if (index == 1)
+                        referenceClosures.CleanAfterRaise(snapshoots[index++]);
+
+                    for (; i < valueClosuresCount; i++)
+                        valueClosures[i].CleanAfterRaise(snapshoots[index++]);
+                }
             }
             finally
             {

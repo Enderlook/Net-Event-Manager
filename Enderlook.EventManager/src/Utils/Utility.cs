@@ -230,12 +230,6 @@ namespace Enderlook.EventManager
 
                 next:;
             }
-
-            Array.Clear(a, 0, count);
-            ArrayPool<TDelegate>.Shared.Return(a);
-
-            Array.Clear(b, 0, countRemove);
-            ArrayPool<TDelegate>.Shared.Return(b);
         }
 
         public static void Raise<TEvent, TDelegate, TMode, TClosure>(
@@ -246,13 +240,44 @@ namespace Enderlook.EventManager
             ref TDelegate[] parameters1, int parametersCount1,
             TDelegate[] parametersOnce1, int parametersOnceCount1, TDelegate[] parametersOnce2, int parametersOnceCount2)
         {
-            RaiseArray<TDelegate, HasNoParameter, TMode, TClosure>(ref parameterless1, parameterlessCount1, new HasNoParameter());
-            RaiseArray<TDelegate, HasNoParameter, TMode, TClosure>(parameterlessOnce1, parameterlessOnce2, parameterlessOnceCount1, parameterlessOnceCount2, new HasNoParameter());
-            RaiseArray<TDelegate, TEvent, TMode, TClosure>(ref parameters1, parametersCount1, argument);
-            RaiseArray<TDelegate, TEvent, TMode, TClosure>(parametersOnce1, parametersOnce2, parametersOnceCount1, parametersOnceCount2, argument);
+            try
+            {
+                RaiseArray<TDelegate, HasNoParameter, TMode, TClosure>(ref parameterless1, parameterlessCount1, new HasNoParameter());
+                RaiseArray<TDelegate, HasNoParameter, TMode, TClosure>(parameterlessOnce1, parameterlessOnce2, parameterlessOnceCount1, parameterlessOnceCount2, new HasNoParameter());
+                RaiseArray<TDelegate, TEvent, TMode, TClosure>(ref parameters1, parametersCount1, argument);
+                RaiseArray<TDelegate, TEvent, TMode, TClosure>(parametersOnce1, parametersOnce2, parametersOnceCount1, parametersOnceCount2, argument);
+            }
+            finally
+            {
+                // Even if an event crash, we can't just loose all registered listeners.
+                // That is why this is inside a try/finally.
+                CleanAfterRaise(ref parameterless, ref parameters,
+                                parameterless1, parameterlessCount1,  parameterlessOnce1, parameterlessOnceCount1,
+                                parameterlessOnce2, parameterlessOnceCount2,
+                                parameters1, parametersCount1, parametersOnce1, parametersOnceCount1,
+                                parametersOnce2, parametersOnceCount2);
+            }
+        }
 
+        public static void CleanAfterRaise<TDelegate>(
+            ref EventList<TDelegate> parameterless, ref EventList<TDelegate> parameters,
+            TDelegate[] parameterless1, int parameterlessCount1,
+            TDelegate[] parameterlessOnce1, int parameterlessOnceCount1, TDelegate[] parameterlessOnce2, int parameterlessOnceCount2,
+            TDelegate[] parameters1, int parametersCount1,
+            TDelegate[] parametersOnce1, int parametersOnceCount1, TDelegate[] parametersOnce2, int parametersOnceCount2)
+        {
             parameterless.InjectToRun(parameterless1, parameterlessCount1);
             parameters.InjectToRun(parameters1, parametersCount1);
+
+            Array.Clear(parameterlessOnce1, 0, parameterlessOnceCount1);
+            ArrayPool<TDelegate>.Shared.Return(parameterlessOnce1);
+            Array.Clear(parameterlessOnce2, 0, parameterlessOnceCount2);
+            ArrayPool<TDelegate>.Shared.Return(parameterlessOnce2);
+
+            Array.Clear(parametersOnce1, 0, parametersOnceCount1);
+            ArrayPool<TDelegate>.Shared.Return(parametersOnce1);
+            Array.Clear(parametersOnce2, 0, parametersOnceCount2);
+            ArrayPool<TDelegate>.Shared.Return(parametersOnce2);
         }
 
         public static void Purge<TDelegate>(ref EventList<TDelegate> parameterless, ref EventList<TDelegate> parameters,
