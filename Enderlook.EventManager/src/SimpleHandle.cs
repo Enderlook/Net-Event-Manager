@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -126,13 +127,31 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(TEvent argument)
         {
-            Utility.Raise<TEvent, Delegate, IsSimple, Unused>(
-                ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce, argument);
+            int handles = 0;
+            handles++; // SimpleHandle
+            handles++; // Reference Closures Handles
+            handles += valueClosuresCount;
 
-            referenceClosures.Raise(argument);
+            HandleSnapshoot[] snapshoots = ArrayPool<HandleSnapshoot>.Shared.Rent(handles);
+            try
+            {
+                // Create snapshoot of listeners.
+                int index = 0;
+                snapshoots[index++] = HandleSnapshoot.Create(ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce);
+                snapshoots[index++] = referenceClosures.ExtractSnapshoot();
+                for (int i = 0; i < valueClosuresCount; i++)
+                    snapshoots[index++] = valueClosures[i].ExtractSnapshoot();
 
-            for (int i = 0; i < valueClosuresCount; i++)
-                valueClosures[i].Raise(argument);
+                index = 0;
+                snapshoots[index++].Raise<TEvent, Delegate, IsSimple, Unused>(ref parameterless, ref parameters, argument);
+                referenceClosures.Raise(snapshoots[index++], argument);
+                for (int i = 0; i < valueClosuresCount; i++)
+                    valueClosures[i].Raise(snapshoots[index++], argument);
+            }
+            finally
+            {
+                ArrayPool<HandleSnapshoot>.Shared.Return(snapshoots);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
