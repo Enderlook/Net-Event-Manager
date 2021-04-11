@@ -70,35 +70,34 @@ public static class Player
 
 ```cs
 /// Type safe event manager where each type represent an event type.
-/// `TEventBase` is base type of all events. Useful to determine a common ground. (You can use `object` if you don't need it).
-public sealed class EventManager<TEventBase> : IDisposable
+public sealed class EventManager : IDisposable
 {
 	/// Subscribes an action to run when the event `TEvent` is raised.
-	public void Subscribe<TEvent>(Action<TEvent> callback) where TEvent : TEventBase
-	public void Subscribe<TEvent>(Action callback) where TEvent : TEventBase
-	public void Unsubscribe<TEvent>(Action<TEvent> callback) where TEvent : TEventBase
-	public void Unsubscribe<TEvent>(Action callback) where TEvent : TEventBase
+	public void Subscribe<TEvent>(Action<TEvent> callback)
+	public void Subscribe<TEvent>(Action callback)
+	public void Unsubscribe<TEvent>(Action<TEvent> callback)
+	public void Unsubscribe<TEvent>(Action callback)
 	
 	/// Subscribes an action to run when the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
-	public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback) where TEvent : TEventBase
-	public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback) where TEvent : TEventBase
-	public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback) where TEvent : TEventBase
-	public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback) where TEvent : TEventBase
+	public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback)
+	public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback)
+	public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback)
+	public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback)
 	
 	/// Subscribes an action to run the next time the event `TEvent` is raised.
-	public void SubscribeOnce<TEvent>(Action<TEvent> callback) where TEvent : TEventBase
-	public void SubscribeOnce<TEvent>(Action callback) where TEvent : TEventBase
-	public void UnsubscribeOnce<TEvent>(Action<TEvent> callback) where TEvent : TEventBase
-	public void UnsubscribeOnce<TEvent>(Action callback) where TEvent : TEventBase
+	public void SubscribeOnce<TEvent>(Action<TEvent> callback)
+	public void SubscribeOnce<TEvent>(Action callback)
+	public void UnsubscribeOnce<TEvent>(Action<TEvent> callback)
+	public void UnsubscribeOnce<TEvent>(Action callback)
 		
 	/// Subscribes an action to run the next time the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
-	public void SubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback) where TEvent : TEventBase
-	public void SubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure> callback) where TEvent : TEventBase
-	public void UnsubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback) where TEvent : TEventBase
-	public void UnsubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure> callback) where TEvent : TEventBase
+	public void SubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback)
+	public void SubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure> callback)
+	public void UnsubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback)
+	public void UnsubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure> callback)
 	
 	/// Raise the specified event.
-	public void Raise<TEvent>(TEvent eventArgument) where TEvent : TEventBase
+	public void Raise<TEvent>(TEvent eventArgument)
 	
 	/// Dispose the underlying content of this event manager.
 	public void Dispose()
@@ -108,4 +107,3 @@ public sealed class EventManager<TEventBase> : IDisposable
 	/// but haven't executed `Raise<TEvent>` yet and want to release their references.
 	public void Purge()
 }
-```
