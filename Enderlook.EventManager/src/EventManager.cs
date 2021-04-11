@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
@@ -338,7 +339,10 @@ namespace Enderlook.EventManager
             try
             {
                 if (simpleCallbacks.TryGetValue(key, out object obj))
+                {
+                    Debug.Assert(obj is SimpleHandle<TEvent>);
                     return Unsafe.As<SimpleHandle<TEvent>>(obj);
+                }
             }
             finally
             {
@@ -349,7 +353,10 @@ namespace Enderlook.EventManager
             try
             {
                 if (simpleCallbacks.TryGetValue(key, out object obj))
+                {
+                    Debug.Assert(obj is SimpleHandle<TEvent>);
                     return Unsafe.As<SimpleHandle<TEvent>>(obj);
+                }
                 SimpleHandle<TEvent> handle = new SimpleHandle<TEvent>();
                 simpleCallbacks[key] = handle;
                 return handle;
@@ -372,6 +379,7 @@ namespace Enderlook.EventManager
                     handle = null;
                     return false;
                 }
+                Debug.Assert(obj is SimpleHandle<TEvent>);
                 handle = Unsafe.As<SimpleHandle<TEvent>>(obj);
                 return true;
             }
@@ -390,7 +398,10 @@ namespace Enderlook.EventManager
             try
             {
                 if (closureCallbacks.TryGetValue(key, out object handle))
+                {
+                    Debug.Assert(handle is HeapClosureHandle<TClosure, TEvent>);
                     return Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(handle);
+                }
             }
             finally
             {
@@ -401,7 +412,10 @@ namespace Enderlook.EventManager
             try
             {
                 if (closureCallbacks.TryGetValue(key, out object obj))
+                {
+                    Debug.Assert(obj is HeapClosureHandle<TClosure, TEvent>);
                     return Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(obj);
+                }
 
                 HeapClosureHandle<TClosure, TEvent> handle = new HeapClosureHandle<TClosure, TEvent>();
                 closureCallbacks[key] = handle;
@@ -426,6 +440,7 @@ namespace Enderlook.EventManager
                     handle = null;
                     return false;
                 }
+                Debug.Assert(obj is HeapClosureHandle<TClosure, TEvent>);
                 handle = Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(obj);
                 return true;
             }
