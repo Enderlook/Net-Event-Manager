@@ -26,8 +26,6 @@ namespace Enderlook.EventManager
         private HeapClosureHandleBase<TEvent>[] valueClosures = empty;
         private int valueClosuresCount;
 
-        private int isRaising;
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Subscribe(Action @delegate)
             => parameterless.Add(@delegate);
