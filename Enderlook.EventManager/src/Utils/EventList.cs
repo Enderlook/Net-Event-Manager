@@ -5,18 +5,22 @@ namespace Enderlook.EventManager
 {
     internal struct EventList<TDelegate> : IDisposable
     {
-        private TDelegate[] toRun;
+        private Array<TDelegate> toRun;
         private int toRunCount;
 
-        private TDelegate[] toRemove;
+        private Array<TDelegate> toRemove;
         private int toRemoveCount;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EventList<TDelegate> Create() => new EventList<TDelegate>()
+        public static EventList<TDelegate> Create()
         {
-            toRun = Utility.CreateEmpty<TDelegate>(),
-            toRemove = Utility.CreateEmpty<TDelegate>(),
-        };
+            Array<TDelegate> array = Array<TDelegate>.Empty();
+            return new EventList<TDelegate>()
+            {
+                toRun = array,
+                toRemove = array,
+            };
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(TDelegate element) => Utility.Add(ref toRun, ref toRunCount, element);
@@ -25,11 +29,11 @@ namespace Enderlook.EventManager
         public void Remove(TDelegate element) => Utility.Add(ref toRemove, ref toRemoveCount, element);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ExtractToRun(out TDelegate[] toRunExtracted, out int toRunCount)
+        public void ExtractToRun(out Array<TDelegate> toRunExtracted, out int toRunCount)
             => Utility.ExtractToRun(ref toRun, ref this.toRunCount, ref toRemove, ref toRemoveCount, out toRunExtracted, out toRunCount);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void InjectToRun(TDelegate[] array, int count)
+        public void InjectToRun(Array<TDelegate> array, int count)
             => Utility.Drain(ref toRun, ref toRunCount, array, count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

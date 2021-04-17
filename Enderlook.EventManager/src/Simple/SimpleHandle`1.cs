@@ -14,7 +14,7 @@ namespace Enderlook.EventManager
 
         private ClosureHandle<object, TEvent> referenceClosures = ClosureHandle<object, TEvent>.Create();
 
-        private HeapClosureHandleBase<TEvent>[] valueClosures = Utility.CreateEmpty<HeapClosureHandleBase<TEvent>>();
+        private Array<HeapClosureHandleBase<TEvent>> valueClosures = Array<HeapClosureHandleBase<TEvent>>.Empty();
         private int valueClosuresCount;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -119,7 +119,7 @@ namespace Enderlook.EventManager
                 handles++; // Reference Closures Handles
                 handles += valueClosuresCount;
 
-                HandleSnapshoot[] snapshoots = Utility.Rent<HandleSnapshoot>(handles);
+                Array<HandleSnapshoot> snapshoots = Array<HandleSnapshoot>.Rent(handles);
                 try
                 {
                     // Create snapshoot of listeners.
@@ -145,11 +145,11 @@ namespace Enderlook.EventManager
                 }
                 finally
                 {
-                    Utility.Return<HandleSnapshoot>(snapshoots);
+                    snapshoots.ClearAndReturn(handles);
                 }
             }
 
-            void ClearOnError(HandleSnapshoot[] snapshoots, ref int index, ref int i)
+            void ClearOnError(Array<HandleSnapshoot> snapshoots, ref int index, ref int i)
             {
                 // Even if an event crash, we can't just loose all registered listeners.
                 // That is why this is inside a try/catch.
@@ -176,7 +176,7 @@ namespace Enderlook.EventManager
             for (int i = 0; i < valueClosuresCount; i++)
                 valueClosures[i].Dispose();
 
-            Utility.Return(valueClosures);
+            valueClosures.ClearAndReturn(valueClosuresCount);
         }
 
         public override void Purge()

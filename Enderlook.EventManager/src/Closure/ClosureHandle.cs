@@ -1,6 +1,5 @@
 ﻿
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
@@ -74,10 +73,10 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(TEvent argument)
         {
-            parameterless.ExtractToRun(out ClosureDelegate<TClosure>[] parameterless1, out int parameterlessCount1);
-            parameterlessOnce.ExtractToRun(out ClosureDelegate<TClosure>[] parameterlessOnce1, out int parameterlessOnceCount1, out ClosureDelegate<TClosure>[] parameterlessOnce2, out int parameterlessOnceCount2);
-            parameters.ExtractToRun(out ClosureDelegate<TClosure>[] parameters1, out int parametersCount1);
-            parametersOnce.ExtractToRun(out ClosureDelegate<TClosure>[] parametersOnce1, out int parametersOnceCount1, out ClosureDelegate<TClosure>[] parametersOnce2, out int parametersOnceCount2);
+            parameterless.ExtractToRun(out Array<ClosureDelegate<TClosure>> parameterless1, out int parameterlessCount1);
+            parameterlessOnce.ExtractToRun(out Array<ClosureDelegate<TClosure>> parameterlessOnce1, out int parameterlessOnceCount1, out Array<ClosureDelegate<TClosure>> parameterlessOnce2, out int parameterlessOnceCount2);
+            parameters.ExtractToRun(out Array<ClosureDelegate<TClosure>> parameters1, out int parametersCount1);
+            parametersOnce.ExtractToRun(out Array<ClosureDelegate<TClosure>> parametersOnce1, out int parametersOnceCount1, out Array<ClosureDelegate<TClosure>> parametersOnce2, out int parametersOnceCount2);
 
             Utility.Raise<TEvent, ClosureDelegate<TClosure>, ClosureDelegate<TClosure>, IsClosure, TClosure>(
                 ref parameterless, ref parameters,
@@ -96,19 +95,12 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(in HandleSnapshoot handleSnapshoot, TEvent argument)
         {
-            Debug.Assert(handleSnapshoot.parameterless1 is ClosureDelegate<TClosure>[]);
-            Debug.Assert(handleSnapshoot.parameterlessOnce1 is ClosureDelegate<TClosure>[]);
-            Debug.Assert(handleSnapshoot.parameterlessOnce2 is ClosureDelegate<TClosure>[]);
-            Debug.Assert(handleSnapshoot.parameters1 is ClosureDelegate<TClosure>[]);
-            Debug.Assert(handleSnapshoot.parametersOnce1 is ClosureDelegate<TClosure>[]);
-            Debug.Assert(handleSnapshoot.parametersOnce2 is ClosureDelegate<TClosure>[]);
-
-            ClosureDelegate<TClosure>[] parameterless1 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parameterless1);
-            ClosureDelegate<TClosure>[] parameterlessOnce1 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parameterlessOnce1);
-            ClosureDelegate<TClosure>[] parameterlessOnce2 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parameterlessOnce2);
-            ClosureDelegate<TClosure>[] parameters1 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parameters1);
-            ClosureDelegate<TClosure>[] parametersOnce1 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parametersOnce1);
-            ClosureDelegate<TClosure>[] parametersOnce2 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parametersOnce2);
+            Array<ClosureDelegate<TClosure>> parameterless1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameterless1);
+            Array<ClosureDelegate<TClosure>> parameterlessOnce1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameterlessOnce1);
+            Array<ClosureDelegate<TClosure>> parameterlessOnce2 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameterlessOnce2);
+            Array<ClosureDelegate<TClosure>> parameters1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameters1);
+            Array<ClosureDelegate<TClosure>> parametersOnce1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parametersOnce1);
+            Array<ClosureDelegate<TClosure>> parametersOnce2 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parametersOnce2);
 
             Utility.Raise<TEvent, ClosureDelegate<TClosure>, ClosureDelegate<TClosure>, IsClosure, TClosure>(
                 ref parameterless, ref parameters,
@@ -122,19 +114,12 @@ namespace Enderlook.EventManager
 
         public void ClearAfterRaise(in HandleSnapshoot handleSnapshoot)
         {
-            Debug.Assert(handleSnapshoot.parameterless1 is ClosureDelegate<TClosure>[]);
-            Debug.Assert(handleSnapshoot.parameterlessOnce1 is ClosureDelegate<TClosure>[]);
-            Debug.Assert(handleSnapshoot.parameterlessOnce2 is ClosureDelegate<TClosure>[]);
-            Debug.Assert(handleSnapshoot.parameters1 is ClosureDelegate<TClosure>[]);
-            Debug.Assert(handleSnapshoot.parametersOnce1 is ClosureDelegate<TClosure>[]);
-            Debug.Assert(handleSnapshoot.parametersOnce2 is ClosureDelegate<TClosure>[]);
-
-            ClosureDelegate<TClosure>[] parameterless1 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parameterless1);
-            ClosureDelegate<TClosure>[] parameterlessOnce1 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parameterlessOnce1);
-            ClosureDelegate<TClosure>[] parameterlessOnce2 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parameterlessOnce2);
-            ClosureDelegate<TClosure>[] parameters1 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parameters1);
-            ClosureDelegate<TClosure>[] parametersOnce1 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parametersOnce1);
-            ClosureDelegate<TClosure>[] parametersOnce2 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parametersOnce2);
+            Array<ClosureDelegate<TClosure>> parameterless1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameterless1);
+            Array<ClosureDelegate<TClosure>> parameterlessOnce1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameterlessOnce1);
+            Array<ClosureDelegate<TClosure>> parameterlessOnce2 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameterlessOnce2);
+            Array<ClosureDelegate<TClosure>> parameters1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameters1);
+            Array<ClosureDelegate<TClosure>> parametersOnce1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parametersOnce1);
+            Array<ClosureDelegate<TClosure>> parametersOnce2 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parametersOnce2);
 
             Utility.CleanAfterRaise(
                 ref parameterless, ref parameters,

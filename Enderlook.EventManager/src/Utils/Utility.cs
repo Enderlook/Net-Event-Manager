@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -12,76 +11,31 @@ namespace Enderlook.EventManager
         private const int INITIAL_CAPACITY = 4;
         private const int GROW_FACTOR = 2;
 
-        private static class Container<T>
-        {
-            public static readonly T[] array = new T[0];
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T[] CreateEmpty<T>()
+        private static Array<T> Steal<T>(ref Array<T> value)
         {
-            // We reduce amount of generic instantiation of ArrayPool<T> by sharing reference type.
-            // Take into account that this is quite dangerous, as myArray.GetType() will return object[].
-            // However we never do that.
-            if (typeof(T).IsValueType)
-                return Container<T>.array;
-            else
-                return Unsafe.As<T[]>(Container<object>.array);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T[] Rent<T>(int minCapacity)
-        {
-            // We reduce amount of generic instantiation of ArrayPool<T> by sharing reference type.
-            // Take into account that this is quite dangerous, as myArray.GetType() will return object[].
-            // However we never do that.
-            if (typeof(T).IsValueType)
-                return ArrayPool<T>.Shared.Rent(minCapacity);
-            else
-                return Unsafe.As<T[]>(ArrayPool<T>.Shared.Rent(minCapacity));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Return<T>(T[] array)
-        {
-            // We reduce amount of generic instantiation of ArrayPool<T> by sharing reference type.
-            // Take into account that this is quite dangerous, as myArray.GetType() will return object[].
-            // However we never do that.
-            if (typeof(T).IsValueType)
-                ArrayPool<T>.Shared.Return(array);
-            else
-            {
-                Debug.Assert(array.GetType() == typeof(object[]));
-                ArrayPool<object>.Shared.Return(Unsafe.As<object[]>(array));
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static T Steal<T>(ref T value) where T : class
-        {
-            T value_;
+            object value_;
             do
             {
-                value_ = Interlocked.Exchange(ref value, null);
+                value_ = Interlocked.Exchange(ref value.array, null);
             } while (value_ is null);
-            return value_;
+            return new Array<T>(value_);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Add<T>(ref T[] array, ref int count, T element)
+        public static void Add<T>(ref Array<T> array, ref int count, T element)
         {
-            T[] array_ = Steal(ref array);
+            Array<T> array_ = Steal(ref array);
 
             int count_ = count;
             if (count_ == array_.Length)
             {
                 if (count_ == 0)
-                    array_ = Rent<T>(INITIAL_CAPACITY);
+                    array_ = Array<T>.Rent(INITIAL_CAPACITY);
                 else
                 {
-                    T[] newArray = Rent<T>(count_ * GROW_FACTOR);
-                    Array.Copy(array_, newArray, count_);
-                    Return(array_);
+                    Array<T> newArray = Array<T>.Rent(count_ * GROW_FACTOR);
+                    array_.CopyToAndReturn(newArray, count_);
                     array_ = newArray;
                 }
             }
@@ -91,36 +45,35 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void InjectEmpty<T>(ref T[] array, ref int count)
+        public static void InjectEmpty<T>(ref Array<T> array, ref int count)
         {
-            T[] array_ = Steal(ref array);
+            Array<T> array_ = Steal(ref array);
 
             int oldCount = count;
             count = 0;
-            array = CreateEmpty<T>();
+            array = Array<T>.Empty();
 
-            Array.Clear(array_, 0, oldCount);
-            Return(array_);
+            array_.ClearAndReturn(oldCount);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Extract<T>(ref T[] array, ref int count, out T[] newArray, out int newCount)
+        public static void Extract<T>(ref Array<T> array, ref int count, out Array<T> newArray, out int newCount)
         {
-            T[] array_ = Steal(ref array);
+            Array<T> array_ = Steal(ref array);
 
             newCount = count;
             count = 0;
-            array = Rent<T>(newCount);
+            array = Array<T>.Rent(newCount);
             newArray = array_;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ExtractToRun<T>(
-            ref T[] toRun, ref int toRunCount, ref T[] toRemove, ref int toRemoveCount,
-            out T[] toRunExtracted, out int toRunExtractedCount)
+            ref Array<T> toRun, ref int toRunCount, ref Array<T> toRemove, ref int toRemoveCount,
+            out Array<T> toRunExtracted, out int toRunExtractedCount)
         {
             Extract(ref toRun, ref toRunCount, out toRunExtracted, out toRunExtractedCount);
-            Extract(ref toRemove, ref toRemoveCount, out T[] toRemoveExtracted, out int countRemove);
+            Extract(ref toRemove, ref toRemoveCount, out Array<T> toRemoveExtracted, out int countRemove);
             if (countRemove > 0)
             {
                 if (toRunExtractedCount == 0)
@@ -129,7 +82,7 @@ namespace Enderlook.EventManager
             }
 
             [MethodImpl(MethodImplOptions.NoInlining)]
-            static void Remove(T[] toRunExtracted, ref int toRunExtractedCount, T[] toRemoveExtracted, ref int countRemove)
+            static void Remove(Array<T> toRunExtracted, ref int toRunExtractedCount, Array<T> toRemoveExtracted, ref int countRemove)
             {
                 EqualityComparer<T> comparer = EqualityComparer<T>.Default;
                 // TODO: Time complexity of this could be reduced by sorting the arrays. Research if that may be worth.
@@ -143,7 +96,7 @@ namespace Enderlook.EventManager
                     {
                         if (comparer.Equals(element, toRemoveExtracted[k]))
                         {
-                            Array.Copy(toRemoveExtracted, k + 1, toRemoveExtracted, k, countRemove - k);
+                            toRemoveExtracted.CopyTo(k + 1, toRemoveExtracted, k, countRemove - k);
                             countRemove--;
                             goto next;
                         }
@@ -156,28 +109,28 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Drain<T>(ref T[] destination, ref int destinationCount, T[] source, int sourceCount)
+        public static void Drain<T>(ref Array<T> destination, ref int destinationCount, Array<T> source, int sourceCount)
         {
             if (sourceCount == 0)
                 return;
 
-            T[] array_ = Steal(ref destination);
+            Array<T> array_ = Steal(ref destination);
 
             if (destinationCount == 0)
             {
                 destinationCount = sourceCount;
                 destination = source;
-                Return(array_);
+                array_.Return();
                 return;
             }
 
             Merge(out destination, ref destinationCount, ref source, ref sourceCount, array_);
 
             [MethodImpl(MethodImplOptions.NoInlining)]
-            static void Merge(out T[] destination, ref int destinationCount, ref T[] source, ref int sourceCount, T[] array_)
+            static void Merge(out Array<T> destination, ref int destinationCount, ref Array<T> source, ref int sourceCount, Array<T> array_)
             {
-                T[] from;
-                T[] to;
+                Array<T> from;
+                Array<T> to;
                 int fromCount;
                 int toCount;
                 if (source.Length > array_.Length)
@@ -199,7 +152,7 @@ namespace Enderlook.EventManager
                 if (totalCount <= to.Length)
                 {
                     if (fromCount > 0)
-                        Array.Copy(from, 0, to, toCount + 1, fromCount);
+                        from.CopyTo(to, toCount + 1, fromCount);
                     source = from;
                     sourceCount = fromCount;
                     destinationCount = totalCount;
@@ -208,20 +161,18 @@ namespace Enderlook.EventManager
                 else
                     ResizeAndCopy(out destination, out destinationCount, out source, out sourceCount, from, to, fromCount, toCount, totalCount);
 
-                Array.Clear(source, 0, sourceCount);
-                Return(source);
+                source.ClearAndReturn(sourceCount);
 
                 [MethodImpl(MethodImplOptions.NoInlining)]
-                static void ResizeAndCopy(out T[] destination, out int destinationCount, out T[] source, out int sourceCount, T[] from, T[] to, int fromCount, int toCount, int totalCount)
+                static void ResizeAndCopy(out Array<T> destination, out int destinationCount, out Array<T> source, out int sourceCount, Array<T> from, Array<T> to, int fromCount, int toCount, int totalCount)
                 {
                     Debug.Assert(fromCount > 0);
-                    T[] newArray = Rent<T>(totalCount * GROW_FACTOR);
-                    Array.Copy(from, newArray, fromCount);
-                    Array.Copy(to, 0, newArray, fromCount + 1, toCount);
+                    Array<T> newArray = Array<T>.Rent(totalCount * GROW_FACTOR);
+                    from.CopyTo(newArray, fromCount);
+                    to.CopyTo(newArray, fromCount + 1, toCount);
                     source = to;
                     sourceCount = toCount;
-                    Array.Clear(from, 0, fromCount);
-                    Return(from);
+                    from.ClearAndReturn(fromCount);
                     destinationCount = totalCount;
                     destination = newArray;
                 }
@@ -268,7 +219,7 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void RaiseArray<TDelegate, TEvent, TMode, TClosure>(ref TDelegate[] a, int count, TEvent argument)
+        public static void RaiseArray<TDelegate, TEvent, TMode, TClosure>(ref Array<TDelegate> a, int count, TEvent argument)
         {
             if (count == 0)
                 return;
@@ -279,7 +230,7 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void RaiseArray<TDelegate, TEvent, TMode, TClosure>(TDelegate[] a, TDelegate[] b, int count, int countRemove, TEvent argument)
+        public static void RaiseArray<TDelegate, TEvent, TMode, TClosure>(Array<TDelegate> a, Array<TDelegate> b, int count, int countRemove, TEvent argument)
         {
             if (count == 0)
                 return;
@@ -303,7 +254,7 @@ namespace Enderlook.EventManager
                 {
                     if (comparer.Equals(element, b[j]))
                     {
-                        Array.Copy(b, j + 1, b, j, countRemove - j);
+                        b.CopyTo(j + 1, b, j, countRemove - j);
                         countRemove--;
                         goto next;
                     }
@@ -319,10 +270,10 @@ namespace Enderlook.EventManager
         public static void Raise<TEvent, TParameterless, TParameters, TMode, TClosure>(
             ref EventList<TParameterless> parameterless, ref EventList<TParameters> parameters,
             TEvent argument,
-            ref TParameterless[] parameterless1, int parameterlessCount1,
-            TParameterless[] parameterlessOnce1, int parameterlessOnceCount1, TParameterless[] parameterlessOnce2, int parameterlessOnceCount2,
-            ref TParameters[] parameters1, int parametersCount1,
-            TParameters[] parametersOnce1, int parametersOnceCount1, TParameters[] parametersOnce2, int parametersOnceCount2)
+            ref Array<TParameterless> parameterless1, int parameterlessCount1,
+            Array<TParameterless> parameterlessOnce1, int parameterlessOnceCount1, Array<TParameterless> parameterlessOnce2, int parameterlessOnceCount2,
+            ref Array<TParameters> parameters1, int parametersCount1,
+            Array<TParameters> parametersOnce1, int parametersOnceCount1, Array<TParameters> parametersOnce2, int parametersOnceCount2)
         {
             try
             {
@@ -346,23 +297,18 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CleanAfterRaise<TParameterless, TParameters>(
             ref EventList<TParameterless> parameterless, ref EventList<TParameters> parameters,
-            TParameterless[] parameterless1, int parameterlessCount1,
-            TParameterless[] parameterlessOnce1, int parameterlessOnceCount1, TParameterless[] parameterlessOnce2, int parameterlessOnceCount2,
-            TParameters[] parameters1, int parametersCount1,
-            TParameters[] parametersOnce1, int parametersOnceCount1, TParameters[] parametersOnce2, int parametersOnceCount2)
+            Array<TParameterless> parameterless1, int parameterlessCount1,
+            Array<TParameterless> parameterlessOnce1, int parameterlessOnceCount1, Array<TParameterless> parameterlessOnce2, int parameterlessOnceCount2,
+            Array<TParameters> parameters1, int parametersCount1,
+            Array<TParameters> parametersOnce1, int parametersOnceCount1, Array<TParameters> parametersOnce2, int parametersOnceCount2)
         {
             parameterless.InjectToRun(parameterless1, parameterlessCount1);
             parameters.InjectToRun(parameters1, parametersCount1);
 
-            Array.Clear(parameterlessOnce1, 0, parameterlessOnceCount1);
-            Return(parameterlessOnce1);
-            Array.Clear(parameterlessOnce2, 0, parameterlessOnceCount2);
-            Return(parameterlessOnce2);
-
-            Array.Clear(parametersOnce1, 0, parametersOnceCount1);
-            Return(parametersOnce1);
-            Array.Clear(parametersOnce2, 0, parametersOnceCount2);
-            Return(parametersOnce2);
+            parameterlessOnce1.ClearAndReturn(parameterlessOnceCount1);
+            parameterlessOnce2.ClearAndReturn(parameterlessOnceCount2);
+            parametersOnce1.ClearAndReturn(parametersOnceCount1);
+            parametersOnce2.ClearAndReturn(parametersOnceCount2);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -370,14 +316,14 @@ namespace Enderlook.EventManager
             ref EventList<TParameterless> parameterless, ref EventList<TParameters> parameters,
             ref EventListOnce<TParameterless> parameterlessOnce, ref EventListOnce<TParameters> parametersOnce)
         {
-            parameterless.ExtractToRun(out TParameterless[] parameterless1, out int parameterlessCount1);
+            parameterless.ExtractToRun(out Array<TParameterless> parameterless1, out int parameterlessCount1);
             parameterless.InjectToRun(parameterless1, parameterlessCount1);
-            parameterlessOnce.ExtractToRunRemoved(out TParameterless[] parameterlessOnce1, out int parameterlessOnceCount1);
+            parameterlessOnce.ExtractToRunRemoved(out Array<TParameterless> parameterlessOnce1, out int parameterlessOnceCount1);
             parameterlessOnce.InjectToRun(parameterlessOnce1, parameterlessOnceCount1);
 
-            parameters.ExtractToRun(out TParameters[] parameters1, out int parametersCount1);
+            parameters.ExtractToRun(out Array<TParameters> parameters1, out int parametersCount1);
             parameters.InjectToRun(parameters1, parametersCount1);
-            parametersOnce.ExtractToRunRemoved(out TParameters[] parametersOnce1, out int parametersOnceCount1);
+            parametersOnce.ExtractToRunRemoved(out Array<TParameters> parametersOnce1, out int parametersOnceCount1);
             parametersOnce.InjectToRun(parametersOnce1, parametersOnceCount1);
         }
     }

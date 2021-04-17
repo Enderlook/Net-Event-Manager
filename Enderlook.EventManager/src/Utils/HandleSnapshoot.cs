@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
 {
@@ -46,16 +45,16 @@ namespace Enderlook.EventManager
             ref EventListOnce<TParameterless> parameterlessOnce,
             ref EventListOnce<TParameters> parametersOnce)
         {
-            parameterless.ExtractToRun(out TParameterless[] parameterless1, out int parameterlessCount1);
-            parameterlessOnce.ExtractToRun(out TParameterless[] parameterlessOnce1, out int parameterlessOnceCount1, out TParameterless[] parameterlessOnce2, out int parameterlessOnceCount2);
-            parameters.ExtractToRun(out TParameters[] parameters1, out int parametersCount1);
-            parametersOnce.ExtractToRun(out TParameters[] parametersOnce1, out int parametersOnceCount1, out TParameters[] parametersOnce2, out int parametersOnceCount2);
+            parameterless.ExtractToRun(out Array<TParameterless> parameterless1, out int parameterlessCount1);
+            parameterlessOnce.ExtractToRun(out Array<TParameterless> parameterlessOnce1, out int parameterlessOnceCount1, out Array<TParameterless> parameterlessOnce2, out int parameterlessOnceCount2);
+            parameters.ExtractToRun(out Array<TParameters> parameters1, out int parametersCount1);
+            parametersOnce.ExtractToRun(out Array<TParameters> parametersOnce1, out int parametersOnceCount1, out Array<TParameters> parametersOnce2, out int parametersOnceCount2);
 
             return new HandleSnapshoot(
-                parameterless1, parameterlessCount1,
-                parameterlessOnce1, parameterlessOnceCount1, parameterlessOnce2, parameterlessOnceCount2,
-                parameters1, parametersCount1,
-                parametersOnce1, parametersOnceCount1, parametersOnce2, parametersOnceCount2
+                parameterless1.AsObject, parameterlessCount1,
+                parameterlessOnce1.AsObject, parameterlessOnceCount1, parameterlessOnce2.AsObject, parameterlessOnceCount2,
+                parameters1.AsObject, parametersCount1,
+                parametersOnce1.AsObject, parametersOnceCount1, parametersOnce2.AsObject, parametersOnceCount2
             );
         }
 
@@ -63,19 +62,12 @@ namespace Enderlook.EventManager
             ref EventList<TParameterless> parameterless, ref EventList<TParameters> parameters,
             TEvent argument)
         {
-            Debug.Assert(this.parameterless1 is TParameterless[]);
-            Debug.Assert(this.parameterlessOnce1 is TParameterless[]);
-            Debug.Assert(this.parameterlessOnce2 is TParameterless[]);
-            Debug.Assert(this.parameters1 is TParameters[]);
-            Debug.Assert(this.parametersOnce1 is TParameters[]);
-            Debug.Assert(this.parametersOnce2 is TParameters[]);
-
-            TParameterless[] parameterless1 = Unsafe.As<TParameterless[]>(this.parameterless1);
-            TParameterless[] parameterlessOnce1 = Unsafe.As<TParameterless[]>(this.parameterlessOnce1);
-            TParameterless[] parameterlessOnce2 = Unsafe.As<TParameterless[]>(this.parameterlessOnce2);
-            TParameters[] parameters1 = Unsafe.As<TParameters[]>(this.parameters1);
-            TParameters[] parametersOnce1 = Unsafe.As<TParameters[]>(this.parametersOnce1);
-            TParameters[] parametersOnce2 = Unsafe.As<TParameters[]>(this.parametersOnce2);
+            Array<TParameterless> parameterless1 = new Array<TParameterless>(this.parameterless1);
+            Array<TParameterless> parameterlessOnce1 = new Array<TParameterless>(this.parameterlessOnce1);
+            Array<TParameterless> parameterlessOnce2 = new Array<TParameterless>(this.parameterlessOnce2);
+            Array<TParameters> parameters1 = new Array<TParameters>(this.parameters1);
+            Array<TParameters> parametersOnce1 = new Array<TParameters>(this.parametersOnce1);
+            Array<TParameters> parametersOnce2 = new Array<TParameters>(this.parametersOnce2);
 
             Utility.Raise<TEvent, TParameterless, TParameters, TMode, TClosure>(
                 ref parameterless, ref parameters,
