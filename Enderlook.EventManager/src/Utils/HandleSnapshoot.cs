@@ -40,16 +40,16 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static HandleSnapshoot Create<TDelegate>(
-            ref EventList<TDelegate> parameterless,
-            ref EventList<TDelegate> parameters,
-            ref EventListOnce<TDelegate> parameterlessOnce,
-            ref EventListOnce<TDelegate> parametersOnce)
+        public static HandleSnapshoot Create<TParameterless, TParameters>(
+            ref EventList<TParameterless> parameterless,
+            ref EventList<TParameters> parameters,
+            ref EventListOnce<TParameterless> parameterlessOnce,
+            ref EventListOnce<TParameters> parametersOnce)
         {
-            parameterless.ExtractToRun(out TDelegate[] parameterless1, out int parameterlessCount1);
-            parameterlessOnce.ExtractToRun(out TDelegate[] parameterlessOnce1, out int parameterlessOnceCount1, out TDelegate[] parameterlessOnce2, out int parameterlessOnceCount2);
-            parameters.ExtractToRun(out TDelegate[] parameters1, out int parametersCount1);
-            parametersOnce.ExtractToRun(out TDelegate[] parametersOnce1, out int parametersOnceCount1, out TDelegate[] parametersOnce2, out int parametersOnceCount2);
+            parameterless.ExtractToRun(out TParameterless[] parameterless1, out int parameterlessCount1);
+            parameterlessOnce.ExtractToRun(out TParameterless[] parameterlessOnce1, out int parameterlessOnceCount1, out TParameterless[] parameterlessOnce2, out int parameterlessOnceCount2);
+            parameters.ExtractToRun(out TParameters[] parameters1, out int parametersCount1);
+            parametersOnce.ExtractToRun(out TParameters[] parametersOnce1, out int parametersOnceCount1, out TParameters[] parametersOnce2, out int parametersOnceCount2);
 
             return new HandleSnapshoot(
                 parameterless1, parameterlessCount1,
@@ -59,25 +59,25 @@ namespace Enderlook.EventManager
             );
         }
 
-        public void Raise<TEvent, TDelegate, TMode, TClosure>(
-            ref EventList<TDelegate> parameterless, ref EventList<TDelegate> parameters,
+        public void Raise<TEvent, TParameterless, TParameters, TMode, TClosure>(
+            ref EventList<TParameterless> parameterless, ref EventList<TParameters> parameters,
             TEvent argument)
         {
-            Debug.Assert(this.parameterless1 is TDelegate[]);
-            Debug.Assert(this.parameterlessOnce1 is TDelegate[]);
-            Debug.Assert(this.parameterlessOnce2 is TDelegate[]);
-            Debug.Assert(this.parameters1 is TDelegate[]);
-            Debug.Assert(this.parametersOnce1 is TDelegate[]);
-            Debug.Assert(this.parametersOnce2 is TDelegate[]);
+            Debug.Assert(this.parameterless1 is TParameterless[]);
+            Debug.Assert(this.parameterlessOnce1 is TParameterless[]);
+            Debug.Assert(this.parameterlessOnce2 is TParameterless[]);
+            Debug.Assert(this.parameters1 is TParameters[]);
+            Debug.Assert(this.parametersOnce1 is TParameters[]);
+            Debug.Assert(this.parametersOnce2 is TParameters[]);
 
-            TDelegate[] parameterless1 = Unsafe.As<TDelegate[]>(this.parameterless1);
-            TDelegate[] parameterlessOnce1 = Unsafe.As<TDelegate[]>(this.parameterlessOnce1);
-            TDelegate[] parameterlessOnce2 = Unsafe.As<TDelegate[]>(this.parameterlessOnce2);
-            TDelegate[] parameters1 = Unsafe.As<TDelegate[]>(this.parameters1);
-            TDelegate[] parametersOnce1 = Unsafe.As<TDelegate[]>(this.parametersOnce1);
-            TDelegate[] parametersOnce2 = Unsafe.As<TDelegate[]>(this.parametersOnce2);
+            TParameterless[] parameterless1 = Unsafe.As<TParameterless[]>(this.parameterless1);
+            TParameterless[] parameterlessOnce1 = Unsafe.As<TParameterless[]>(this.parameterlessOnce1);
+            TParameterless[] parameterlessOnce2 = Unsafe.As<TParameterless[]>(this.parameterlessOnce2);
+            TParameters[] parameters1 = Unsafe.As<TParameters[]>(this.parameters1);
+            TParameters[] parametersOnce1 = Unsafe.As<TParameters[]>(this.parametersOnce1);
+            TParameters[] parametersOnce2 = Unsafe.As<TParameters[]>(this.parametersOnce2);
 
-            Utility.Raise<TEvent, TDelegate, TMode, TClosure>(
+            Utility.Raise<TEvent, TParameterless, TParameters, TMode, TClosure>(
                 ref parameterless, ref parameters,
                 argument,
                 ref parameterless1, parameterlessCount1,

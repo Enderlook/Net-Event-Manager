@@ -14,8 +14,8 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EventList<TDelegate> Create() => new EventList<TDelegate>()
         {
-            toRun = Array.Empty<TDelegate>(),
-            toRemove = Array.Empty<TDelegate>(),
+            toRun = Utility.CreateEmpty<TDelegate>(),
+            toRemove = Utility.CreateEmpty<TDelegate>(),
         };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

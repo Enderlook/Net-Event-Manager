@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -7,23 +6,15 @@ namespace Enderlook.EventManager
 {
     internal sealed class SimpleHandle<TEvent> : SimpleHandle
     {
-        private static readonly HeapClosureHandleBase<TEvent>[] empty = new HeapClosureHandleBase<TEvent>[0];
+        private EventList<Action> parameterless = EventList<Action>.Create();
+        private EventListOnce<Action> parameterlessOnce = EventListOnce<Action>.Create();
 
-        /* In `Delegate` we actually store instances of `Action`.
-         * But this upcast allow us to avoid the generic instantiation of ArrayPool<Action>.
-         * And so we store less unused arrays on the pool.*/
-        private EventList<Delegate> parameterless = EventList<Delegate>.Create();
-        private EventListOnce<Delegate> parameterlessOnce = EventListOnce<Delegate>.Create();
-
-        /* In `Delegate` we actually store instances of `Action<TEvent>`.
-         * But this upcast allow us to avoid the generic instantiation of ArrayPool<Action<TEvent>>.
-         * And so we store less unused arrays on the pool.*/
-        private EventList<Delegate> parameters = EventList<Delegate>.Create();
-        private EventListOnce<Delegate> parametersOnce = EventListOnce<Delegate>.Create();
+        private EventList<Action<TEvent>> parameters = EventList<Action<TEvent>>.Create();
+        private EventListOnce<Action<TEvent>> parametersOnce = EventListOnce<Action<TEvent>>.Create();
 
         private ClosureHandle<object, TEvent> referenceClosures = ClosureHandle<object, TEvent>.Create();
 
-        private HeapClosureHandleBase<TEvent>[] valueClosures = empty;
+        private HeapClosureHandleBase<TEvent>[] valueClosures = Utility.CreateEmpty<HeapClosureHandleBase<TEvent>>();
         private int valueClosuresCount;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -128,7 +119,7 @@ namespace Enderlook.EventManager
                 handles++; // Reference Closures Handles
                 handles += valueClosuresCount;
 
-                HandleSnapshoot[] snapshoots = ArrayPool<HandleSnapshoot>.Shared.Rent(handles);
+                HandleSnapshoot[] snapshoots = Utility.Rent<HandleSnapshoot>(handles);
                 try
                 {
                     // Create snapshoot of listeners.
@@ -142,7 +133,7 @@ namespace Enderlook.EventManager
                     try
                     {
                         index = i = 0;
-                        snapshoots[index++].Raise<TEvent, Delegate, IsSimple, Unused>(ref parameterless, ref parameters, argument);
+                        snapshoots[index++].Raise<TEvent, Action, Action<TEvent>, IsSimple, Unused>(ref parameterless, ref parameters, argument);
                         referenceClosures.Raise(snapshoots[index++], argument);
                         for (; i < valueClosuresCount; i++)
                             valueClosures[i].Raise(snapshoots[index++], argument);
@@ -154,7 +145,7 @@ namespace Enderlook.EventManager
                 }
                 finally
                 {
-                    ArrayPool<HandleSnapshoot>.Shared.Return(snapshoots);
+                    Utility.Return<HandleSnapshoot>(snapshoots);
                 }
             }
 
@@ -185,7 +176,7 @@ namespace Enderlook.EventManager
             for (int i = 0; i < valueClosuresCount; i++)
                 valueClosures[i].Dispose();
 
-            ArrayPool<HeapClosureHandleBase<TEvent>>.Shared.Return(valueClosures);
+            Utility.Return(valueClosures);
         }
 
         public override void Purge()

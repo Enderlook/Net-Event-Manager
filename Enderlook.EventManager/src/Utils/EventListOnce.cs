@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
 {
@@ -14,8 +13,8 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EventListOnce<TDelegate> Create() => new EventListOnce<TDelegate>()
         {
-            toRun = Array.Empty<TDelegate>(),
-            toRemove = Array.Empty<TDelegate>(),
+            toRun = Utility.CreateEmpty<TDelegate>(),
+            toRemove = Utility.CreateEmpty<TDelegate>(),
         };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

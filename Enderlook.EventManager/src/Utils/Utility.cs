@@ -12,6 +12,50 @@ namespace Enderlook.EventManager
         private const int INITIAL_CAPACITY = 4;
         private const int GROW_FACTOR = 2;
 
+        private static class Container<T>
+        {
+            public static readonly T[] array = new T[0];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T[] CreateEmpty<T>()
+        {
+            // We reduce amount of generic instantiation of ArrayPool<T> by sharing reference type.
+            // Take into account that this is quite dangerous, as myArray.GetType() will return object[].
+            // However we never do that.
+            if (typeof(T).IsValueType)
+                return Container<T>.array;
+            else
+                return Unsafe.As<T[]>(Container<object>.array);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T[] Rent<T>(int minCapacity)
+        {
+            // We reduce amount of generic instantiation of ArrayPool<T> by sharing reference type.
+            // Take into account that this is quite dangerous, as myArray.GetType() will return object[].
+            // However we never do that.
+            if (typeof(T).IsValueType)
+                return ArrayPool<T>.Shared.Rent(minCapacity);
+            else
+                return Unsafe.As<T[]>(ArrayPool<T>.Shared.Rent(minCapacity));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Return<T>(T[] array)
+        {
+            // We reduce amount of generic instantiation of ArrayPool<T> by sharing reference type.
+            // Take into account that this is quite dangerous, as myArray.GetType() will return object[].
+            // However we never do that.
+            if (typeof(T).IsValueType)
+                ArrayPool<T>.Shared.Return(array);
+            else
+            {
+                Debug.Assert(array.GetType() == typeof(object[]));
+                ArrayPool<object>.Shared.Return(Unsafe.As<object[]>(array));
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static T Steal<T>(ref T value) where T : class
         {
@@ -32,12 +76,12 @@ namespace Enderlook.EventManager
             if (count_ == array_.Length)
             {
                 if (count_ == 0)
-                    array_ = ArrayPool<T>.Shared.Rent(INITIAL_CAPACITY);
+                    array_ = Rent<T>(INITIAL_CAPACITY);
                 else
                 {
-                    T[] newArray = ArrayPool<T>.Shared.Rent(count_ * GROW_FACTOR);
+                    T[] newArray = Rent<T>(count_ * GROW_FACTOR);
                     Array.Copy(array_, newArray, count_);
-                    ArrayPool<T>.Shared.Return(array_);
+                    Return(array_);
                     array_ = newArray;
                 }
             }
@@ -53,10 +97,10 @@ namespace Enderlook.EventManager
 
             int oldCount = count;
             count = 0;
-            array = Array.Empty<T>();
+            array = CreateEmpty<T>();
 
             Array.Clear(array_, 0, oldCount);
-            ArrayPool<T>.Shared.Return(array_);
+            Return(array_);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -66,7 +110,7 @@ namespace Enderlook.EventManager
 
             newCount = count;
             count = 0;
-            array = ArrayPool<T>.Shared.Rent(newCount);
+            array = Rent<T>(newCount);
             newArray = array_;
         }
 
@@ -123,7 +167,7 @@ namespace Enderlook.EventManager
             {
                 destinationCount = sourceCount;
                 destination = source;
-                ArrayPool<T>.Shared.Return(array_);
+                Return(array_);
                 return;
             }
 
@@ -165,19 +209,19 @@ namespace Enderlook.EventManager
                     ResizeAndCopy(out destination, out destinationCount, out source, out sourceCount, from, to, fromCount, toCount, totalCount);
 
                 Array.Clear(source, 0, sourceCount);
-                ArrayPool<T>.Shared.Return(source);
+                Return(source);
 
                 [MethodImpl(MethodImplOptions.NoInlining)]
                 static void ResizeAndCopy(out T[] destination, out int destinationCount, out T[] source, out int sourceCount, T[] from, T[] to, int fromCount, int toCount, int totalCount)
                 {
                     Debug.Assert(fromCount > 0);
-                    T[] newArray = ArrayPool<T>.Shared.Rent(totalCount * GROW_FACTOR);
+                    T[] newArray = Rent<T>(totalCount * GROW_FACTOR);
                     Array.Copy(from, newArray, fromCount);
                     Array.Copy(to, 0, newArray, fromCount + 1, toCount);
                     source = to;
                     sourceCount = toCount;
                     Array.Clear(from, 0, fromCount);
-                    ArrayPool<T>.Shared.Return(from);
+                    Return(from);
                     destinationCount = totalCount;
                     destination = newArray;
                 }
@@ -272,20 +316,20 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Raise<TEvent, TDelegate, TMode, TClosure>(
-            ref EventList<TDelegate> parameterless, ref EventList<TDelegate> parameters,
+        public static void Raise<TEvent, TParameterless, TParameters, TMode, TClosure>(
+            ref EventList<TParameterless> parameterless, ref EventList<TParameters> parameters,
             TEvent argument,
-            ref TDelegate[] parameterless1, int parameterlessCount1,
-            TDelegate[] parameterlessOnce1, int parameterlessOnceCount1, TDelegate[] parameterlessOnce2, int parameterlessOnceCount2,
-            ref TDelegate[] parameters1, int parametersCount1,
-            TDelegate[] parametersOnce1, int parametersOnceCount1, TDelegate[] parametersOnce2, int parametersOnceCount2)
+            ref TParameterless[] parameterless1, int parameterlessCount1,
+            TParameterless[] parameterlessOnce1, int parameterlessOnceCount1, TParameterless[] parameterlessOnce2, int parameterlessOnceCount2,
+            ref TParameters[] parameters1, int parametersCount1,
+            TParameters[] parametersOnce1, int parametersOnceCount1, TParameters[] parametersOnce2, int parametersOnceCount2)
         {
             try
             {
-                RaiseArray<TDelegate, HasNoParameter, TMode, TClosure>(ref parameterless1, parameterlessCount1, new HasNoParameter());
-                RaiseArray<TDelegate, HasNoParameter, TMode, TClosure>(parameterlessOnce1, parameterlessOnce2, parameterlessOnceCount1, parameterlessOnceCount2, new HasNoParameter());
-                RaiseArray<TDelegate, TEvent, TMode, TClosure>(ref parameters1, parametersCount1, argument);
-                RaiseArray<TDelegate, TEvent, TMode, TClosure>(parametersOnce1, parametersOnce2, parametersOnceCount1, parametersOnceCount2, argument);
+                RaiseArray<TParameterless, HasNoParameter, TMode, TClosure>(ref parameterless1, parameterlessCount1, new HasNoParameter());
+                RaiseArray<TParameterless, HasNoParameter, TMode, TClosure>(parameterlessOnce1, parameterlessOnce2, parameterlessOnceCount1, parameterlessOnceCount2, new HasNoParameter());
+                RaiseArray<TParameters, TEvent, TMode, TClosure>(ref parameters1, parametersCount1, argument);
+                RaiseArray<TParameters, TEvent, TMode, TClosure>(parametersOnce1, parametersOnce2, parametersOnceCount1, parametersOnceCount2, argument);
             }
             finally
             {
@@ -300,39 +344,40 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CleanAfterRaise<TDelegate>(
-            ref EventList<TDelegate> parameterless, ref EventList<TDelegate> parameters,
-            TDelegate[] parameterless1, int parameterlessCount1,
-            TDelegate[] parameterlessOnce1, int parameterlessOnceCount1, TDelegate[] parameterlessOnce2, int parameterlessOnceCount2,
-            TDelegate[] parameters1, int parametersCount1,
-            TDelegate[] parametersOnce1, int parametersOnceCount1, TDelegate[] parametersOnce2, int parametersOnceCount2)
+        public static void CleanAfterRaise<TParameterless, TParameters>(
+            ref EventList<TParameterless> parameterless, ref EventList<TParameters> parameters,
+            TParameterless[] parameterless1, int parameterlessCount1,
+            TParameterless[] parameterlessOnce1, int parameterlessOnceCount1, TParameterless[] parameterlessOnce2, int parameterlessOnceCount2,
+            TParameters[] parameters1, int parametersCount1,
+            TParameters[] parametersOnce1, int parametersOnceCount1, TParameters[] parametersOnce2, int parametersOnceCount2)
         {
             parameterless.InjectToRun(parameterless1, parameterlessCount1);
             parameters.InjectToRun(parameters1, parametersCount1);
 
             Array.Clear(parameterlessOnce1, 0, parameterlessOnceCount1);
-            ArrayPool<TDelegate>.Shared.Return(parameterlessOnce1);
+            Return(parameterlessOnce1);
             Array.Clear(parameterlessOnce2, 0, parameterlessOnceCount2);
-            ArrayPool<TDelegate>.Shared.Return(parameterlessOnce2);
+            Return(parameterlessOnce2);
 
             Array.Clear(parametersOnce1, 0, parametersOnceCount1);
-            ArrayPool<TDelegate>.Shared.Return(parametersOnce1);
+            Return(parametersOnce1);
             Array.Clear(parametersOnce2, 0, parametersOnceCount2);
-            ArrayPool<TDelegate>.Shared.Return(parametersOnce2);
+            Return(parametersOnce2);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Purge<TDelegate>(ref EventList<TDelegate> parameterless, ref EventList<TDelegate> parameters,
-                                            ref EventListOnce<TDelegate> parameterlessOnce, ref EventListOnce<TDelegate> parametersOnce)
+        public static void Purge<TParameterless, TParameters>(
+            ref EventList<TParameterless> parameterless, ref EventList<TParameters> parameters,
+            ref EventListOnce<TParameterless> parameterlessOnce, ref EventListOnce<TParameters> parametersOnce)
         {
-            parameterless.ExtractToRun(out TDelegate[] parameterless1, out int parameterlessCount1);
+            parameterless.ExtractToRun(out TParameterless[] parameterless1, out int parameterlessCount1);
             parameterless.InjectToRun(parameterless1, parameterlessCount1);
-            parameterlessOnce.ExtractToRunRemoved(out TDelegate[] parameterlessOnce1, out int parameterlessOnceCount1);
+            parameterlessOnce.ExtractToRunRemoved(out TParameterless[] parameterlessOnce1, out int parameterlessOnceCount1);
             parameterlessOnce.InjectToRun(parameterlessOnce1, parameterlessOnceCount1);
 
-            parameters.ExtractToRun(out TDelegate[] parameters1, out int parametersCount1);
+            parameters.ExtractToRun(out TParameters[] parameters1, out int parametersCount1);
             parameters.InjectToRun(parameters1, parametersCount1);
-            parametersOnce.ExtractToRunRemoved(out TDelegate[] parametersOnce1, out int parametersOnceCount1);
+            parametersOnce.ExtractToRunRemoved(out TParameters[] parametersOnce1, out int parametersOnceCount1);
             parametersOnce.InjectToRun(parametersOnce1, parametersOnceCount1);
         }
     }

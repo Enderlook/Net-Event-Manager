@@ -79,7 +79,7 @@ namespace Enderlook.EventManager
             parameters.ExtractToRun(out ClosureDelegate<TClosure>[] parameters1, out int parametersCount1);
             parametersOnce.ExtractToRun(out ClosureDelegate<TClosure>[] parametersOnce1, out int parametersOnceCount1, out ClosureDelegate<TClosure>[] parametersOnce2, out int parametersOnceCount2);
 
-            Utility.Raise<TEvent, ClosureDelegate<TClosure>, IsClosure, TClosure>(
+            Utility.Raise<TEvent, ClosureDelegate<TClosure>, ClosureDelegate<TClosure>, IsClosure, TClosure>(
                 ref parameterless, ref parameters,
                 argument,
                 ref parameterless1, parameterlessCount1,
@@ -110,7 +110,7 @@ namespace Enderlook.EventManager
             ClosureDelegate<TClosure>[] parametersOnce1 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parametersOnce1);
             ClosureDelegate<TClosure>[] parametersOnce2 = Unsafe.As<ClosureDelegate<TClosure>[]>(handleSnapshoot.parametersOnce2);
 
-            Utility.Raise<TEvent, ClosureDelegate<TClosure>, IsClosure, TClosure>(
+            Utility.Raise<TEvent, ClosureDelegate<TClosure>, ClosureDelegate<TClosure>, IsClosure, TClosure>(
                 ref parameterless, ref parameters,
                 argument,
                 ref parameterless1, handleSnapshoot.parameterlessCount1,
