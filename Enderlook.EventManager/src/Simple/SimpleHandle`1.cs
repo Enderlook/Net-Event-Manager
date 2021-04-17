@@ -112,6 +112,7 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(TEvent argument)
         {
+            // We must use lock(object) instead of a read write lock because it must allow lock multiple times in the same thread.
             lock (this)
             {
                 int handles = 0;
