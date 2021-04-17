@@ -184,6 +184,8 @@ namespace Enderlook.EventManager
 
             for (int i = 0; i < valueClosuresCount; i++)
                 valueClosures[i].Dispose();
+
+            ArrayPool<HeapClosureHandleBase<TEvent>>.Shared.Return(valueClosures);
         }
 
         public override void Purge()
