@@ -42,6 +42,16 @@ namespace Enderlook.EventManager
             Array<T> stolenArray = Array<T>.Steal(ref Array);
             int count_ = Count;
             if (count_ == stolenArray.Length)
+                ResizeAndAdd(ref this, count_);
+            else
+            {
+                stolenArray[count_++] = element;
+                Count = count_;
+                Array<T>.Overwrite(ref Array, stolenArray);
+            }
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            void ResizeAndAdd(ref List<T> self, int count_)
             {
                 if (count_ == 0)
                     stolenArray = Array<T>.Rent(INITIAL_CAPACITY);
@@ -53,10 +63,10 @@ namespace Enderlook.EventManager
                     stolenArray.Return();
                     stolenArray = newArray;
                 }
+
+                self.Count = count_;
+                Array<T>.Overwrite(ref self.Array, stolenArray);
             }
-            stolenArray[count_++] = element;
-            Count = count_;
-            Array<T>.Overwrite(ref Array, stolenArray);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
