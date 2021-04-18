@@ -1,82 +1,71 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
 {
     internal readonly struct HandleSnapshoot
     {
-        public readonly object parameterless1;
-        public readonly int parameterlessCount1;
-        public readonly object parameterlessOnce1;
-        public readonly int parameterlessOnceCount1;
-        public readonly object parameterlessOnce2;
-        public readonly int parameterlessOnceCount2;
-        public readonly object parameters1;
-        public readonly int parametersCount1;
-        public readonly object parametersOnce1;
-        public readonly int parametersOnceCount1;
-        public readonly object parametersOnce2;
-        public readonly int parametersOnceCount2;
+        private readonly Array parameterless;
+        private readonly int parameterlessCount;
+        private readonly Array parameterlessOnce;
+        private readonly int parameterlessOnceCount;
+        private readonly Array parameters;
+        private readonly int parametersCount;
+        private readonly Array parametersOnce;
+        private readonly int parametersOnceCount;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public HandleSnapshoot(
-            object parameterless1, int parameterlessCount1,
-            object parameterlessOnce1, int parameterlessOnceCount1, object parameterlessOnce2, int parameterlessOnceCount2,
-            object parameters1, int parametersCount1,
-            object parametersOnce1, int parametersOnceCount1, object parametersOnce2, int parametersOnceCount2)
+        internal HandleSnapshoot(
+            Array parameterless, int parameterlessCount,
+            Array parameterlessOnce, int parameterlessOnceCount,
+            Array parameters, int parametersCount,
+            Array parametersOnce, int parametersOnceCount)
         {
-            this.parameterless1 = parameterless1;
-            this.parameterlessCount1 = parameterlessCount1;
-            this.parameterlessOnce1 = parameterlessOnce1;
-            this.parameterlessOnceCount1 = parameterlessOnceCount1;
-            this.parameterlessOnce2 = parameterlessOnce2;
-            this.parameterlessOnceCount2 = parameterlessOnceCount2;
-            this.parameters1 = parameters1;
-            this.parametersCount1 = parametersCount1;
-            this.parametersOnce1 = parametersOnce1;
-            this.parametersOnceCount1 = parametersOnceCount1;
-            this.parametersOnce2 = parametersOnce2;
-            this.parametersOnceCount2 = parametersOnceCount2;
+            this.parameterless = parameterless;
+            this.parameterlessCount = parameterlessCount;
+            this.parameterlessOnce = parameterlessOnce;
+            this.parameterlessOnceCount = parameterlessOnceCount;
+            this.parameters = parameters;
+            this.parametersCount = parametersCount;
+            this.parametersOnce = parametersOnce;
+            this.parametersOnceCount = parametersOnceCount;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static HandleSnapshoot Create<TParameterless, TParameters>(
-            ref EventList<TParameterless> parameterless,
-            ref EventList<TParameters> parameters,
-            ref EventListOnce<TParameterless> parameterlessOnce,
-            ref EventListOnce<TParameters> parametersOnce)
+        public void Raise<TParameterless, TParameters, TEvent, TMode, TClosure>(TEvent argument)
         {
-            parameterless.ExtractToRun(out Array<TParameterless> parameterless1, out int parameterlessCount1);
-            parameterlessOnce.ExtractToRun(out Array<TParameterless> parameterlessOnce1, out int parameterlessOnceCount1, out Array<TParameterless> parameterlessOnce2, out int parameterlessOnceCount2);
-            parameters.ExtractToRun(out Array<TParameters> parameters1, out int parametersCount1);
-            parametersOnce.ExtractToRun(out Array<TParameters> parametersOnce1, out int parametersOnceCount1, out Array<TParameters> parametersOnce2, out int parametersOnceCount2);
-
-            return new HandleSnapshoot(
-                parameterless1.AsObject, parameterlessCount1,
-                parameterlessOnce1.AsObject, parameterlessOnceCount1, parameterlessOnce2.AsObject, parameterlessOnceCount2,
-                parameters1.AsObject, parametersCount1,
-                parametersOnce1.AsObject, parametersOnceCount1, parametersOnce2.AsObject, parametersOnceCount2
-            );
+            Utility.Raise<TParameterless, Unused, TMode, TClosure>(new List<TParameterless>(new Array<TParameterless>(parameterless), parameterlessCount), new());
+            Utility.Raise<TParameterless, Unused, TMode, TClosure>(new List<TParameterless>(new Array<TParameterless>(parameterlessOnce), parameterlessOnceCount), new());
+            Utility.Raise<TParameters, TEvent, TMode, TClosure>(new List<TParameters>(new Array<TParameters>(parameters), parametersCount), argument);
+            Utility.Raise<TParameters, TEvent, TMode, TClosure>(new List<TParameters>(new Array<TParameters>(parametersOnce), parametersOnceCount), argument);
         }
 
-        public void Raise<TEvent, TParameterless, TParameters, TMode, TClosure>(
-            ref EventList<TParameterless> parameterless, ref EventList<TParameters> parameters,
-            TEvent argument)
-        {
-            Array<TParameterless> parameterless1 = new(this.parameterless1);
-            Array<TParameterless> parameterlessOnce1 = new(this.parameterlessOnce1);
-            Array<TParameterless> parameterlessOnce2 = new(this.parameterlessOnce2);
-            Array<TParameters> parameters1 = new(this.parameters1);
-            Array<TParameters> parametersOnce1 = new(this.parametersOnce1);
-            Array<TParameters> parametersOnce2 = new(this.parametersOnce2);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Raise<TEvent, TClosure>(ClosureHandle<TClosure, TEvent> closureHandle, TEvent argument)
+            => closureHandle.Raise(this, argument);
 
-            Utility.Raise<TEvent, TParameterless, TParameters, TMode, TClosure>(
-                ref parameterless, ref parameters,
-                argument,
-                ref parameterless1, parameterlessCount1,
-                parameterlessOnce1, parameterlessOnceCount1, parameterlessOnce2, parameterlessOnceCount2,
-                ref parameters1, parametersCount1,
-                parametersOnce1, parametersOnceCount1, parametersOnce2, parametersOnceCount2
-            );
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Return<TParameterless, TParameters>()
+        {
+            new List<TParameterless>(new Array<TParameterless>(parameterless), parameterlessCount).Return();
+            new List<TParameterless>(new Array<TParameterless>(parameterlessOnce), parameterlessOnceCount).Return();
+            new List<TParameters>(new Array<TParameters>(parameters), parametersCount).Return();
+            new List<TParameters>(new Array<TParameters>(parametersOnce), parametersOnceCount).Return();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static HandleSnapshoot Create<T1, T2, T3, T4>(
+            List<T1> parameterless,
+            List<T2> parameterlessOnce,
+            List<T3> parameters,
+            List<T4> parametersOnce)
+        {
+            return new(
+                parameterless.UnderlyingObject, parameterless.Count,
+                parameterlessOnce.UnderlyingObject, parameterlessOnce.Count,
+                parameters.UnderlyingObject, parameters.Count,
+                parametersOnce.UnderlyingObject, parametersOnce.Count
+                );
         }
     }
 }

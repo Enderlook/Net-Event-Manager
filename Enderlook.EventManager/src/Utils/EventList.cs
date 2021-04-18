@@ -5,42 +5,48 @@ namespace Enderlook.EventManager
 {
     internal struct EventList<TDelegate> : IDisposable
     {
-        private Array<TDelegate> toRun;
-        private int toRunCount;
-
-        private Array<TDelegate> toRemove;
-        private int toRemoveCount;
+        private List<TDelegate> toExecute;
+        private List<TDelegate> toAdd;
+        private List<TDelegate> toRemove;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static EventList<TDelegate> Create()
         {
-            Array<TDelegate> array = Array<TDelegate>.Empty();
+            List<TDelegate> list = List<TDelegate>.Empty();
             return new EventList<TDelegate>()
             {
-                toRun = array,
-                toRemove = array,
+                toExecute = list,
+                toAdd = list,
+                toRemove = list,
             };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(TDelegate element) => Utility.Add(ref toRun, ref toRunCount, element);
+        public void Add(TDelegate element) => toAdd.ConcurrentAdd(element);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(TDelegate element) => Utility.Add(ref toRemove, ref toRemoveCount, element);
+        public void Remove(TDelegate element) => toRemove.ConcurrentAdd(element);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ExtractToRun(out Array<TDelegate> toRunExtracted, out int toRunCount)
-            => Utility.ExtractToRun(ref toRun, ref this.toRunCount, ref toRemove, ref toRemoveCount, out toRunExtracted, out toRunCount);
+        public List<TDelegate> GetExecutionList()
+        {
+            Purge();
+            return toExecute.Clone();
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void InjectToRun(Array<TDelegate> array, int count)
-            => Utility.Drain(ref toRun, ref toRunCount, array, count);
+        public void Purge()
+        {
+            toExecute.ConcurrentAddFrom(ref toAdd);
+            toExecute.ConcurrentRemoveFrom(ref toRemove);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            Utility.InjectEmpty(ref toRun, ref toRunCount);
-            Utility.InjectEmpty(ref toRemove, ref toRemoveCount);
+            toExecute.Return();
+            toAdd.Return();
+            toRemove.Return();
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Enderlook.EventManager
         private EventListOnce<ClosureDelegate<TClosure>> parametersOnce;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ClosureHandle<TClosure, TEvent> Create() => new ClosureHandle<TClosure, TEvent>()
+        public static ClosureHandle<TClosure, TEvent> Create() => new()
         {
             parameterless = EventList<ClosureDelegate<TClosure>>.Create(),
             parameterlessOnce = EventListOnce<ClosureDelegate<TClosure>>.Create(),
@@ -61,72 +61,58 @@ namespace Enderlook.EventManager
 
         public void Dispose()
         {
-            parameters.Dispose();
             parameterless.Dispose();
-            parametersOnce.Dispose();
             parameterlessOnce.Dispose();
+            parameters.Dispose();
+            parametersOnce.Dispose();
         }
 
         public void Purge()
-            => Utility.Purge(ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce);
+        {
+            parameterless.Purge();
+            parameterlessOnce.Purge();
+            parameters.Purge();
+            parametersOnce.Purge();
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(TEvent argument)
         {
-            parameterless.ExtractToRun(out Array<ClosureDelegate<TClosure>> parameterless1, out int parameterlessCount1);
-            parameterlessOnce.ExtractToRun(out Array<ClosureDelegate<TClosure>> parameterlessOnce1, out int parameterlessOnceCount1, out Array<ClosureDelegate<TClosure>> parameterlessOnce2, out int parameterlessOnceCount2);
-            parameters.ExtractToRun(out Array<ClosureDelegate<TClosure>> parameters1, out int parametersCount1);
-            parametersOnce.ExtractToRun(out Array<ClosureDelegate<TClosure>> parametersOnce1, out int parametersOnceCount1, out Array<ClosureDelegate<TClosure>> parametersOnce2, out int parametersOnceCount2);
+            List<ClosureDelegate<TClosure>> parameterlessList = parameterless.GetExecutionList();
+            List<ClosureDelegate<TClosure>> parameterlessOnceList = parameterlessOnce.GetExecutionList();
+            List<ClosureDelegate<TClosure>> parametersList = parameters.GetExecutionList();
+            List<ClosureDelegate<TClosure>> parametersOnceList = parametersOnce.GetExecutionList();
 
-            Utility.Raise<TEvent, ClosureDelegate<TClosure>, ClosureDelegate<TClosure>, IsClosure, TClosure>(
-                ref parameterless, ref parameters,
-                argument,
-                ref parameterless1, parameterlessCount1,
-                parameterlessOnce1, parameterlessOnceCount1, parameterlessOnce2, parameterlessOnceCount2,
-                ref parameters1, parametersCount1,
-                parametersOnce1, parametersOnceCount1, parametersOnce2, parametersOnceCount2
-            );
+            try
+            {
+                Utility.Raise<ClosureDelegate<TClosure>, Unused, HasClosure, TClosure>(parameterlessList, new());
+                Utility.Raise<ClosureDelegate<TClosure>, Unused, HasClosure, TClosure>(parameterlessOnceList, new());
+                Utility.Raise<ClosureDelegate<TClosure>, TEvent, HasClosure, TClosure>(parametersList, argument);
+                Utility.Raise<ClosureDelegate<TClosure>, TEvent, HasClosure, TClosure>(parametersOnceList, argument);
+            }
+            finally
+            {
+                parameterlessList.Return();
+                parameterlessOnceList.Return();
+                parametersList.Return();
+                parametersOnceList.Return();
+            }
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public HandleSnapshoot ExtractSnapshoot()
-            => HandleSnapshoot.Create(ref parameterless, ref parameters, ref parameterlessOnce, ref parametersOnce);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(in HandleSnapshoot handleSnapshoot, TEvent argument)
-        {
-            Array<ClosureDelegate<TClosure>> parameterless1 = new(handleSnapshoot.parameterless1);
-            Array<ClosureDelegate<TClosure>> parameterlessOnce1 = new(handleSnapshoot.parameterlessOnce1);
-            Array<ClosureDelegate<TClosure>> parameterlessOnce2 = new(handleSnapshoot.parameterlessOnce2);
-            Array<ClosureDelegate<TClosure>> parameters1 = new(handleSnapshoot.parameters1);
-            Array<ClosureDelegate<TClosure>> parametersOnce1 = new(handleSnapshoot.parametersOnce1);
-            Array<ClosureDelegate<TClosure>> parametersOnce2 = new(handleSnapshoot.parametersOnce2);
+            => handleSnapshoot.Raise<ClosureDelegate<TClosure>, ClosureDelegate<TClosure>, TEvent, HasClosure, TClosure>(argument);
 
-            Utility.Raise<TEvent, ClosureDelegate<TClosure>, ClosureDelegate<TClosure>, IsClosure, TClosure>(
-                ref parameterless, ref parameters,
-                argument,
-                ref parameterless1, handleSnapshoot.parameterlessCount1,
-                parameterlessOnce1, handleSnapshoot.parameterlessOnceCount1, parameterlessOnce2, handleSnapshoot.parameterlessOnceCount2,
-                ref parameters1, handleSnapshoot.parametersCount1,
-                parametersOnce1, handleSnapshoot.parametersOnceCount1, parametersOnce2, handleSnapshoot.parametersOnceCount2
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Return(in HandleSnapshoot handleSnapshoot)
+            => handleSnapshoot.Return<ClosureDelegate<TClosure>, ClosureDelegate<TClosure>>();
+
+        public HandleSnapshoot ExtractSnapshoot()
+            => HandleSnapshoot.Create(
+                parameterless.GetExecutionList(),
+                parameterlessOnce.GetExecutionList(),
+                parameters.GetExecutionList(),
+                parametersOnce.GetExecutionList()
             );
-        }
-
-        public void ClearAfterRaise(in HandleSnapshoot handleSnapshoot)
-        {
-            Array<ClosureDelegate<TClosure>> parameterless1 = new(handleSnapshoot.parameterless1);
-            Array<ClosureDelegate<TClosure>> parameterlessOnce1 = new(handleSnapshoot.parameterlessOnce1);
-            Array<ClosureDelegate<TClosure>> parameterlessOnce2 = new(handleSnapshoot.parameterlessOnce2);
-            Array<ClosureDelegate<TClosure>> parameters1 = new(handleSnapshoot.parameters1);
-            Array<ClosureDelegate<TClosure>> parametersOnce1 = new(handleSnapshoot.parametersOnce1);
-            Array<ClosureDelegate<TClosure>> parametersOnce2 = new(handleSnapshoot.parametersOnce2);
-
-            Utility.CleanAfterRaise(
-                ref parameterless, ref parameters,
-                parameterless1, handleSnapshoot.parameterlessCount1, parameterlessOnce1, handleSnapshoot.parameterlessOnceCount1,
-                parameterlessOnce2, handleSnapshoot.parameterlessOnceCount2,
-                parameters1, handleSnapshoot.parametersCount1, parametersOnce1, handleSnapshoot.parametersOnceCount1,
-                parametersOnce2, handleSnapshoot.parametersOnceCount2);
-        }
     }
 }

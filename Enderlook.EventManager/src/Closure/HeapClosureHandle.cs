@@ -7,9 +7,6 @@ namespace Enderlook.EventManager
         public ClosureHandle<TClosure, TEvent> handle = ClosureHandle<TClosure, TEvent>.Create();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override void Raise(TEvent argument) => handle.Raise(argument);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override void Purge() => handle.Purge();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -22,6 +19,6 @@ namespace Enderlook.EventManager
         public override void Raise(in HandleSnapshoot handleSnapshoot, TEvent argument) => handle.Raise(handleSnapshoot, argument);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override void ClearAfterRaise(in HandleSnapshoot handleSnapshoot) => handle.ClearAfterRaise(handleSnapshoot);
+        public override void Return(in HandleSnapshoot handleSnapshoot) => handle.Return(handleSnapshoot);
     }
 }

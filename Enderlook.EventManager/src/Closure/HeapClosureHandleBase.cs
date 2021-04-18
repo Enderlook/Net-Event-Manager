@@ -4,8 +4,6 @@ namespace Enderlook.EventManager
 {
     internal abstract class HeapClosureHandleBase<TEvent> : IDisposable
     {
-        public abstract void Raise(TEvent argument);
-
         public abstract void Purge();
 
         public abstract void Dispose();
@@ -14,6 +12,6 @@ namespace Enderlook.EventManager
 
         public abstract void Raise(in HandleSnapshoot handleSnapshoot, TEvent argument);
 
-        public abstract void ClearAfterRaise(in HandleSnapshoot handleSnapshoot);
+        public abstract void Return(in HandleSnapshoot handleSnapshoot);
     }
 }

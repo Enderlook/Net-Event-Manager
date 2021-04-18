@@ -2,19 +2,20 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Enderlook.EventManager
 {
     internal struct Array<T>
     {
-        internal object array;
+        private Array array;
 
         private T[] AsArray {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Unsafe.As<T[]>(array);
         }
 
-        public object AsObject {
+        public Array AsObject {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => array;
         }
@@ -38,7 +39,7 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Array(object array)
+        public Array(Array array)
         {
             if (typeof(T).IsValueType)
                 Debug.Assert(array.GetType() == typeof(T[]));
@@ -54,8 +55,8 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CopyTo(Array<T> otherArray, int count)
-            => Array.Copy(AsArray, otherArray.AsArray, count);
+        public void CopyTo(Array<T> to, int count)
+            => Array.Copy(AsArray, to.AsArray, count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(Array<T> to, int toStartIndex, int count)
@@ -66,14 +67,11 @@ namespace Enderlook.EventManager
             => Array.Copy(AsArray, startIndex, to.AsArray, toStartIndex, count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CopyToAndReturn(Array<T> otherArray, int count)
+        public void ClearIfContainsReferences(int count)
         {
-            CopyTo(otherArray, count);
-            ClearAndReturn(count);
+            // TODO, in .Net Standard 2.1 we can use RuntimeHelpers.IsReferenceOrContainsReferences<T>() to check if we need to clear it or not.
+            Array.Clear(AsArray, 0, count);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Clear(int count) => Array.Clear(AsArray, 0, count);
 
         private static class Container<U>
         {
@@ -114,22 +112,29 @@ namespace Enderlook.EventManager
             {
                 Debug.Assert(array.GetType() == typeof(T[]));
                 ArrayPool<T>.Shared.Return(Unsafe.As<T[]>(array));
-                array = Empty();
+                array = Empty().array;
             }
             else
             {
                 Debug.Assert(array.GetType() == typeof(object[]));
                 ArrayPool<object>.Shared.Return(Unsafe.As<object[]>(array));
-                array = Empty();
+                array = Empty().array;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ClearAndReturn(int count)
+        public static Array<T> Steal(ref Array<T> array)
         {
-            // TODO, in .Net Standard 2.1 we can use RuntimeHelpers.IsReferenceOrContainsReferences<T>() to check if we need to clear it or not.
-            Clear(count);
-            Return();
+            Array value_;
+            do
+            {
+                value_ = Interlocked.Exchange(ref array.array, null);
+            } while (value_ is null);
+            return new Array<T>(value_);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Overwrite(ref Array<T> array, Array<T> other)
+            => array.array = other.array;
     }
 }
