@@ -142,6 +142,7 @@ namespace Enderlook.EventManager
                     catch
                     {
                         ClearOnError(snapshoots, ref index, ref i);
+                        throw;
                     }
                 }
                 finally
