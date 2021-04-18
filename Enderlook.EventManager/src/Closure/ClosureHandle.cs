@@ -7,7 +7,7 @@ namespace Enderlook.EventManager
     internal struct ClosureHandle<TClosure, TEvent> : IDisposable
     {
         /* We store instances of `Action`.
-         * The lack of the delegate type in the `ClosureDelegate` type allow us to avoid the generic instantiation of ArrayPool<Action<TEvent>>.
+         * The lack of the delegate type in the `ClosureDelegate` type allow us to avoid the generic instantiation of ArrayPool<Action>.
          * And so we store less unused arrays on the pool.*/
         private EventList<ClosureDelegate<TClosure>> parameterless;
         private EventListOnce<ClosureDelegate<TClosure>> parameterlessOnce;
