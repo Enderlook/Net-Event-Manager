@@ -76,30 +76,6 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Raise(TEvent argument)
-        {
-            List<ClosureDelegate<TClosure>> parameterlessList = parameterless.GetExecutionList();
-            List<ClosureDelegate<TClosure>> parameterlessOnceList = parameterlessOnce.GetExecutionList();
-            List<ClosureDelegate<TClosure>> parametersList = parameters.GetExecutionList();
-            List<ClosureDelegate<TClosure>> parametersOnceList = parametersOnce.GetExecutionList();
-
-            try
-            {
-                Utility.Raise<ClosureDelegate<TClosure>, Unused, HasClosure, TClosure>(parameterlessList, new());
-                Utility.Raise<ClosureDelegate<TClosure>, Unused, HasClosure, TClosure>(parameterlessOnceList, new());
-                Utility.Raise<ClosureDelegate<TClosure>, TEvent, HasClosure, TClosure>(parametersList, argument);
-                Utility.Raise<ClosureDelegate<TClosure>, TEvent, HasClosure, TClosure>(parametersOnceList, argument);
-            }
-            finally
-            {
-                parameterlessList.Return();
-                parameterlessOnceList.Return();
-                parametersList.Return();
-                parametersOnceList.Return();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(in HandleSnapshoot handleSnapshoot, TEvent argument)
             => handleSnapshoot.Raise<ClosureDelegate<TClosure>, ClosureDelegate<TClosure>, TEvent, HasClosure, TClosure>(argument);
 
