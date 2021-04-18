@@ -62,12 +62,12 @@ namespace Enderlook.EventManager
             ref EventList<TParameterless> parameterless, ref EventList<TParameters> parameters,
             TEvent argument)
         {
-            Array<TParameterless> parameterless1 = new Array<TParameterless>(this.parameterless1);
-            Array<TParameterless> parameterlessOnce1 = new Array<TParameterless>(this.parameterlessOnce1);
-            Array<TParameterless> parameterlessOnce2 = new Array<TParameterless>(this.parameterlessOnce2);
-            Array<TParameters> parameters1 = new Array<TParameters>(this.parameters1);
-            Array<TParameters> parametersOnce1 = new Array<TParameters>(this.parametersOnce1);
-            Array<TParameters> parametersOnce2 = new Array<TParameters>(this.parametersOnce2);
+            Array<TParameterless> parameterless1 = new(this.parameterless1);
+            Array<TParameterless> parameterlessOnce1 = new(this.parameterlessOnce1);
+            Array<TParameterless> parameterlessOnce2 = new(this.parameterlessOnce2);
+            Array<TParameters> parameters1 = new(this.parameters1);
+            Array<TParameters> parametersOnce1 = new(this.parametersOnce1);
+            Array<TParameters> parametersOnce2 = new(this.parametersOnce2);
 
             Utility.Raise<TEvent, TParameterless, TParameters, TMode, TClosure>(
                 ref parameterless, ref parameters,

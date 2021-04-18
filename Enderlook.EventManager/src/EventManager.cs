@@ -12,11 +12,11 @@ namespace Enderlook.EventManager
     {
         private ReadWriterLock simpleCallbacksLocker;
         // `object` is actually `SimpleHandle<TEvent>`.
-        private readonly Dictionary<Type, object> simpleCallbacks = new Dictionary<Type, object>();
+        private readonly Dictionary<Type, object> simpleCallbacks = new();
 
         private ReadWriterLock closureCallbacksLocker;
         // `object` is actually `HeapClosureHandle<TClosure, TEvent>`.
-        private readonly Dictionary<(Type, Type), object> closureCallbacks = new Dictionary<(Type, Type), object>();
+        private readonly Dictionary<(Type, Type), object> closureCallbacks = new();
 
         /// <summary>
         /// Subscribes the callback <paramref name="callback"/> to execute when the event type <typeparamref name="TEvent"/> is raised.
@@ -334,7 +334,7 @@ namespace Enderlook.EventManager
                         Debug.Assert(obj is SimpleHandle<TEvent>);
                         return Unsafe.As<SimpleHandle<TEvent>>(obj);
                     }
-                    SimpleHandle<TEvent> handle = new SimpleHandle<TEvent>();
+                    SimpleHandle<TEvent> handle = new();
                     simpleCallbacks[key] = handle;
                     simpleCallbacksLocker.WriteEnd();
                     return handle;
@@ -385,7 +385,7 @@ namespace Enderlook.EventManager
                     Debug.Assert(obj is HeapClosureHandle<TClosure, TEvent>);
                     return Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(obj);
                 }
-                HeapClosureHandle<TClosure, TEvent> handle = new HeapClosureHandle<TClosure, TEvent>();
+                HeapClosureHandle<TClosure, TEvent> handle = new();
                 closureCallbacks[key] = handle;
                 GetOrCreateSimpleHandle<TEvent>().AddValueClosure(handle);
                 closureCallbacksLocker.WriteEnd();

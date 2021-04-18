@@ -95,12 +95,12 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(in HandleSnapshoot handleSnapshoot, TEvent argument)
         {
-            Array<ClosureDelegate<TClosure>> parameterless1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameterless1);
-            Array<ClosureDelegate<TClosure>> parameterlessOnce1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameterlessOnce1);
-            Array<ClosureDelegate<TClosure>> parameterlessOnce2 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameterlessOnce2);
-            Array<ClosureDelegate<TClosure>> parameters1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameters1);
-            Array<ClosureDelegate<TClosure>> parametersOnce1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parametersOnce1);
-            Array<ClosureDelegate<TClosure>> parametersOnce2 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parametersOnce2);
+            Array<ClosureDelegate<TClosure>> parameterless1 = new(handleSnapshoot.parameterless1);
+            Array<ClosureDelegate<TClosure>> parameterlessOnce1 = new(handleSnapshoot.parameterlessOnce1);
+            Array<ClosureDelegate<TClosure>> parameterlessOnce2 = new(handleSnapshoot.parameterlessOnce2);
+            Array<ClosureDelegate<TClosure>> parameters1 = new(handleSnapshoot.parameters1);
+            Array<ClosureDelegate<TClosure>> parametersOnce1 = new(handleSnapshoot.parametersOnce1);
+            Array<ClosureDelegate<TClosure>> parametersOnce2 = new(handleSnapshoot.parametersOnce2);
 
             Utility.Raise<TEvent, ClosureDelegate<TClosure>, ClosureDelegate<TClosure>, IsClosure, TClosure>(
                 ref parameterless, ref parameters,
@@ -114,12 +114,12 @@ namespace Enderlook.EventManager
 
         public void ClearAfterRaise(in HandleSnapshoot handleSnapshoot)
         {
-            Array<ClosureDelegate<TClosure>> parameterless1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameterless1);
-            Array<ClosureDelegate<TClosure>> parameterlessOnce1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameterlessOnce1);
-            Array<ClosureDelegate<TClosure>> parameterlessOnce2 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameterlessOnce2);
-            Array<ClosureDelegate<TClosure>> parameters1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parameters1);
-            Array<ClosureDelegate<TClosure>> parametersOnce1 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parametersOnce1);
-            Array<ClosureDelegate<TClosure>> parametersOnce2 = new Array<ClosureDelegate<TClosure>>(handleSnapshoot.parametersOnce2);
+            Array<ClosureDelegate<TClosure>> parameterless1 = new(handleSnapshoot.parameterless1);
+            Array<ClosureDelegate<TClosure>> parameterlessOnce1 = new(handleSnapshoot.parameterlessOnce1);
+            Array<ClosureDelegate<TClosure>> parameterlessOnce2 = new(handleSnapshoot.parameterlessOnce2);
+            Array<ClosureDelegate<TClosure>> parameters1 = new(handleSnapshoot.parameters1);
+            Array<ClosureDelegate<TClosure>> parametersOnce1 = new(handleSnapshoot.parametersOnce1);
+            Array<ClosureDelegate<TClosure>> parametersOnce2 = new(handleSnapshoot.parametersOnce2);
 
             Utility.CleanAfterRaise(
                 ref parameterless, ref parameters,
