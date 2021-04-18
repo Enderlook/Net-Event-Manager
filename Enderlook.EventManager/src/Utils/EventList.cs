@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Enderlook.EventManager
 {
     internal struct EventList<TDelegate> : IDisposable
     {
         private List<TDelegate> toExecute;
+        private int toExecuteIsBeingUsed;
         private List<TDelegate> toAdd;
         private List<TDelegate> toRemove;
 
@@ -30,8 +32,41 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public List<TDelegate> GetExecutionList()
         {
+            // We try to avoid the cloning of the list by borrowing it on the first execution
+
+            int value;
+            do
+            {
+                value = Interlocked.Exchange(ref toExecuteIsBeingUsed, 2);
+            } while (value == 2);
+
+            if (value == 1)
+                toExecute = toExecute.Clone();
+
             Purge();
-            return toExecute.Clone();
+
+            List<TDelegate> result = toExecute;
+            toExecuteIsBeingUsed = 1;
+            return result;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ReturnExecutionList(List<TDelegate> list)
+        {
+            int value;
+            do
+            {
+                value = Interlocked.Exchange(ref toExecuteIsBeingUsed, 2);
+            } while (value == 2);
+
+            if (list.Array.AsObject == toExecute.Array.AsObject)
+            {
+                toExecuteIsBeingUsed = 0;
+                return;
+            }
+
+            toExecuteIsBeingUsed = value;
+            list.Return();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

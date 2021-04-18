@@ -111,62 +111,58 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Raise(TEvent argument)
         {
-            // We must use lock(object) instead of a read write lock because it must allow lock multiple times in the same thread.
-            lock (this)
+            int valueClosuresCount = valueClosures.Count;
+
+            int handles = 0;
+            handles++; // SimpleHandle
+            handles++; // Reference Closures Handles
+            handles += valueClosuresCount;
+
+            Array<HandleSnapshoot> snapshoots = Array<HandleSnapshoot>.Rent(handles);
+
+            // Create snapshoot of listeners.
+            int index = 0;
+            snapshoots[index++] = HandleSnapshoot.Create(
+                parameterless.GetExecutionList(),
+                parameterlessOnce.GetExecutionList(),
+                parameters.GetExecutionList(),
+                parametersOnce.GetExecutionList()
+            );
+            snapshoots[index++] = referenceClosures.ExtractSnapshoot();
+
+            if (valueClosuresCount > 0)
             {
-                int valueClosuresCount = valueClosures.Count;
+                Array<HeapClosureHandleBase<TEvent>> valueClosuresStolen = Array<HeapClosureHandleBase<TEvent>>.Steal(ref valueClosures.Array);
+                int i = 0;
+                for (; i < valueClosuresCount; i++)
+                    snapshoots[index++] = valueClosures[i].ExtractSnapshoot();
+                Array<HeapClosureHandleBase<TEvent>>.Overwrite(ref valueClosures.Array, valueClosuresStolen);
+            }
 
-                int handles = 0;
-                handles++; // SimpleHandle
-                handles++; // Reference Closures Handles
-                handles += valueClosuresCount;
-
-                Array<HandleSnapshoot> snapshoots = Array<HandleSnapshoot>.Rent(handles);
-
-                // Create snapshoot of listeners.
-                int index = 0;
-                snapshoots[index++] = HandleSnapshoot.Create(
-                    parameterless.GetExecutionList(),
-                    parameterlessOnce.GetExecutionList(),
-                    parameters.GetExecutionList(),
-                    parametersOnce.GetExecutionList()
-                );
-                snapshoots[index++] = referenceClosures.ExtractSnapshoot();
-
+            try
+            {
+                index = 0;
+                snapshoots[index++].Raise<Action, Action<TEvent>, TEvent, HasNoClosure, Unused>(argument);
+                referenceClosures.Raise(snapshoots[index++], argument);
                 if (valueClosuresCount > 0)
                 {
-                    Array<HeapClosureHandleBase<TEvent>> valueClosuresStolen = Array<HeapClosureHandleBase<TEvent>>.Steal(ref valueClosures.Array);
-                    int i = 0;
-                    for (; i < valueClosuresCount; i++)
-                        snapshoots[index++] = valueClosures[i].ExtractSnapshoot();
-                    Array<HeapClosureHandleBase<TEvent>>.Overwrite(ref valueClosures.Array, valueClosuresStolen);
-                }
-
-                try
-                {
-                    index = 0;
-                    snapshoots[index++].Raise<Action, Action<TEvent>, TEvent, HasNoClosure, Unused>(argument);
-                    referenceClosures.Raise(snapshoots[index++], argument);
-                    if (valueClosuresCount > 0)
-                    {
-                        for (int i = 0; i < valueClosuresCount; i++)
-                            valueClosures.ConcurrentGet(i).Raise(snapshoots[index++], argument);
-                    }
-                }
-                finally
-                {
-                    index = 0;
-                    snapshoots[index++].Return<Action, Action<TEvent>>();
-                    referenceClosures.Return(snapshoots[index++]);
-
-                    Array<HeapClosureHandleBase<TEvent>> valueClosuresStolen = Array<HeapClosureHandleBase<TEvent>>.Steal(ref valueClosures.Array);
                     for (int i = 0; i < valueClosuresCount; i++)
-                        valueClosuresStolen[i].Return(snapshoots[index++]);
-                    Array<HeapClosureHandleBase<TEvent>>.Overwrite(ref valueClosures.Array, valueClosuresStolen);
-
-                    snapshoots.ClearIfContainsReferences(handles);
-                    snapshoots.Return();
+                        valueClosures.ConcurrentGet(i).Raise(snapshoots[index++], argument);
                 }
+            }
+            finally
+            {
+                index = 0;
+                snapshoots[index++].Return(ref parameterless, ref parameters);
+                referenceClosures.Return(snapshoots[index++]);
+
+                Array<HeapClosureHandleBase<TEvent>> valueClosuresStolen = Array<HeapClosureHandleBase<TEvent>>.Steal(ref valueClosures.Array);
+                for (int i = 0; i < valueClosuresCount; i++)
+                    valueClosuresStolen[i].Return(snapshoots[index++]);
+                Array<HeapClosureHandleBase<TEvent>>.Overwrite(ref valueClosures.Array, valueClosuresStolen);
+
+                snapshoots.ClearIfContainsReferences(handles);
+                snapshoots.Return();
             }
         }
 

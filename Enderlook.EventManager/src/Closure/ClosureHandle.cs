@@ -105,7 +105,7 @@ namespace Enderlook.EventManager
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Return(in HandleSnapshoot handleSnapshoot)
-            => handleSnapshoot.Return<ClosureDelegate<TClosure>, ClosureDelegate<TClosure>>();
+            => handleSnapshoot.Return(ref parameterless, ref parameters);
 
         public HandleSnapshoot ExtractSnapshoot()
             => HandleSnapshoot.Create(

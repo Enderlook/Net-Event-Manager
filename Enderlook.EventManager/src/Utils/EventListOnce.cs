@@ -27,8 +27,15 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public List<TDelegate> GetExecutionList()
         {
-            Purge();
-            return toAdd.Clone();
+            Array<TDelegate> add = Array<TDelegate>.Steal(ref toAdd.Array);
+            Array<TDelegate> remove = Array<TDelegate>.Steal(ref toRemove.Array);
+            List<TDelegate> toAdd_ = new(add, toAdd.Count);
+            List<TDelegate> toRemove_ = new(remove, toRemove.Count);
+            toAdd.InjectZero();
+            toRemove.InjectZero();
+            toAdd_.ConcurrentRemoveFrom(ref toRemove_);
+            toRemove_.Return();
+            return toAdd_.Clone();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

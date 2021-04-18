@@ -45,11 +45,11 @@ namespace Enderlook.EventManager
             => closureHandle.Raise(this, argument);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Return<TParameterless, TParameters>()
+        public void Return<TParameterless, TParameters>(ref EventList<TParameterless> parameterless, ref EventList<TParameters> parameters)
         {
-            new List<TParameterless>(new Array<TParameterless>(parameterless), parameterlessCount).Return();
+            parameterless.ReturnExecutionList(new List<TParameterless>(new Array<TParameterless>(this.parameterless), parameterlessCount));
+            parameters.ReturnExecutionList(new List<TParameters>(new Array<TParameters>(this.parameters), parametersCount));
             new List<TParameterless>(new Array<TParameterless>(parameterlessOnce), parameterlessOnceCount).Return();
-            new List<TParameters>(new Array<TParameters>(parameters), parametersCount).Return();
             new List<TParameters>(new Array<TParameters>(parametersOnce), parametersOnceCount).Return();
         }
 

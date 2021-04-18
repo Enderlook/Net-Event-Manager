@@ -60,6 +60,14 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void InjectZero()
+        {
+            Debug.Assert(Array.AsObject is null);
+            Count = 0;
+            Array = Array<T>.Empty();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ConcurrentAddFrom(ref List<T> toAdd)
         {
             Array<T> self = Array<T>.Steal(ref Array);
