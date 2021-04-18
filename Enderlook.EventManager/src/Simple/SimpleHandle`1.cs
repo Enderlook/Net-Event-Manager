@@ -63,17 +63,17 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Subscribe<TClosure, T>(Action<TClosure, T> @delegate, TClosure closure)
+        public void Subscribe<TClosure>(Action<TClosure, TEvent> @delegate, TClosure closure)
         {
             Debug.Assert(!typeof(TClosure).IsValueType);
-            referenceClosures.Subscribe(Unsafe.As<Action<object>>(@delegate), closure);
+            referenceClosures.Subscribe(Unsafe.As<Action<object, TEvent>>(@delegate), closure);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Unsubscribe<TClosure, U>(Action<TClosure, U> @delegate, TClosure closure)
+        public void Unsubscribe<TClosure>(Action<TClosure, TEvent> @delegate, TClosure closure)
         {
             Debug.Assert(!typeof(TClosure).IsValueType);
-            referenceClosures.Unsubscribe(Unsafe.As<Action<object>>(@delegate), closure);
+            referenceClosures.Unsubscribe(Unsafe.As<Action<object, TEvent>>(@delegate), closure);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
