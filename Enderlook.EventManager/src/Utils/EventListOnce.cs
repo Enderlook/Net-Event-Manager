@@ -39,7 +39,12 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Purge() => toAdd.ConcurrentRemoveFrom(ref toRemove);
+        public void Purge()
+        {
+            toAdd.ConcurrentRemoveFrom(ref toRemove);
+            toAdd.ExtractIfEmpty();
+            toRemove.ExtractIfEmpty();
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()

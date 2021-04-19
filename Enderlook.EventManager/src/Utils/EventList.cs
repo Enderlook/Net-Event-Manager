@@ -43,7 +43,7 @@ namespace Enderlook.EventManager
             if (value == 1)
                 toExecute = toExecute.Clone();
 
-            Purge();
+            Compact();
 
             List<TDelegate> result = toExecute;
             if (result.Count == 0)
@@ -76,6 +76,15 @@ namespace Enderlook.EventManager
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Purge()
+        {
+            Compact();
+            toAdd.ExtractIfEmpty();
+            toRemove.ExtractIfEmpty();
+            toExecute.ExtractIfEmpty();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Compact()
         {
             toExecute.ConcurrentAddFrom(ref toAdd);
             toExecute.ConcurrentRemoveFrom(ref toRemove);

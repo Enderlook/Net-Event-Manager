@@ -179,6 +179,19 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ExtractIfEmpty()
+        {
+            Array<T> self = Array<T>.Steal(ref Array);
+            if (Count == 0)
+            {
+                self.Return();
+                Array = Array<T>.Empty();
+            }
+            else
+                Array<T>.Overwrite(ref Array, self);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static List<T> Rent(int minCapacity) => new(Array<T>.Rent(minCapacity), 0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
