@@ -12,7 +12,7 @@ namespace Enderlook.EventManager
     {
         private ReadWriterLock simpleCallbacksLocker;
         // `object` is actually `SimpleHandle<TEvent>`.
-        private readonly Dictionary<Type, object> simpleCallbacks = new();
+        private readonly Dictionary<Type, SimpleHandle> simpleCallbacks = new();
 
         private ReadWriterLock closureCallbacksLocker;
         // `object` is actually `HeapClosureHandle<TClosure, TEvent>`.
@@ -312,7 +312,7 @@ namespace Enderlook.EventManager
 
             simpleCallbacksLocker.ReadBegin();
             {
-                if (simpleCallbacks.TryGetValue(key, out object obj))
+                if (simpleCallbacks.TryGetValue(key, out SimpleHandle obj))
                 {
                     simpleCallbacksLocker.ReadEnd();
                     Debug.Assert(obj is SimpleHandle<TEvent>);
@@ -328,7 +328,7 @@ namespace Enderlook.EventManager
             {
                 simpleCallbacksLocker.WriteBegin();
                 {
-                    if (simpleCallbacks.TryGetValue(key, out object obj))
+                    if (simpleCallbacks.TryGetValue(key, out SimpleHandle obj))
                     {
                         simpleCallbacksLocker.WriteEnd();
                         Debug.Assert(obj is SimpleHandle<TEvent>);
@@ -347,7 +347,7 @@ namespace Enderlook.EventManager
         {
             Type key = typeof(TEvent);
             simpleCallbacksLocker.ReadBegin();
-            if (!simpleCallbacks.TryGetValue(key, out object obj))
+            if (!simpleCallbacks.TryGetValue(key, out SimpleHandle obj))
             {
                 simpleCallbacksLocker.ReadEnd();
                 handle = null;
