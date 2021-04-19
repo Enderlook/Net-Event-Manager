@@ -54,11 +54,11 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static HandleSnapshoot Create<T1, T2, T3, T4>(
-            List<T1> parameterless,
-            List<T2> parameterlessOnce,
-            List<T3> parameters,
-            List<T4> parametersOnce)
+        public static HandleSnapshoot Create<TParameterless, TParameters>(
+            List<TParameterless> parameterless,
+            List<TParameterless> parameterlessOnce,
+            List<TParameters> parameters,
+            List<TParameters> parametersOnce)
         {
             return new(
                 parameterless.UnderlyingObject, parameterless.Count,
