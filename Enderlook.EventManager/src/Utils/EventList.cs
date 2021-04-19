@@ -46,6 +46,11 @@ namespace Enderlook.EventManager
             Purge();
 
             List<TDelegate> result = toExecute;
+            if (result.Count == 0)
+            {
+                toExecuteIsBeingUsed = value;
+                return List<TDelegate>.Empty();
+            }
             toExecuteIsBeingUsed = 1;
             return result;
         }
