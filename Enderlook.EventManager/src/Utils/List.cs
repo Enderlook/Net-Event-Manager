@@ -14,9 +14,17 @@ namespace Enderlook.EventManager
 
         public int Count { get; private set; }
 
-        public T this[int index] => Array[index];
+        public T this[int index] {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Array[index];
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set => Array[index] = value;
+        }
 
-        public Array UnderlyingObject => Array.AsObject;
+        public Array UnderlyingObject {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Array.AsObject;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public List(Array<T> array, int count)
@@ -26,7 +34,21 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public List<T> Clone()
+        public static List<T> Steal(ref List<T> list)
+        {
+            Array<T> stolen = Array<T>.Steal(ref list.Array);
+            return new List<T>(stolen, list.Count);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Overwrite(ref List<T> list, List<T> other)
+        {
+            list.Count = other.Count;
+            Array<T>.Overwrite(ref list.Array, other.Array);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public List<T> ConcurrentClone()
         {
             Array<T> stolenArray = Array<T>.Steal(ref Array);
             List<T> list = Rent(Count);
@@ -78,96 +100,74 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ConcurrentAddFrom(ref List<T> toAdd)
+        public void AddFrom(ref List<T> toAdd)
         {
-            Array<T> self = Array<T>.Steal(ref Array);
-            Array<T> add = Array<T>.Steal(ref toAdd.Array);
-
             if (toAdd.Count == 0)
-            {
-                Array<T>.Overwrite(ref Array, self);
-                Array<T>.Overwrite(ref toAdd.Array, add);
                 return;
-            }
 
             int total = Count + toAdd.Count;
-            if (self.Length < total)
+            if (Array.Length < total)
                 ResizeAndAdd(ref this, ref toAdd);
             else
                 AddFrom(ref this, ref toAdd);
 
             [MethodImpl(MethodImplOptions.NoInlining)]
-            void AddFrom(ref List<T> selfList, ref List<T> toAdd)
+            void AddFrom(ref List<T> self, ref List<T> toAdd)
             {
-                add.CopyTo(self, selfList.Count + 1, toAdd.Count);
-                add.ClearIfContainsReferences(toAdd.Count);
+                toAdd.Array.CopyTo(self.Array, self.Count + 1, toAdd.Count);
+                toAdd.Array.ClearIfContainsReferences(toAdd.Count);
                 toAdd.Count = 0;
-                selfList.Count = total;
-                Array<T>.Overwrite(ref selfList.Array, self);
-                Array<T>.Overwrite(ref toAdd.Array, add);
+                self.Count = total;
             }
 
             [MethodImpl(MethodImplOptions.NoInlining)]
-            void ResizeAndAdd(ref List<T> selfList, ref List<T> toAdd)
+            void ResizeAndAdd(ref List<T> self, ref List<T> toAdd)
             {
                 Array<T> newArray = Array<T>.Rent(total);
-                self.CopyTo(newArray, selfList.Count);
-                self.ClearIfContainsReferences(selfList.Count);
+                self.Array.CopyTo(newArray, self.Count);
                 self.Return();
-                add.CopyTo(newArray, selfList.Count, toAdd.Count);
-                add.ClearIfContainsReferences(toAdd.Count);
+                toAdd.Array.CopyTo(newArray, self.Count, toAdd.Count);
+                toAdd.Array.ClearIfContainsReferences(toAdd.Count);
                 toAdd.Count = 0;
-                selfList.Count = total;
-                Array<T>.Overwrite(ref selfList.Array, newArray);
-                Array<T>.Overwrite(ref toAdd.Array, add);
+                self.Count = total;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ConcurrentRemoveFrom(ref List<T> toRemove)
+        public void RemoveFrom(ref List<T> toRemove)
         {
-            Array<T> self = Array<T>.Steal(ref Array);
-            Array<T> remove = Array<T>.Steal(ref toRemove.Array);
-
             if (toRemove.Count == 0)
-            {
-                Array<T>.Overwrite(ref Array, self);
-                Array<T>.Overwrite(ref toRemove.Array, remove);
                 return;
-            }
 
             Remove(ref this, ref toRemove);
 
             [MethodImpl(MethodImplOptions.NoInlining)]
-            void Remove(ref List<T> selfList, ref List<T> removeList)
+            static void Remove(ref List<T> self, ref List<T> toRemove)
             {
                 EqualityComparer<T> comparer = EqualityComparer<T>.Default;
                 // TODO: Time complexity of this could be reduced by sorting the arrays. Research if that may be worth.
                 int j = 0;
-                T _ = self[selfList.Count - 1];
-                _ = remove[removeList.Count - 1];
-                for (int i = 0; i < selfList.Count; i++)
+                T _ = self[self.Count - 1];
+                _ = toRemove[toRemove.Count - 1];
+                for (int i = 0; i < self.Count; i++)
                 {
                     T element = self[i];
-                    for (int k = removeList.Count - 1; k >= 0; k--)
+                    for (int k = toRemove.Count - 1; k >= 0; k--)
                     {
-                        if (comparer.Equals(element, remove[k]))
+                        if (comparer.Equals(element, toRemove[k]))
                         {
-                            remove.CopyTo(k + 1, remove, k, removeList.Count - k);
-                            removeList.Count--;
+                            toRemove.Array.CopyTo(k + 1, toRemove.Array, k, toRemove.Count - k);
+                            toRemove.Count--;
                             goto next;
                         }
                         self[j++] = element;
                         next:;
                     }
                 }
-                selfList.Count = j;
+                self.Count = j;
 
-                remove.ClearIfContainsReferences(removeList.Count);
-                removeList.Count = 0;
-
-                Array<T>.Overwrite(ref selfList.Array, self);
-                Array<T>.Overwrite(ref removeList.Array, remove);
+                toRemove.Array.ClearIfContainsReferences(toRemove.Count);
+                toRemove.Count = 0;
             }
         }
 

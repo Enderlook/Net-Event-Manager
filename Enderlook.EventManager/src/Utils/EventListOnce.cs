@@ -27,23 +27,29 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public List<TDelegate> GetExecutionList()
         {
-            Array<TDelegate> add = Array<TDelegate>.Steal(ref toAdd.Array);
-            Array<TDelegate> remove = Array<TDelegate>.Steal(ref toRemove.Array);
-            List<TDelegate> toAdd_ = new(add, toAdd.Count);
-            List<TDelegate> toRemove_ = new(remove, toRemove.Count);
-            toAdd.InjectZero();
-            toRemove.InjectZero();
-            toAdd_.ConcurrentRemoveFrom(ref toRemove_);
-            toRemove_.Return();
-            return toAdd_.Clone();
+            List<TDelegate> toAdd_ = List<TDelegate>.Steal(ref toAdd);
+            List<TDelegate> toRemove_ = List<TDelegate>.Steal(ref toRemove);
+            toAdd_.RemoveFrom(ref toRemove);
+            List<TDelegate>.Overwrite(ref toRemove, toRemove_);
+            List<TDelegate>.Overwrite(ref toAdd, List<TDelegate>.Empty());
+            return toAdd_;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Purge()
         {
-            toAdd.ConcurrentRemoveFrom(ref toRemove);
-            toAdd.ExtractIfEmpty();
-            toRemove.ExtractIfEmpty();
+            List<TDelegate> toAdd_ = List<TDelegate>.Steal(ref toAdd);
+            List<TDelegate> toRemove_ = List<TDelegate>.Steal(ref toRemove);
+            toAdd_.RemoveFrom(ref toRemove);
+            List<TDelegate>.Overwrite(ref toRemove, List<TDelegate>.Empty());
+            toRemove_.Return();
+            if (toAdd_.Count == 0)
+            {
+                List<TDelegate>.Overwrite(ref toAdd, List<TDelegate>.Empty());
+                toAdd_.Return();
+            }
+            else
+                List<TDelegate>.Overwrite(ref toAdd, toAdd_);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

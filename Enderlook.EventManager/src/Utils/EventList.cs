@@ -41,7 +41,7 @@ namespace Enderlook.EventManager
             } while (value == 2);
 
             if (value == 1)
-                toExecute = toExecute.Clone();
+                toExecute = toExecute.ConcurrentClone();
 
             Compact();
 
@@ -77,17 +77,39 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Purge()
         {
-            Compact();
-            toAdd.ExtractIfEmpty();
-            toRemove.ExtractIfEmpty();
-            toExecute.ExtractIfEmpty();
+            List<TDelegate> toExecute_ = List<TDelegate>.Steal(ref toExecute);
+            List<TDelegate> toAdd_ = List<TDelegate>.Steal(ref toAdd);
+            toExecute_.AddFrom(ref toAdd_);
+            List<TDelegate>.Overwrite(ref toAdd, List<TDelegate>.Empty());
+            toAdd_.Return();
+
+            List<TDelegate> toRemove_ = List<TDelegate>.Steal(ref toRemove);
+            toExecute.RemoveFrom(ref toRemove);
+            List<TDelegate>.Overwrite(ref toRemove, List<TDelegate>.Empty());
+            toRemove_.Return();
+
+            if (toExecute_.Count == 0)
+            {
+                List<TDelegate>.Overwrite(ref toExecute, List<TDelegate>.Empty());
+                toExecute_.Return();
+            }
+            else
+                List<TDelegate>.Overwrite(ref toExecute, toExecute_);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Compact()
         {
-            toExecute.ConcurrentAddFrom(ref toAdd);
-            toExecute.ConcurrentRemoveFrom(ref toRemove);
+            List<TDelegate> toExecute_ = List<TDelegate>.Steal(ref toExecute);
+            List<TDelegate> toAdd_ = List<TDelegate>.Steal(ref toAdd);
+            toExecute_.AddFrom(ref toAdd_);
+            List<TDelegate>.Overwrite(ref toAdd, toAdd_);
+
+            List<TDelegate> toRemove_ = List<TDelegate>.Steal(ref toRemove);
+            toExecute.RemoveFrom(ref toRemove);
+            List<TDelegate>.Overwrite(ref toRemove, toRemove_);
+
+            List<TDelegate>.Overwrite(ref toExecute, toExecute_);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
