@@ -5,8 +5,12 @@ namespace Enderlook.EventManager
 {
     internal struct EventList<TDelegate> : IEventCollection<TDelegate>
     {
+        private const int LOCKED = 2;
+        private const int BORROWED = 1;
+        private const int FREE = 0;
+
         private List<TDelegate> toExecute;
-        private int toExecuteIsBeingUsed;
+        private int toExecuteState;
         private List<TDelegate> toAdd;
         private List<TDelegate> toRemove;
 
@@ -36,21 +40,21 @@ namespace Enderlook.EventManager
             int value;
             do
             {
-                value = Interlocked.Exchange(ref toExecuteIsBeingUsed, 2);
-            } while (value == 2);
+                value = Interlocked.Exchange(ref toExecuteState, LOCKED);
+            } while (value == LOCKED);
 
-            if (value == 1)
+            if (value == BORROWED)
                 toExecute = toExecute.ConcurrentClone();
 
             Compact();
 
             List<TDelegate> result = toExecute;
-            if (result.Count == 0)
+            if (result.Count == FREE)
             {
-                toExecuteIsBeingUsed = value;
+                toExecuteState = value;
                 return List<TDelegate>.Empty();
             }
-            toExecuteIsBeingUsed = 1;
+            toExecuteState = BORROWED;
             return result;
         }
 
@@ -60,16 +64,16 @@ namespace Enderlook.EventManager
             int value;
             do
             {
-                value = Interlocked.Exchange(ref toExecuteIsBeingUsed, 2);
-            } while (value == 2);
+                value = Interlocked.Exchange(ref toExecuteState, LOCKED);
+            } while (value == LOCKED);
 
             if (list.Array.AsObject == toExecute.Array.AsObject)
             {
-                toExecuteIsBeingUsed = 0;
+                toExecuteState = FREE;
                 return;
             }
 
-            toExecuteIsBeingUsed = value;
+            toExecuteState = value;
             list.Return();
         }
 
