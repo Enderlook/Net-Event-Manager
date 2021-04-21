@@ -130,7 +130,7 @@ namespace Enderlook.EventManager
                 toAdd.Array.CopyTo(newArray, self.Count, toAdd.Count);
                 toAdd.Array.ClearIfContainsReferences(toAdd.Count);
                 toAdd.Count = 0;
-                self.Count = total;
+                self = new List<T>(newArray, total);
             }
         }
 
