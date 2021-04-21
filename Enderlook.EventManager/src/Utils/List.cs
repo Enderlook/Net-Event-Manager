@@ -86,6 +86,7 @@ namespace Enderlook.EventManager
                     stolenArray = newArray;
                 }
 
+                stolenArray[count_++] = element;
                 self.Count = count_;
                 Array<T>.Overwrite(ref self.Array, stolenArray);
             }
