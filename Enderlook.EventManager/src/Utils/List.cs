@@ -93,6 +93,32 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Add(T element)
+        {
+            if (Count == Array.Length)
+                ResizeAndAdd(ref this);
+            else
+                Array[Count++] = element;
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            void ResizeAndAdd(ref List<T> self)
+            {
+                if (self.Count == 0)
+                    self.Array = Array<T>.Rent(INITIAL_CAPACITY);
+                else
+                {
+                    Array<T> newArray = Array<T>.Rent(self.Count * GROW_FACTOR);
+                    self.Array.CopyTo(newArray, self.Count);
+                    self.Array.ClearIfContainsReferences(self.Count);
+                    self.Array.Return();
+                    self.Array = newArray;
+                }
+
+                self.Array[self.Count++] = element;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void InjectZero()
         {
             Debug.Assert(Array.AsObject is null);

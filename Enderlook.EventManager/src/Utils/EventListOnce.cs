@@ -2,7 +2,7 @@
 
 namespace Enderlook.EventManager
 {
-    internal struct EventListOnce<TDelegate>
+    internal struct EventListOnce<TDelegate> : IEventCollection<TDelegate>
     {
         private List<TDelegate> toAdd;
         private List<TDelegate> toRemove;
@@ -36,7 +36,7 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Purge()
+        public void CompactAndPurge()
         {
             List<TDelegate> toAdd_ = List<TDelegate>.Steal(ref toAdd);
             List<TDelegate> toRemove_ = List<TDelegate>.Steal(ref toRemove);
@@ -58,5 +58,11 @@ namespace Enderlook.EventManager
             toAdd.Return();
             toRemove.Return();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IEventCollection<TDelegate>.Compact() => CompactAndPurge();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IEventCollection<TDelegate>.ReturnExecutionList(List<TDelegate> list) { }
     }
 }

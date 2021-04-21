@@ -10,13 +10,21 @@ namespace Enderlook.EventManager
     /// </summary>
     public sealed class EventManager : IDisposable
     {
-        private ReadWriterLock simpleCallbacksLocker;
-        // `object` is actually `SimpleHandle<TEvent>`.
-        private readonly Dictionary<Type, SimpleHandle> simpleCallbacks = new();
+        private ReadWriterLock @lock;
+        private Dictionary<Type, Handle> handles = new Dictionary<Type, Handle>();
 
-        private ReadWriterLock closureCallbacksLocker;
-        // `object` is actually `HeapClosureHandle<TClosure, TEvent>`.
-        private readonly Dictionary<(Type, Type), object> closureCallbacks = new();
+        private Handles<Type, Handle> withoutParameter = Handles<Type, Handle>.Create();
+        private Handles<Type, Handle> withParameter = Handles<Type, Handle>.Create();
+        private Handles<Type, Handle> withoutParameterOnce = Handles<Type, Handle>.Create();
+        private Handles<Type, Handle> withParameterOnce = Handles<Type, Handle>.Create();
+        private Handles<Type, Handle> referenceClosureWithoutParameter = Handles<Type, Handle>.Create();
+        private Handles<Type, Handle> referenceClosureWithParameter = Handles<Type, Handle>.Create();
+        private Handles<Type, Handle> referenceClosureWithoutParameterOnce = Handles<Type, Handle>.Create();
+        private Handles<Type, Handle> referenceClosureWithParameterOnce = Handles<Type, Handle>.Create();
+        private Handles<(Type, Type), Handle> valueClosureWithoutParameter = Handles<(Type, Type), Handle>.Create();
+        private Handles<(Type, Type), Handle> valueClosureWithParameter = Handles<(Type, Type), Handle>.Create();
+        private Handles<(Type, Type), Handle> valueClosureWithoutParameterOnce = Handles<(Type, Type), Handle>.Create();
+        private Handles<(Type, Type), Handle> valueClosureWithParameterOnce = Handles<(Type, Type), Handle>.Create();
 
         /// <summary>
         /// Subscribes the callback <paramref name="callback"/> to execute when the event type <typeparamref name="TEvent"/> is raised.
@@ -28,7 +36,9 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            GetOrCreateSimpleHandle<TEvent>().Subscribe(callback);
+            withParameter
+                .GetOrCreate<EventList<Action<TEvent>>, Action<TEvent>, HasNoClosure, Unused, TEvent>(ref @lock, handles)
+                .Add(callback);
         }
 
         /// <inheritdoc cref="Subscribe{TEvent}(Action{TEvent})"/>
@@ -37,7 +47,9 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            GetOrCreateSimpleHandle<TEvent>().Subscribe(callback);
+            withoutParameter
+                .GetOrCreate<EventList<Action>, Action, HasNoClosure, Unused, TEvent>(ref @lock, handles)
+                .Add(callback);
         }
 
         /// <summary>
@@ -50,7 +62,9 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            GetOrCreateSimpleHandle<TEvent>().SubscribeOnce(callback);
+            withParameterOnce
+                .GetOrCreate<EventListOnce<Action<TEvent>>, Action<TEvent>, HasNoClosure, Unused, TEvent>(ref @lock, handles)
+                .Add(callback);
         }
 
         /// <inheritdoc cref="SubscribeOnce{TEvent}(Action{TEvent})"/>
@@ -59,7 +73,9 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            GetOrCreateSimpleHandle<TEvent>().SubscribeOnce(callback);
+            withoutParameterOnce
+                .GetOrCreate<EventListOnce<Action>, Action, HasNoClosure, Unused, TEvent>(ref @lock, handles)
+                .Add(callback);
         }
 
         /// <summary>
@@ -72,8 +88,8 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
-                handle.Unsubscribe(callback);
+            if (withParameter.TryGet(out EventHandle<EventList<Action<TEvent>>, Action<TEvent>, HasNoClosure, Unused, TEvent> handle))
+                handle.Remove(callback);
         }
 
         /// <summary>
@@ -86,8 +102,8 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
-                handle.Unsubscribe(callback);
+            if (withoutParameter.TryGet(out EventHandle<EventList<Action>, Action, HasNoClosure, Unused, TEvent> handle))
+                handle.Remove(callback);
         }
 
         /// <summary>
@@ -100,8 +116,8 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
-                handle.UnsubscribeOnce(callback);
+            if (withParameterOnce.TryGet(out EventHandle<EventListOnce<Action<TEvent>>, Action<TEvent>, HasNoClosure, Unused, TEvent> handle))
+                handle.Remove(callback);
         }
 
         /// <summary>
@@ -114,8 +130,8 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
-                handle.UnsubscribeOnce(callback);
+            if (withParameterOnce.TryGet(out EventHandle<EventListOnce<Action>, Action, HasNoClosure, Unused, TEvent> handle))
+                handle.Remove(callback);
         }
 
         /// <summary>
@@ -130,9 +146,13 @@ namespace Enderlook.EventManager
                 ThrowNullCallback();
 
             if (typeof(TClosure).IsValueType)
-                GetOrCreateClosureHandle<TClosure, TEvent>().handle.Subscribe(callback, closure);
+                valueClosureWithParameter
+                    .GetOrCreate<EventList<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent>(ref @lock, handles)
+                    .Add(new ClosureDelegate<TClosure>(callback, closure));
             else
-                GetOrCreateSimpleHandle<TEvent>().Subscribe(callback, closure);
+                referenceClosureWithParameter
+                    .GetOrCreate<EventList<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent>(ref @lock, handles)
+                    .Add(new ClosureDelegate<TClosure>(callback, closure));
         }
 
         /// <inheritdoc cref="Subscribe{TClosure, TEvent}(TClosure, Action{TClosure, TEvent})"/>
@@ -142,9 +162,13 @@ namespace Enderlook.EventManager
                 ThrowNullCallback();
 
             if (typeof(TClosure).IsValueType)
-                GetOrCreateClosureHandle<TClosure, TEvent>().handle.Subscribe(callback, closure);
+                valueClosureWithoutParameter
+                    .GetOrCreate<EventList<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent>(ref @lock, handles)
+                    .Add(new ClosureDelegate<TClosure>(callback, closure));
             else
-                GetOrCreateSimpleHandle<TEvent>().Subscribe(callback, closure);
+                referenceClosureWithoutParameter
+                    .GetOrCreate<EventList<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent>(ref @lock, handles)
+                    .Add(new ClosureDelegate<TClosure>(callback, closure));
         }
 
         /// <summary>
@@ -159,9 +183,13 @@ namespace Enderlook.EventManager
                 ThrowNullCallback();
 
             if (typeof(TClosure).IsValueType)
-                GetOrCreateClosureHandle<TClosure, TEvent>().handle.SubscribeOnce(callback, closure);
+                valueClosureWithParameterOnce
+                    .GetOrCreate<EventListOnce<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent>(ref @lock, handles)
+                    .Add(new ClosureDelegate<TClosure>(callback, closure));
             else
-                GetOrCreateSimpleHandle<TEvent>().SubscribeOnce(callback, closure);
+                referenceClosureWithParameterOnce
+                    .GetOrCreate<EventListOnce<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent>(ref @lock, handles)
+                    .Add(new ClosureDelegate<TClosure>(callback, closure));
         }
 
         /// <inheritdoc cref="SubscribeOnce{TEvent}(Action{TEvent})"/>
@@ -171,9 +199,13 @@ namespace Enderlook.EventManager
                 ThrowNullCallback();
 
             if (typeof(TClosure).IsValueType)
-                GetOrCreateClosureHandle<TClosure, TEvent>().handle.SubscribeOnce(callback, closure);
+                valueClosureWithoutParameterOnce
+                    .GetOrCreate<EventListOnce<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent>(ref @lock, handles)
+                    .Add(new ClosureDelegate<TClosure>(callback, closure));
             else
-                GetOrCreateSimpleHandle<TEvent>().SubscribeOnce(callback, closure);
+                referenceClosureWithoutParameterOnce
+                    .GetOrCreate<EventListOnce<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent>(ref @lock, handles)
+                    .Add(new ClosureDelegate<TClosure>(callback, closure));
         }
 
         /// <summary>
@@ -189,13 +221,13 @@ namespace Enderlook.EventManager
 
             if (typeof(TClosure).IsValueType)
             {
-                if (TryGetClosureHandle(out HeapClosureHandle<TClosure, TEvent> handle))
-                    handle.handle.Unsubscribe(callback, closure);
+                if (valueClosureWithParameter.TryGet(out EventHandle<EventList<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent> handle))
+                    handle.Remove(new ClosureDelegate<TClosure>(callback, closure));
             }
             else
             {
-                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
-                    handle.Unsubscribe(callback, closure);
+                if (referenceClosureWithParameter.TryGet(out EventHandle<EventList<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent> handle))
+                    handle.Remove(new ClosureDelegate<TClosure>(callback, closure));
             }
         }
 
@@ -212,13 +244,13 @@ namespace Enderlook.EventManager
 
             if (typeof(TClosure).IsValueType)
             {
-                if (TryGetClosureHandle(out HeapClosureHandle<TClosure, TEvent> handle))
-                    handle.handle.Unsubscribe(callback, closure);
+                if (valueClosureWithoutParameter.TryGet(out EventHandle<EventList<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent> handle))
+                    handle.Remove(new ClosureDelegate<TClosure>(callback, closure));
             }
             else
             {
-                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
-                    handle.Unsubscribe(callback, closure);
+                if (referenceClosureWithoutParameter.TryGet(out EventHandle<EventList<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent> handle))
+                    handle.Remove(new ClosureDelegate<TClosure>(callback, closure));
             }
         }
 
@@ -235,13 +267,13 @@ namespace Enderlook.EventManager
 
             if (typeof(TClosure).IsValueType)
             {
-                if (TryGetClosureHandle(out HeapClosureHandle<TClosure, TEvent> handle))
-                    handle.handle.UnsubscribeOnce(callback, closure);
+                if (valueClosureWithParameterOnce.TryGet(out EventHandle<EventListOnce<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent> handle))
+                    handle.Remove(new ClosureDelegate<TClosure>(callback, closure));
             }
             else
             {
-                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
-                    handle.UnsubscribeOnce(callback, closure);
+                if (referenceClosureWithParameterOnce.TryGet(out EventHandle<EventListOnce<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent> handle))
+                    handle.Remove(new ClosureDelegate<TClosure>(callback, closure));
             }
         }
 
@@ -258,13 +290,13 @@ namespace Enderlook.EventManager
 
             if (typeof(TClosure).IsValueType)
             {
-                if (TryGetClosureHandle(out HeapClosureHandle<TClosure, TEvent> handle))
-                    handle.handle.UnsubscribeOnce(callback, closure);
+                if (valueClosureWithoutParameterOnce.TryGet(out EventHandle<EventListOnce<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent> handle))
+                    handle.Remove(new ClosureDelegate<TClosure>(callback, closure));
             }
             else
             {
-                if (TryGetTypeHandle(out SimpleHandle<TEvent> handle))
-                    handle.UnsubscribeOnce(callback, closure);
+                if (referenceClosureWithoutParameterOnce.TryGet(out EventHandle<EventListOnce<ClosureDelegate<TClosure>>, ClosureDelegate<TClosure>, HasClosure, TClosure, TEvent> handle))
+                    handle.Remove(new ClosureDelegate<TClosure>(callback, closure));
             }
         }
 
@@ -275,21 +307,24 @@ namespace Enderlook.EventManager
         /// <param name="eventArgument">Arguments of this event</param>
         public void Raise<TEvent>(TEvent eventArgument)
         {
-            if (TryGetTypeHandle(out SimpleHandle<TEvent> simpleHandler))
-                simpleHandler.Raise(eventArgument);
+            @lock.ReadBegin();
+            if (handles.TryGetValue(typeof(TEvent), out Handle handle))
+            {
+                @lock.ReadEnd();
+                Debug.Assert(handle is GlobalHandle<TEvent>);
+                Unsafe.As<GlobalHandle<TEvent>>(handle).Raise(eventArgument);
+            }
+            else
+                @lock.ReadEnd();
         }
 
         /// <inheritdoc cref="IDisposable.Dispose"/>
         public void Dispose()
         {
-            simpleCallbacksLocker.WriteBegin();
-            closureCallbacksLocker.WriteBegin();
-            foreach (SimpleHandle handle in simpleCallbacks.Values)
+            @lock.ReadBegin();
+            foreach (Handle handle in handles.Values)
                 handle.Dispose();
-            simpleCallbacks.Clear();
-            closureCallbacks.Clear();
-            closureCallbacksLocker.WriteEnd();
-            simpleCallbacksLocker.WriteEnd();
+            @lock.ReadEnd();
         }
 
         /// <summary>
@@ -297,117 +332,10 @@ namespace Enderlook.EventManager
         /// </summary>
         public void Purge()
         {
-            simpleCallbacksLocker.ReadBegin();
-            closureCallbacksLocker.ReadBegin();
-            foreach (SimpleHandle handle in simpleCallbacks.Values)
-                handle.Purge();
-            closureCallbacksLocker.ReadEnd();
-            simpleCallbacksLocker.ReadEnd();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private SimpleHandle<TEvent> GetOrCreateSimpleHandle<TEvent>()
-        {
-            Type key = typeof(TEvent);
-
-            simpleCallbacksLocker.ReadBegin();
-            {
-                if (simpleCallbacks.TryGetValue(key, out SimpleHandle obj))
-                {
-                    simpleCallbacksLocker.ReadEnd();
-                    Debug.Assert(obj is SimpleHandle<TEvent>);
-                    return Unsafe.As<SimpleHandle<TEvent>>(obj);
-                }
-            }
-            simpleCallbacksLocker.ReadEnd();
-
-            return CreateSimpleHandle(key);
-
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            SimpleHandle<TEvent> CreateSimpleHandle(Type key)
-            {
-                simpleCallbacksLocker.WriteBegin();
-                {
-                    if (simpleCallbacks.TryGetValue(key, out SimpleHandle obj))
-                    {
-                        simpleCallbacksLocker.WriteEnd();
-                        Debug.Assert(obj is SimpleHandle<TEvent>);
-                        return Unsafe.As<SimpleHandle<TEvent>>(obj);
-                    }
-                    SimpleHandle<TEvent> handle = new();
-                    simpleCallbacks[key] = handle;
-                    simpleCallbacksLocker.WriteEnd();
-                    return handle;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TryGetTypeHandle<TEvent>(out SimpleHandle<TEvent> handle)
-        {
-            Type key = typeof(TEvent);
-            simpleCallbacksLocker.ReadBegin();
-            if (!simpleCallbacks.TryGetValue(key, out SimpleHandle obj))
-            {
-                simpleCallbacksLocker.ReadEnd();
-                handle = null;
-                return false;
-            }
-            Debug.Assert(obj is SimpleHandle<TEvent>);
-            handle = Unsafe.As<SimpleHandle<TEvent>>(obj);
-            simpleCallbacksLocker.ReadEnd();
-            return true;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private HeapClosureHandle<TClosure, TEvent> GetOrCreateClosureHandle<TClosure, TEvent>()
-        {
-            (Type, Type) key = (typeof(TClosure), typeof(TEvent));
-
-            closureCallbacksLocker.ReadBegin();
-            if (closureCallbacks.TryGetValue(key, out object obj))
-            {
-                closureCallbacksLocker.ReadEnd();
-                Debug.Assert(obj is HeapClosureHandle<TClosure, TEvent>);
-                return Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(obj);
-            }
-            closureCallbacksLocker.ReadEnd();
-
-            return CreateClosureHandle(key);
-
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            HeapClosureHandle<TClosure, TEvent> CreateClosureHandle((Type, Type) key)
-            {
-                closureCallbacksLocker.WriteBegin();
-                if (closureCallbacks.TryGetValue(key, out object obj))
-                {
-                    closureCallbacksLocker.WriteEnd();
-                    Debug.Assert(obj is HeapClosureHandle<TClosure, TEvent>);
-                    return Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(obj);
-                }
-                HeapClosureHandle<TClosure, TEvent> handle = new();
-                closureCallbacks[key] = handle;
-                GetOrCreateSimpleHandle<TEvent>().AddValueClosure(handle);
-                closureCallbacksLocker.WriteEnd();
-                return handle;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TryGetClosureHandle<TClosure, TEvent>(out HeapClosureHandle<TClosure, TEvent> handle)
-        {
-            (Type, Type) key = (typeof(TClosure), typeof(TEvent));
-            closureCallbacksLocker.ReadBegin();
-            if (!closureCallbacks.TryGetValue(key, out object obj))
-            {
-                closureCallbacksLocker.ReadEnd();
-                handle = null;
-                    return false;
-            }
-            Debug.Assert(obj is HeapClosureHandle<TClosure, TEvent>);
-            handle = Unsafe.As<HeapClosureHandle<TClosure, TEvent>>(obj);
-            closureCallbacksLocker.ReadEnd();
-            return true;
+            @lock.ReadBegin();
+            foreach (Handle handle in handles.Values)
+                handle.CompactAndPurge();
+            @lock.ReadEnd();
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

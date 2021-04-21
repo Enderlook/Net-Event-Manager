@@ -1,10 +1,9 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Enderlook.EventManager
 {
-    internal struct EventList<TDelegate> : IDisposable
+    internal struct EventList<TDelegate> : IEventCollection<TDelegate>
     {
         private List<TDelegate> toExecute;
         private int toExecuteIsBeingUsed;
@@ -75,7 +74,7 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Purge()
+        public void CompactAndPurge()
         {
             List<TDelegate> toExecute_ = List<TDelegate>.Steal(ref toExecute);
             List<TDelegate> toAdd_ = List<TDelegate>.Steal(ref toAdd);
@@ -98,7 +97,7 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Compact()
+        public void Compact()
         {
             List<TDelegate> toExecute_ = List<TDelegate>.Steal(ref toExecute);
             List<TDelegate> toAdd_ = List<TDelegate>.Steal(ref toAdd);
