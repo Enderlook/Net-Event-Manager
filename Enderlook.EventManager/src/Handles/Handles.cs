@@ -12,16 +12,16 @@ namespace Enderlook.EventManager
         private Dictionary<TKey, TValue> dictionary;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Handles<TKey, TValue> Create()
-            => new()
-        {
-            dictionary = new(),
-        };
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGet<TList, TDelegate, TMode, TClosure, TEvent>(out EventHandle<TList, TDelegate, TMode, TClosure, TEvent> result)
             where TList : IEventCollection<TDelegate>
         {
+            // TODO: If we allocated the dictionary on the constructor we could avoid this check, at cost of memory.
+            if (dictionary is null)
+            {
+                result = null;
+                return false;
+            }
+
             TKey key = GetKey<TMode, TClosure, TEvent>();
 
             @lock.ReadBegin();
@@ -40,14 +40,18 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static TKey GetKey<TMode, TClosure, TEvent>()
         {
-            if (typeof(TMode) == typeof(HasNoClosure))
+            if (typeof(TMode) == typeof(HasNoClosureStrong) ||
+                typeof(TMode) == typeof(HasNoClosureWeakWithHandle) ||
+                typeof(TMode) == typeof(HasNoClosureWeakWithoutHandle))
             {
                 Debug.Assert(typeof(TClosure) == typeof(Unused));
                 Debug.Assert(typeof(TKey) == typeof(Type));
                 Type type = typeof(TEvent);
                 return Unsafe.As<Type, TKey>(ref type);
             }
-            else if (typeof(TMode) == typeof(HasClosure))
+            else if (typeof(TMode) == typeof(HasClosureStrong) ||
+                typeof(TMode) == typeof(HasClosureWeakWithHandle) ||
+                typeof(TMode) == typeof(HasClosureWeakWithoutHandle))
             {
                 Debug.Assert(typeof(TClosure) != typeof(Unused));
                 if (typeof(TClosure).IsValueType)
@@ -74,6 +78,10 @@ namespace Enderlook.EventManager
         {
             TKey key = GetKey<TMode, TClosure, TEvent>();
 
+            // TODO: If we allocated the dictionary on the constructor we could avoid this check, at cost of memory.
+            if (dictionary is null)
+                return CreateSlowPath(ref this, ref globalLock, handles, key);
+
             @lock.ReadBegin();
             if (dictionary.TryGetValue(key, out TValue value))
             {
@@ -85,9 +93,13 @@ namespace Enderlook.EventManager
                 return Unsafe.As<EventHandle<TList, TDelegate, TMode, TClosure, TEvent>>(value);
             }
 
-            return SlowPath(ref this, ref globalLock, handles, key);
+            return SlowPathNoInline(ref this, ref globalLock, handles, key);
 
             [MethodImpl(MethodImplOptions.NoInlining)]
+            static EventHandle<TList, TDelegate, TMode, TClosure, TEvent> SlowPathNoInline(ref Handles<TKey, TValue> self, ref ReadWriterLock globalLock, Dictionary<Type, Handle> handles, TKey key)
+                => SlowPath(ref self, ref globalLock, handles, key);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             static EventHandle<TList, TDelegate, TMode, TClosure, TEvent> SlowPath(ref Handles<TKey, TValue> self, ref ReadWriterLock globalLock, Dictionary<Type, Handle> handles, TKey key)
             {
                 self.@lock.ReadEnd();
@@ -147,6 +159,13 @@ namespace Enderlook.EventManager
                     self.@lock.WriteEnd();
                     return eventHandle;
                 }
+            }
+
+            static EventHandle<TList, TDelegate, TMode, TClosure, TEvent> CreateSlowPath(ref Handles<TKey, TValue> self, ref ReadWriterLock globalLock, Dictionary<Type, Handle> handles, TKey key)
+            {
+                // We don't take a lock, so multiple instances can be created and become garbage. Thought it doesn't matter.
+                self.dictionary = new Dictionary<TKey, TValue>();
+                return SlowPath(ref self, ref globalLock, handles, key);
             }
         }
     }

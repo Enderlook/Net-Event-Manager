@@ -73,6 +73,13 @@ namespace Enderlook.EventManager
             Array.Clear(AsArray, 0, count);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ClearIfContainsReferences(int startIndex, int count)
+        {
+            // TODO, in .Net Standard 2.1 we can use RuntimeHelpers.IsReferenceOrContainsReferences<T>() to check if we need to clear it or not.
+            Array.Clear(AsArray, startIndex, count);
+        }
+
         private static class Container<U>
         {
             public static readonly U[] array = new U[0];

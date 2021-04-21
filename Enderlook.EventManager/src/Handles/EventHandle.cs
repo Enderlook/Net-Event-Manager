@@ -56,7 +56,9 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void Execute(TDelegate @delegate, TEvent argument)
         {
-            if (typeof(TMode) == typeof(HasNoClosure))
+            // TODO: Add debug assertions for weak delegates.
+
+            if (typeof(TMode) == typeof(HasNoClosureStrong))
             {
                 Debug.Assert(typeof(TClosure) == typeof(Unused));
                 if (typeof(TEvent) == typeof(Unused))
@@ -70,22 +72,142 @@ namespace Enderlook.EventManager
                     Unsafe.As<Action<TEvent>>(@delegate)(argument);
                 }
             }
-            else if (typeof(TMode) == typeof(HasClosure))
+            else if (typeof(TMode) == typeof(HasNoClosureWeakWithHandle))
+            {
+                Debug.Assert(typeof(TClosure) == typeof(Unused));
+                Debug.Assert(typeof(IWeak).IsAssignableFrom(typeof(TDelegate)));
+
+                Debug.Assert(@delegate is WeakDelegate);
+                WeakDelegate weak = Unsafe.As<TDelegate, WeakDelegate>(ref @delegate);
+
+                if (typeof(TEvent) == typeof(Unused))
+                {
+                    // TODO: This assertion should be improved.
+                    Debug.Assert(!weak.@delegate.GetType().GetGenericArguments()[0].IsValueType);
+                    object target = weak.Handle.Target;
+                    if (target is null)
+                        return;
+                    Unsafe.As<Action<object>>(weak.@delegate)(target);
+                }
+                else
+                {
+                    // TODO: This assertion should be improved.
+                    Debug.Assert(!weak.@delegate.GetType().GetGenericArguments()[0].IsValueType);
+                    object target = weak.Handle.Target;
+                    if (target is null)
+                        return;
+                    Unsafe.As<Action<object, TEvent>>(weak.@delegate)(target, argument);
+                }
+            }
+            else if (typeof(TMode) == typeof(HasNoClosureWeakWithoutHandle))
+            {
+                Debug.Assert(typeof(TClosure) == typeof(Unused));
+                Debug.Assert(typeof(IWeak).IsAssignableFrom(typeof(TDelegate)));
+
+                Debug.Assert(@delegate is WeakDelegate);
+                WeakDelegate weak = Unsafe.As<TDelegate, WeakDelegate>(ref @delegate);
+
+                if (typeof(TEvent) == typeof(Unused))
+                {
+                    Debug.Assert(weak.@delegate is Action);
+                    if (weak.Handle.Target is null)
+                        return;
+                    Unsafe.As<Action>(weak.@delegate)();
+                }
+                else
+                {
+                    Debug.Assert(weak.@delegate is Action<TEvent>);
+                    if (weak.Handle.Target is null)
+                        return;
+                    Unsafe.As<Action<TEvent>>(weak.@delegate)(argument);
+                }
+            }
+            else if (typeof(TMode) == typeof(HasClosureStrong))
             {
                 Debug.Assert(typeof(TClosure) != typeof(Unused));
-
                 Debug.Assert(@delegate is ClosureDelegate<TClosure>);
+
                 ClosureDelegate<TClosure> closure = Unsafe.As<TDelegate, ClosureDelegate<TClosure>>(ref @delegate);
 
                 if (typeof(TEvent) == typeof(Unused))
                 {
-                    Debug.Assert(closure.@delegate is Action<TClosure>);
+                    if (typeof(TClosure) == typeof(object))
+                        Debug.Assert(closure.@delegate.GetType() == typeof(Action<>).MakeGenericType(@delegate.GetType().GetGenericArguments()[0]));
+                    else
+                        Debug.Assert(closure.@delegate is Action<TClosure>);
+
                     Unsafe.As<Action<TClosure>>(closure.@delegate)(closure.closure);
                 }
                 else
                 {
-                    Debug.Assert(closure.@delegate is Action<TClosure, TEvent>);
+                    if (typeof(TClosure) == typeof(object))
+                        Debug.Assert(closure.@delegate.GetType() == typeof(Action<,>).MakeGenericType(@delegate.GetType().GetGenericArguments()[0], typeof(TEvent)));
+                    else
+                        Debug.Assert(closure.@delegate is Action<TClosure, TEvent>);
+
                     Unsafe.As<Action<TClosure, TEvent>>(closure.@delegate)(closure.closure, argument);
+                }
+            }
+            else if (typeof(TMode) == typeof(HasClosureWeakWithoutHandle))
+            {
+                Debug.Assert(typeof(TClosure) != typeof(Unused));
+
+                Debug.Assert(@delegate is WeakDelegate<TClosure>);
+                WeakDelegate<TClosure> weak = Unsafe.As<TDelegate, WeakDelegate<TClosure>>(ref @delegate);
+
+                if (typeof(TEvent) == typeof(Unused))
+                {
+                    if (typeof(TClosure) == typeof(object))
+                        Debug.Assert(weak.@delegate.GetType() == typeof(Action<>).MakeGenericType(@delegate.GetType().GetGenericArguments()[0]));
+                    else
+                        Debug.Assert(weak.@delegate is Action<TClosure>);
+
+                    // TODO: This assertion should be improved.
+                    object target = weak.Handle.Target;
+                    if (target is null)
+                        return;
+
+                    Unsafe.As<Action<TClosure>>(weak.@delegate)(weak.closure);
+                }
+                else
+                {
+                    if (typeof(TClosure) == typeof(object))
+                        Debug.Assert(weak.@delegate.GetType() == typeof(Action<,>).MakeGenericType(@delegate.GetType().GetGenericArguments()[0], typeof(TEvent)));
+                    else
+                        Debug.Assert(weak.@delegate is Action<TClosure, TEvent>);
+
+                    // TODO: This assertion should be improved.
+                    object target = weak.Handle.Target;
+                    if (target is null)
+                        return;
+
+                    Unsafe.As<Action<TClosure, TEvent>>(weak.@delegate)(weak.closure, argument);
+                }
+            }
+            else if (typeof(TMode) == typeof(HasClosureWeakWithHandle))
+            {
+                Debug.Assert(typeof(TClosure) != typeof(Unused));
+
+                Debug.Assert(@delegate is WeakDelegate<TClosure>);
+                WeakDelegate<TClosure> weak = Unsafe.As<TDelegate, WeakDelegate<TClosure>>(ref @delegate);
+
+                if (typeof(TEvent) == typeof(Unused))
+                {
+                    // TODO: This assertion should be improved.
+                    Debug.Assert(!weak.@delegate.GetType().GetGenericArguments()[0].IsValueType);
+                    object target = weak.Handle.Target;
+                    if (target is null)
+                        return;
+                    Unsafe.As<Action<object, TClosure>>(weak.@delegate)(target, weak.closure);
+                }
+                else
+                {
+                    // TODO: This assertion should be improved.
+                    Debug.Assert(!weak.@delegate.GetType().GetGenericArguments()[0].IsValueType);
+                    object target = weak.Handle.Target;
+                    if (target is null)
+                        return;
+                    Unsafe.As<Action<object, TClosure, TEvent>>(weak.@delegate)(target, weak.closure, argument);
                 }
             }
             else

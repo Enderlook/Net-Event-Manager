@@ -1,6 +1,10 @@
 ﻿namespace Enderlook.EventManager
 {
     internal struct Unused { }
-    internal struct HasClosure { }
-    internal struct HasNoClosure { }
+    internal struct HasClosureStrong { }
+    internal struct HasClosureWeakWithHandle { }
+    internal struct HasClosureWeakWithoutHandle { }
+    internal struct HasNoClosureStrong { }
+    internal struct HasNoClosureWeakWithHandle { }
+    internal struct HasNoClosureWeakWithoutHandle { }
 }

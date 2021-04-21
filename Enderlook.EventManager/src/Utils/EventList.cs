@@ -81,6 +81,7 @@ namespace Enderlook.EventManager
         public void CompactAndPurge()
         {
             List<TDelegate> toExecute_ = List<TDelegate>.Steal(ref toExecute);
+            toExecute.RemoveWeakHandlesIfHas();
             List<TDelegate> toAdd_ = List<TDelegate>.Steal(ref toAdd);
             toExecute_.AddFrom(ref toAdd_);
             List<TDelegate>.Overwrite(ref toAdd, List<TDelegate>.Empty());
@@ -118,9 +119,9 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            toExecute.Return();
-            toAdd.Return();
-            toRemove.Return();
+            toExecute.Dispose();
+            toAdd.Dispose();
+            toRemove.Dispose();
         }
     }
 }

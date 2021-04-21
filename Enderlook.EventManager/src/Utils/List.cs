@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Enderlook.EventManager
 {
@@ -141,10 +142,26 @@ namespace Enderlook.EventManager
             [MethodImpl(MethodImplOptions.NoInlining)]
             void AddFrom(ref List<T> self, ref List<T> toAdd)
             {
-                toAdd.Array.CopyTo(self.Array, self.Count + 1, toAdd.Count);
+                if (typeof(IWeak).IsAssignableFrom(typeof(T)))
+                {
+                    for (int i = 0; i < toAdd.Count; i++)
+                    {
+                        T element = toAdd[i];
+                        // TODO: We could avoid the safe casting.
+                        GCHandle handle = ((IWeak)element).Handle;
+                        if (handle.Target is not null)
+                            self.Add(element);
+                        else
+                            handle.Free();
+                    }
+                }
+                else
+                {
+                    toAdd.Array.CopyTo(self.Array, self.Count + 1, toAdd.Count);
+                    self.Count = total;
+                }
                 toAdd.Array.ClearIfContainsReferences(toAdd.Count);
                 toAdd.Count = 0;
-                self.Count = total;
             }
 
             [MethodImpl(MethodImplOptions.NoInlining)]
@@ -153,10 +170,28 @@ namespace Enderlook.EventManager
                 Array<T> newArray = Array<T>.Rent(total);
                 self.Array.CopyTo(newArray, self.Count);
                 self.Return();
-                toAdd.Array.CopyTo(newArray, self.Count, toAdd.Count);
+
+                if (typeof(IWeak).IsAssignableFrom(typeof(T)))
+                {
+                    self = new(newArray, self.Count);
+                    for (int i = 0; i < toAdd.Count; i++)
+                    {
+                        T element = toAdd[i];
+                        // TODO: We could avoid the safe casting.
+                        GCHandle handle = ((IWeak)element).Handle;
+                        if (handle.Target is not null)
+                            self.Add(element);
+                        else
+                            handle.Free();
+                    }
+                }
+                else
+                {
+                    toAdd.Array.CopyTo(newArray, self.Count, toAdd.Count);
+                    self = new List<T>(newArray, total);
+                }
                 toAdd.Array.ClearIfContainsReferences(toAdd.Count);
                 toAdd.Count = 0;
-                self = new List<T>(newArray, total);
             }
         }
 
@@ -181,17 +216,30 @@ namespace Enderlook.EventManager
                     T element = self[i];
                     for (int k = toRemove.Count - 1; k >= 0; k--)
                     {
-                        if (comparer.Equals(element, toRemove[k]))
+                        T element2 = toRemove[k];
+                        if (comparer.Equals(element, element2))
                         {
+                            if (typeof(IWeak).IsAssignableFrom(typeof(T)))
+                            {
+                                // TODO: We could avoid the safe casting.
+                                ((IWeak)element2).Handle.Free();
+                                ((IWeak)element).Handle.Free();
+                            }
                             toRemove.Array.CopyTo(k + 1, toRemove.Array, k, toRemove.Count - k);
                             toRemove.Count--;
-                            goto next;
                         }
-                        self[j++] = element;
-                        next:;
+                        else
+                            self[j++] = element;
                     }
                 }
                 self.Count = j;
+
+                if (typeof(IWeak).IsAssignableFrom(typeof(T)))
+                {
+                    for (int i = 0; i < toRemove.Count; i++)
+                        // TODO: We could avoid the safe casting.
+                        ((IWeak)toRemove[i]).Handle.Free();
+                }
 
                 toRemove.Array.ClearIfContainsReferences(toRemove.Count);
                 toRemove.Count = 0;
@@ -199,8 +247,42 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RemoveWeakHandlesIfHas()
+        {
+            if (typeof(IWeak).IsAssignableFrom(typeof(T)))
+            {
+                int j = 0;
+                for (int i = 0; i < Count; i++)
+                {
+                    T element = Array[i];
+                    // TODO: We could avoid the safe casting.
+                    GCHandle handle = ((IWeak)element).Handle;
+                    if (handle.Target is not null)
+                        Array[j++] = element;
+                    else
+                        handle.Free();
+                }
+                Array.ClearIfContainsReferences(j, Count - j);
+                Count = j;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Return()
         {
+            Array.ClearIfContainsReferences(Count);
+            Array.Return();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose()
+        {
+            if (typeof(IWeak).IsAssignableFrom(typeof(T)) && Count > 0)
+            {
+                T _ = Array[Count - 1];
+                for (int i = 0; i < Count; i++)
+                    ((IWeak)Array[i]).Handle.Free();
+            }
             Array.ClearIfContainsReferences(Count);
             Array.Return();
         }
