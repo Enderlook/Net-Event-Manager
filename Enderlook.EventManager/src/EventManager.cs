@@ -14,6 +14,16 @@ namespace Enderlook.EventManager
         private Dictionary<Type, Handle> handles = new Dictionary<Type, Handle>();
 
         /// <summary>
+        /// Creates a new event manager;
+        /// </summary>
+        public EventManager()
+        {
+#pragma warning disable CA1806 // Do not ignore method results
+            new AutoPurger(this);
+#pragma warning restore CA1806 // Do not ignore method results
+        }
+
+        /// <summary>
         /// Raises an event type <typeparamref name="TEvent"/>.
         /// </summary>
         /// <typeparam name="TEvent"></typeparam>
