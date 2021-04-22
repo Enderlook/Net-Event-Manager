@@ -48,15 +48,13 @@ namespace Enderlook.EventManager
             Array<T>.Overwrite(ref list.Array, other.Array);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public List<T> ConcurrentClone()
+        // We don't apply AggressiveInlining because we always use it as a cold path.
+        public List<T> Clone()
         {
-            Array<T> stolenArray = Array<T>.Steal(ref Array);
-            List<T> list = Rent(Count);
-            stolenArray.CopyTo(list.Array, Count);
-            Array<T>.Overwrite(ref Array, stolenArray);
-            list.Count = Count;
-            return list;
+            List<T> clone = Rent(Count);
+            Array.CopyTo(clone.Array, Count);
+            clone.Count = Count;
+            return clone;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
