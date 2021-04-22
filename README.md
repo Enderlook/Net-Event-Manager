@@ -19,7 +19,7 @@ public static class Player
 
 		eventManager.Subscribe<PlayerPickedUpItemEvent>(OnPlayerPickedUpItem);
 
-		eventManager.Subscribe<PlayerPickedUpItemEvent>(("Excalibur, "Mimic"), OnPlayerPickedUpItem2);
+		eventManager.Subscribe<PlayerPickedUpItemEvent>(("Excalibur", "Mimic"), OnPlayerPickedUpItem2);
 
 		eventManager.Raise(new PlayerPickedUpItemEvent("Excalibur"));
 
