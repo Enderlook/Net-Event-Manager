@@ -3,10 +3,10 @@ using System.Threading;
 
 namespace Enderlook.EventManager
 {
-    internal struct ReadWriterLock
+    internal struct ReadWriteLock
     {
         private int locked;
-        private int readers;
+        private uint readers;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Lock()
