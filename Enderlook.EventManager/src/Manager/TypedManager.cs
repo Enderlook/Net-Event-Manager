@@ -16,16 +16,19 @@ namespace Enderlook.EventManager
         public void Raise(EventManager manager, TEvent argument)
         {
             ValueList<SliceWithEventHandle> stored = ValueList<SliceWithEventHandle>.Create(managers.ConcurrentCount());
-            int index = 0;
-            while (managers.ConcurrentTryMoveNext(ref index, out TypedEventHandle<TEvent> eventHandle))
-                stored.Add(eventHandle.ConcurrentGetRaiser());
-            manager.InEventEnd();
-
-            for (int i = 0; i < stored.Count; i++)
             {
-                SliceWithEventHandle handle = stored.Get(i);
-                CastUtils.ExpectAssignableType<TypedEventHandle<TEvent>>(handle.handle).ConcurrentRaise(handle.slice, argument);
+                int index = 0;
+                while (managers.ConcurrentTryMoveNext(ref index, out TypedEventHandle<TEvent> eventHandle))
+                    stored.Add(eventHandle.ConcurrentGetRaiser());
+                manager.InEventEnd();
+
+                for (int i = 0; i < stored.Count; i++)
+                {
+                    SliceWithEventHandle handle = stored.Get(i);
+                    CastUtils.ExpectAssignableType<TypedEventHandle<TEvent>>(handle.handle).ConcurrentRaise(handle.slice, argument);
+                }
             }
+            stored.Return();
         }
 
         public override bool Purge()
