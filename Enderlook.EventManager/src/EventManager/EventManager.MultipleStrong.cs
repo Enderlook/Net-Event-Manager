@@ -1,16 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
 {
     public sealed partial class EventManager
     {
-        private Handles<Type> multipleStrongWithArgumentHandle;
-        private Handles<Type> multipleStrongHandle;
-        private Handles<Type2> multipleStrongWithArgumentWithValueClosureHandle;
-        private Handles<Type> multipleStrongWithArgumentWithReferenceClosureHandle;
-        private Handles<Type2> multipleStrongWithValueClosureHandle;
-        private Handles<Type> multipleStrongWithReferenceClosureHandle;
+        private Dictionary<Type, EventHandle> multipleStrongWithArgumentHandle;
+        private Dictionary<Type, EventHandle> multipleStrongHandle;
+        private Dictionary<Type2, EventHandle> multipleStrongWithArgumentWithValueClosureHandle;
+        private Dictionary<Type, EventHandle> multipleStrongWithArgumentWithReferenceClosureHandle;
+        private Dictionary<Type2, EventHandle> multipleStrongWithValueClosureHandle;
+        private Dictionary<Type, EventHandle> multipleStrongWithReferenceClosureHandle;
 
         /// <summary>
         /// Subscribes the callback <paramref name="callback"/> to execute when the event type <typeparamref name="TEvent"/> is raised.
@@ -23,16 +24,10 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
-            else
-            {
-                multipleStrongWithArgumentHandle
-                    .GetOrCreate<MultipleStrongWithArgumentEventHandle<TEvent>, TEvent>(typeof(TEvent), this)
-                    .Add(callback);
-                globalLock.ReadEnd();
-            }
+            GetOrCreate<Type, MultipleStrongWithArgumentEventHandle<TEvent>, TEvent>(
+                ref multipleStrongWithArgumentHandle, typeof(TEvent))
+                .Add(callback);
+            InEventEnd();
         }
 
         /// <summary>
@@ -46,16 +41,9 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
-            else
-            {
-                multipleStrongHandle
-                    .GetOrCreate<MultipleStrongEventHandle<TEvent>, TEvent>(typeof(TEvent), this)
-                    .Add(callback);
-                globalLock.ReadEnd();
-            }
+            GetOrCreate<Type, MultipleStrongEventHandle<TEvent>, TEvent>(ref multipleStrongHandle, typeof(TEvent))
+                .Add(callback);
+            InEventEnd();
         }
 
         /// <summary>
@@ -70,21 +58,15 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
+            if (typeof(TClosure).IsValueType)
+                GetOrCreate<Type2, MultipleStrongWithArgumentWithClosureEventHandle<TEvent, TClosure>, TEvent>(
+                    ref multipleStrongWithArgumentWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)))
+                    .Add(callback, closure);
             else
-            {
-                if (typeof(TClosure).IsValueType)
-                    multipleStrongWithArgumentWithValueClosureHandle
-                        .GetOrCreate<MultipleStrongWithArgumentWithClosureEventHandle<TEvent, TClosure>, TEvent>(new(typeof(TEvent), typeof(TClosure)), this)
-                        .Add(callback, closure);
-                else
-                    multipleStrongWithArgumentWithReferenceClosureHandle
-                        .GetOrCreate<MultipleStrongWithArgumentWithClosureEventHandle<TEvent, object>, TEvent>(typeof(TEvent), this)
-                        .Add(Unsafe.As<Action<object, TEvent>>(callback), closure);
-                globalLock.ReadEnd();
-            }
+                GetOrCreate<Type, MultipleStrongWithArgumentWithClosureEventHandle<TEvent, object>, TEvent>(
+                    ref multipleStrongWithArgumentWithReferenceClosureHandle, typeof(TEvent))
+                    .Add(Unsafe.As<Action<object, TEvent>>(callback), closure);
+            InEventEnd();
         }
 
         /// <summary>
@@ -99,21 +81,15 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
+            if (typeof(TClosure).IsValueType)
+                GetOrCreate<Type2, MultipleStrongWithClosureEventHandle<TEvent, TClosure>, TEvent>(
+                    ref multipleStrongWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)))
+                    .Add(callback, closure);
             else
-            {
-                if (typeof(TClosure).IsValueType)
-                    multipleStrongWithValueClosureHandle
-                        .GetOrCreate<MultipleStrongWithClosureEventHandle<TEvent, TClosure>, TEvent>(new(typeof(TEvent), typeof(TClosure)), this)
-                        .Add(callback, closure);
-                else
-                    multipleStrongWithReferenceClosureHandle
-                        .GetOrCreate<MultipleStrongWithClosureEventHandle<TEvent, object>, TEvent>(typeof(TEvent), this)
-                        .Add(Unsafe.As<Action<object>>(callback), closure);
-                globalLock.ReadEnd();
-            }
+                GetOrCreate<Type, MultipleStrongWithClosureEventHandle<TEvent, object>, TEvent>(
+                    ref multipleStrongWithReferenceClosureHandle, typeof(TEvent))
+                    .Add(Unsafe.As<Action<object>>(callback), closure);
+            InEventEnd();
         }
 
         /// <summary>
@@ -127,15 +103,10 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
-            else
+            if (TryGet(ref multipleStrongWithArgumentHandle, typeof(TEvent), out MultipleStrongWithArgumentEventHandle<TEvent> manager))
             {
-                if (multipleStrongWithArgumentHandle
-                    .TryGet(typeof(TEvent), out MultipleStrongWithArgumentEventHandle<TEvent> manager))
-                    manager.Remove(callback);
-                globalLock.ReadEnd();
+                manager.Remove(callback);
+                InEventEnd();
             }
         }
 
@@ -150,15 +121,10 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
-            else
+            if (TryGet(ref multipleStrongHandle, typeof(TEvent), out MultipleStrongEventHandle<TEvent> manager))
             {
-                if (multipleStrongHandle
-                    .TryGet(typeof(TEvent), out MultipleStrongEventHandle<TEvent> manager))
-                    manager.Remove(callback);
-                globalLock.ReadEnd();
+                manager.Remove(callback);
+                InEventEnd();
             }
         }
 
@@ -174,24 +140,21 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
+            if (typeof(TClosure).IsValueType)
+            {
+                if (TryGet(ref multipleStrongWithArgumentWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)), out MultipleStrongWithArgumentWithClosureEventHandle<TEvent, TClosure> manager))
+                {
+                    manager.Remove(callback, closure);
+                    InEventEnd();
+                }
+            }
             else
             {
-                if (typeof(TClosure).IsValueType)
+                if (TryGet(ref multipleStrongWithArgumentWithReferenceClosureHandle, typeof(TEvent), out MultipleStrongWithArgumentWithClosureEventHandle<TEvent, object> manager))
                 {
-                    if (multipleStrongWithArgumentWithValueClosureHandle
-                        .TryGet(new(typeof(TEvent), typeof(TClosure)), out MultipleStrongWithArgumentWithClosureEventHandle<TEvent, TClosure> manager))
-                        manager.Remove(callback, closure);
+                    manager.Remove(Unsafe.As<Action<object, TEvent>>(callback), closure);
+                    InEventEnd();
                 }
-                else
-                {
-                    if (multipleStrongWithArgumentWithReferenceClosureHandle
-                        .TryGet(typeof(TEvent), out MultipleStrongWithArgumentWithClosureEventHandle<TEvent, object> manager))
-                        manager.Remove(Unsafe.As<Action<object, TEvent>>(callback), closure);
-                }
-                globalLock.ReadEnd();
             }
         }
 
@@ -207,24 +170,21 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
+            if (typeof(TClosure).IsValueType)
+            {
+                if (TryGet(ref multipleStrongWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)), out MultipleStrongWithClosureEventHandle<TEvent, TClosure> manager))
+                {
+                    manager.Remove(callback, closure);
+                    InEventEnd();
+                }
+            }
             else
             {
-                if (typeof(TClosure).IsValueType)
+                if (TryGet(ref multipleStrongWithReferenceClosureHandle, typeof(TEvent), out MultipleStrongWithClosureEventHandle<TEvent, object> manager))
                 {
-                    if (multipleStrongWithValueClosureHandle
-                        .TryGet(new(typeof(TEvent), typeof(TClosure)), out MultipleStrongWithClosureEventHandle<TEvent, TClosure> manager))
-                        manager.Remove(callback, closure);
+                    manager.Remove(Unsafe.As<Action<object>>(callback), closure);
+                    InEventEnd();
                 }
-                else
-                {
-                    if (multipleStrongWithReferenceClosureHandle
-                        .TryGet(typeof(TEvent), out MultipleStrongWithClosureEventHandle<TEvent, object> manager))
-                        manager.Remove(Unsafe.As<Action<object>>(callback), closure);
-                }
-                globalLock.ReadEnd();
             }
         }
     }

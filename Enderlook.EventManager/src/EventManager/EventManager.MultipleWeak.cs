@@ -1,35 +1,36 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
 {
     public sealed partial class EventManager
     {
-        private Handles<Type> multipleWeakWithArgumentHandle;
-        private Handles<Type> multipleWeakHandle;
-        private Handles<Type2> multipleWeakWithArgumentWithValueClosureHandle;
-        private Handles<Type> multipleWeakWithArgumentWithReferenceClosureHandle;
-        private Handles<Type2> multipleWeakWithValueClosureHandle;
-        private Handles<Type> multipleWeakWithReferenceClosureHandle;
-        private Handles<Type2> multipleWeakWithArgumentWithValueClosureWithHandleHandle;
-        private Handles<Type> multipleWeakWithArgumentWithReferenceClosureWithHandleHandle;
-        private Handles<Type2> multipleWeakWithValueClosureWithHandleHandle;
-        private Handles<Type> multipleWeakWithReferenceClosureWithHandleHandle;
-        private Handles<Type> multipleWeakWithArgumentWithHandleHandle;
-        private Handles<Type> multipleWeakWithHandleHandle;
+        private Dictionary<Type, EventHandle> multipleWeakWithArgumentHandle;
+        private Dictionary<Type, EventHandle> multipleWeakHandle;
+        private Dictionary<Type2, EventHandle> multipleWeakWithArgumentWithValueClosureHandle;
+        private Dictionary<Type, EventHandle> multipleWeakWithArgumentWithReferenceClosureHandle;
+        private Dictionary<Type2, EventHandle> multipleWeakWithValueClosureHandle;
+        private Dictionary<Type, EventHandle> multipleWeakWithReferenceClosureHandle;
+        private Dictionary<Type2, EventHandle> multipleWeakWithArgumentWithValueClosureWithHandleHandle;
+        private Dictionary<Type, EventHandle> multipleWeakWithArgumentWithReferenceClosureWithHandleHandle;
+        private Dictionary<Type2, EventHandle> multipleWeakWithValueClosureWithHandleHandle;
+        private Dictionary<Type, EventHandle> multipleWeakWithReferenceClosureWithHandleHandle;
+        private Dictionary<Type, EventHandle> multipleWeakWithArgumentWithHandleHandle;
+        private Dictionary<Type, EventHandle> multipleWeakWithHandleHandle;
 
-        private Handles<Type> multipleWeakWithArgumentHandleTrackResurrection;
-        private Handles<Type> multipleWeakHandleTrackResurrection;
-        private Handles<Type2> multipleWeakWithArgumentWithValueClosureHandleTrackResurrection;
-        private Handles<Type> multipleWeakWithArgumentWithReferenceClosureHandleTrackResurrection;
-        private Handles<Type2> multipleWeakWithValueClosureHandleTrackResurrection;
-        private Handles<Type> multipleWeakWithReferenceClosureHandleTrackResurrection;
-        private Handles<Type2> multipleWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection;
-        private Handles<Type> multipleWeakWithArgumentWithReferenceClosureWithHandleHandleTrackResurrection;
-        private Handles<Type2> multipleWeakWithValueClosureWithHandleHandleTrackResurrection;
-        private Handles<Type> multipleWeakWithReferenceClosureWithHandleHandleTrackResurrection;
-        private Handles<Type> multipleWeakWithArgumentWithHandleHandleTrackResurrection;
-        private Handles<Type> multipleWeakWithHandleHandleTrackResurrection;
+        private Dictionary<Type, EventHandle> multipleWeakWithArgumentHandleTrackResurrection;
+        private Dictionary<Type, EventHandle> multipleWeakHandleTrackResurrection;
+        private Dictionary<Type2, EventHandle> multipleWeakWithArgumentWithValueClosureHandleTrackResurrection;
+        private Dictionary<Type, EventHandle> multipleWeakWithArgumentWithReferenceClosureHandleTrackResurrection;
+        private Dictionary<Type2, EventHandle> multipleWeakWithValueClosureHandleTrackResurrection;
+        private Dictionary<Type, EventHandle> multipleWeakWithReferenceClosureHandleTrackResurrection;
+        private Dictionary<Type2, EventHandle> multipleWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection;
+        private Dictionary<Type, EventHandle> multipleWeakWithArgumentWithReferenceClosureWithHandleHandleTrackResurrection;
+        private Dictionary<Type2, EventHandle> multipleWeakWithValueClosureWithHandleHandleTrackResurrection;
+        private Dictionary<Type, EventHandle> multipleWeakWithReferenceClosureWithHandleHandleTrackResurrection;
+        private Dictionary<Type, EventHandle> multipleWeakWithArgumentWithHandleHandleTrackResurrection;
+        private Dictionary<Type, EventHandle> multipleWeakWithHandleHandleTrackResurrection;
 
         /// <summary>
         /// Subscribes the callback <paramref name="callback"/> to execute when the event type <typeparamref name="TEvent"/> is raised.<br/>
@@ -46,18 +47,11 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
-            else
-            {
-                (trackResurrection ?
-                    ref multipleWeakWithArgumentHandleTrackResurrection :
-                    ref multipleWeakWithArgumentHandle)
-                    .GetOrCreate<MultipleWeakWithArgumentEventHandle<TEvent>, TEvent>(typeof(TEvent), this)
-                        .Add(handle, callback, trackResurrection);
-                globalLock.ReadEnd();
-            }
+            GetOrCreate<Type, MultipleWeakWithArgumentEventHandle<TEvent>, TEvent>(
+                ref trackResurrection ? ref multipleWeakWithArgumentHandleTrackResurrection : ref multipleWeakWithArgumentHandle,
+                typeof(TEvent))
+                .Add(handle, callback, trackResurrection);
+            InEventEnd();
         }
 
         /// <summary>
@@ -75,18 +69,11 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
-            else
-            {
-                (trackResurrection ?
-                    ref multipleWeakHandleTrackResurrection :
-                    ref multipleWeakHandle)
-                    .GetOrCreate<MultipleWeakEventHandle<TEvent>, TEvent>(typeof(TEvent), this)
-                        .Add(handle, callback, trackResurrection);
-                globalLock.ReadEnd();
-            }
+            GetOrCreate<Type, MultipleWeakEventHandle<TEvent>, TEvent>(
+                ref trackResurrection ? ref multipleWeakHandleTrackResurrection : ref multipleWeakHandle,
+                typeof(TEvent))
+                .Add(handle, callback, trackResurrection);
+            InEventEnd();
         }
 
         /// <summary>
@@ -105,25 +92,17 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
+            if (typeof(TClosure).IsValueType)
+                GetOrCreate<Type2, MultipleWeakWithArgumentWithClosureEventHandle<TEvent, TClosure>, TEvent>(
+                    ref trackResurrection ? ref multipleWeakWithArgumentWithValueClosureHandleTrackResurrection : ref multipleWeakWithArgumentWithValueClosureHandle,
+                    new(typeof(TEvent), typeof(TClosure)))
+                .Add(handle, closure, callback, trackResurrection);
             else
-            {
-                if (typeof(TClosure).IsValueType)
-                    (trackResurrection ?
-                        ref multipleWeakWithArgumentWithValueClosureHandleTrackResurrection :
-                        ref multipleWeakWithArgumentWithValueClosureHandle)
-                        .GetOrCreate<MultipleWeakWithArgumentWithClosureEventHandle<TEvent, TClosure>, TEvent>(new(typeof(TEvent), typeof(TClosure)), this)
-                            .Add(handle, closure, callback, trackResurrection);
-                else
-                    (trackResurrection ?
-                        ref multipleWeakWithArgumentWithReferenceClosureHandleTrackResurrection :
-                        ref multipleWeakWithArgumentWithReferenceClosureHandle)
-                        .GetOrCreate<MultipleWeakWithArgumentWithClosureEventHandle<TEvent, object>, TEvent>(typeof(TEvent), this)
-                            .Add(handle, closure, Unsafe.As<Action<object, TEvent>>(callback), trackResurrection);
-                globalLock.ReadEnd();
-            }
+                GetOrCreate<Type, MultipleWeakWithArgumentWithClosureEventHandle<TEvent, object>, TEvent>(
+                ref trackResurrection ? ref multipleWeakWithArgumentWithReferenceClosureHandleTrackResurrection : ref multipleWeakWithArgumentWithReferenceClosureHandle,
+                typeof(TEvent))
+                .Add(handle, closure, Unsafe.As<Action<object, TEvent>>(callback), trackResurrection);
+            InEventEnd();
         }
 
         /// <summary>
@@ -142,25 +121,17 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
+            if (typeof(TClosure).IsValueType)
+                GetOrCreate<Type2, MultipleWeakWithClosureEventHandle<TEvent, TClosure>, TEvent>(
+                    ref trackResurrection ? ref multipleWeakWithValueClosureHandleTrackResurrection : ref multipleWeakWithValueClosureHandle,
+                    new(typeof(TEvent), typeof(TClosure)))
+                .Add(handle, closure, callback, trackResurrection);
             else
-            {
-                if (typeof(TClosure).IsValueType)
-                    (trackResurrection ?
-                        ref multipleWeakWithValueClosureHandleTrackResurrection :
-                        ref multipleWeakWithValueClosureHandle)
-                        .GetOrCreate<MultipleWeakWithClosureEventHandle<TEvent, TClosure>, TEvent>(new(typeof(TEvent), typeof(TClosure)), this)
-                            .Add(handle, closure, callback, trackResurrection);
-                else
-                    (trackResurrection ?
-                        ref multipleWeakWithReferenceClosureHandleTrackResurrection :
-                        ref multipleWeakWithReferenceClosureHandle)
-                        .GetOrCreate<MultipleWeakWithClosureEventHandle<TEvent, object>, TEvent>(typeof(TEvent), this)
-                            .Add(handle, closure, Unsafe.As<Action<object>>(callback), trackResurrection);
-                globalLock.ReadEnd();
-            }
+                GetOrCreate<Type, MultipleWeakWithClosureEventHandle<TEvent, object>, TEvent>(
+                ref trackResurrection ? ref multipleWeakWithReferenceClosureHandleTrackResurrection : ref multipleWeakWithReferenceClosureHandle,
+                typeof(TEvent))
+                .Add(handle, closure, Unsafe.As<Action<object>>(callback), trackResurrection);
+            InEventEnd();
         }
 
         /// <summary>
@@ -179,25 +150,17 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
+            if (typeof(TClosure).IsValueType)
+                GetOrCreate<Type2, MultipleWeakWithArgumentWithClosureWithHandleEventHandle<TEvent, TClosure>, TEvent>(
+                    ref trackResurrection ? ref multipleWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection : ref multipleWeakWithArgumentWithValueClosureWithHandleHandle,
+                    new(typeof(TEvent), typeof(TClosure)))
+                .Add(handle, closure, callback, trackResurrection);
             else
-            {
-                if (typeof(TClosure).IsValueType)
-                    (trackResurrection ?
-                        ref multipleWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection :
-                        ref multipleWeakWithArgumentWithValueClosureWithHandleHandle)
-                        .GetOrCreate<MultipleWeakWithArgumentWithClosureWithHandleEventHandle<TEvent, TClosure>, TEvent>(new(typeof(TEvent), typeof(TClosure)), this)
-                            .Add(handle, closure, callback, trackResurrection);
-                else
-                    (trackResurrection ?
-                        ref multipleWeakWithArgumentWithReferenceClosureWithHandleHandleTrackResurrection :
-                        ref multipleWeakWithArgumentWithReferenceClosureWithHandleHandle)
-                        .GetOrCreate<MultipleWeakWithArgumentWithClosureWithHandleEventHandle<TEvent, object>, TEvent>(typeof(TEvent), this)
-                            .Add(handle, closure, Unsafe.As<Action<object, object, TEvent>>(callback), trackResurrection);
-                globalLock.ReadEnd();
-            }
+                GetOrCreate<Type, MultipleWeakWithArgumentWithClosureWithHandleEventHandle<TEvent, object>, TEvent>(
+                ref trackResurrection ? ref multipleWeakWithArgumentWithReferenceClosureWithHandleHandleTrackResurrection : ref multipleWeakWithArgumentWithReferenceClosureWithHandleHandle,
+                typeof(TEvent))
+                .Add(handle, closure, Unsafe.As<Action<object, object, TEvent>>(callback), trackResurrection);
+            InEventEnd();
         }
 
         /// <summary>
@@ -216,25 +179,17 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
+            if (typeof(TClosure).IsValueType)
+                GetOrCreate<Type2, MultipleWeakWithClosureWithHandleEventHandle<TEvent, TClosure>, TEvent>(
+                    ref trackResurrection ? ref multipleWeakWithValueClosureWithHandleHandleTrackResurrection : ref multipleWeakWithValueClosureWithHandleHandle,
+                    new(typeof(TEvent), typeof(TClosure)))
+                .Add(handle, closure, callback, trackResurrection);
             else
-            {
-                if (typeof(TClosure).IsValueType)
-                    (trackResurrection ?
-                        ref multipleWeakWithValueClosureWithHandleHandleTrackResurrection :
-                        ref multipleWeakWithValueClosureWithHandleHandle)
-                        .GetOrCreate<MultipleWeakWithClosureWithHandleEventHandle<TEvent, TClosure>, TEvent>(new(typeof(TEvent), typeof(TClosure)), this)
-                            .Add(handle, closure, callback, trackResurrection);
-                else
-                    (trackResurrection ?
-                        ref multipleWeakWithReferenceClosureWithHandleHandleTrackResurrection :
-                        ref multipleWeakWithReferenceClosureWithHandleHandle)
-                        .GetOrCreate<MultipleWeakWithClosureWithHandleEventHandle<TEvent, object>, TEvent>(typeof(TEvent), this)
-                            .Add(handle, closure, Unsafe.As<Action<object, object>>(callback), trackResurrection);
-                globalLock.ReadEnd();
-            }
+                GetOrCreate<Type, MultipleWeakWithClosureWithHandleEventHandle<TEvent, object>, TEvent>(
+                ref trackResurrection ? ref multipleWeakWithReferenceClosureWithHandleHandleTrackResurrection : ref multipleWeakWithReferenceClosureWithHandleHandle,
+                typeof(TEvent))
+                .Add(handle, closure, Unsafe.As<Action<object, object>>(callback), trackResurrection);
+            InEventEnd();
         }
 
         /// <summary>
@@ -252,18 +207,11 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
-            else
-            {
-                (trackResurrection ?
-                    ref multipleWeakWithArgumentWithHandleHandleTrackResurrection :
-                    ref multipleWeakWithArgumentWithHandleHandle)
-                    .GetOrCreate<MultipleWeakWithArgumentWithHandleEventHandle<TEvent>, TEvent>(typeof(TEvent), this)
-                        .Add(handle, callback, trackResurrection);
-                globalLock.ReadEnd();
-            }
+            GetOrCreate<Type, MultipleWeakWithArgumentWithHandleEventHandle<TEvent>, TEvent>(
+                ref trackResurrection ? ref multipleWeakWithArgumentWithHandleHandleTrackResurrection : ref multipleWeakWithArgumentWithHandleHandle,
+                typeof(TEvent))
+                .Add(handle, callback, trackResurrection);
+            InEventEnd();
         }
 
         /// <summary>
@@ -281,18 +229,11 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
-            else
-            {
-                (trackResurrection ?
-                    ref multipleWeakWithHandleHandleTrackResurrection :
-                    ref multipleWeakWithHandleHandle)
-                    .GetOrCreate<MultipleWeakWithHandleEventHandle<TEvent>, TEvent>(typeof(TEvent), this)
-                        .Add(handle, callback, trackResurrection);
-                globalLock.ReadEnd();
-            }
+            GetOrCreate<Type, MultipleWeakWithHandleEventHandle<TEvent>, TEvent>(
+                ref trackResurrection ? ref multipleWeakWithHandleHandleTrackResurrection : ref multipleWeakWithHandleHandle,
+                typeof(TEvent))
+                .Add(handle, callback, trackResurrection);
+            InEventEnd();
         }
 
         /// <summary>
@@ -309,17 +250,11 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
-            else
+            if (TryGet(ref trackResurrection ? ref multipleWeakWithArgumentHandleTrackResurrection : ref multipleWeakWithArgumentHandle,
+                typeof(TEvent), out MultipleWeakWithArgumentEventHandle<TEvent> manager))
             {
-                if ((trackResurrection ?
-                    ref multipleWeakWithArgumentHandleTrackResurrection :
-                    ref multipleWeakWithArgumentHandle)
-                    .TryGet(typeof(TEvent), out MultipleWeakWithArgumentEventHandle<TEvent> manager))
-                    manager.Remove(handle, callback);
-                globalLock.ReadEnd();
+                manager.Remove(handle, callback);
+                InEventEnd();
             }
         }
 
@@ -337,17 +272,11 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
-            else
+            if (TryGet(ref trackResurrection ? ref multipleWeakHandleTrackResurrection : ref multipleWeakHandle,
+                typeof(TEvent), out MultipleWeakEventHandle<TEvent> manager))
             {
-                if ((trackResurrection ?
-                    ref multipleWeakHandleTrackResurrection :
-                    ref multipleWeakHandle)
-                    .TryGet(typeof(TEvent), out MultipleWeakEventHandle<TEvent> manager))
-                    manager.Remove(handle, callback);
-                globalLock.ReadEnd();
+                manager.Remove(handle, callback);
+                InEventEnd();
             }
         }
 
@@ -366,26 +295,23 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
+            if (typeof(TClosure).IsValueType)
+            {
+                if (TryGet(ref trackResurrection ? ref multipleWeakWithArgumentWithValueClosureHandleTrackResurrection : ref multipleWeakWithArgumentWithValueClosureHandle,
+                    new(typeof(TEvent), typeof(TClosure)), out MultipleWeakWithArgumentWithClosureEventHandle<TEvent, TClosure> manager))
+                {
+                    manager.Remove(handle, closure, callback);
+                    InEventEnd();
+                }
+            }
             else
             {
-                if (typeof(TClosure).IsValueType)
+                if (TryGet(ref trackResurrection ? ref multipleWeakWithArgumentWithReferenceClosureHandleTrackResurrection : ref multipleWeakWithArgumentWithReferenceClosureHandle,
+                    typeof(TEvent), out MultipleWeakWithArgumentWithClosureEventHandle<TEvent, object> manager))
                 {
-                    if ((trackResurrection ?
-                        ref multipleWeakWithArgumentWithValueClosureHandleTrackResurrection :
-                        ref multipleWeakWithArgumentWithValueClosureHandle)
-                        .TryGet(new(typeof(TEvent), typeof(TClosure)), out MultipleWeakWithArgumentWithClosureEventHandle<TEvent, TClosure> manager))
-                        manager.Remove(handle, closure, callback);
+                    manager.Remove(handle, closure, Unsafe.As<Action<object, TEvent>>(callback));
+                    InEventEnd();
                 }
-                else
-                    if ((trackResurrection ?
-                        ref multipleWeakWithArgumentWithReferenceClosureHandleTrackResurrection :
-                        ref multipleWeakWithArgumentWithReferenceClosureHandle)
-                        .TryGet(typeof(TEvent), out MultipleWeakWithArgumentWithClosureEventHandle<TEvent, object> manager))
-                        manager.Remove(handle, closure, Unsafe.As<Action<object, TEvent>>(callback));
-                globalLock.ReadEnd();
             }
         }
 
@@ -404,26 +330,23 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
+            if (typeof(TClosure).IsValueType)
+            {
+                if (TryGet(ref trackResurrection ? ref multipleWeakWithValueClosureHandleTrackResurrection : ref multipleWeakWithValueClosureHandle,
+                    new(typeof(TEvent), typeof(TClosure)), out MultipleWeakWithClosureEventHandle<TEvent, TClosure> manager))
+                {
+                    manager.Remove(handle, closure, callback);
+                    InEventEnd();
+                }
+            }
             else
             {
-                if (typeof(TClosure).IsValueType)
+                if (TryGet(ref trackResurrection ? ref multipleWeakWithReferenceClosureHandleTrackResurrection : ref multipleWeakWithReferenceClosureHandle,
+                    typeof(TEvent), out MultipleWeakWithClosureEventHandle<TEvent, object> manager))
                 {
-                    if ((trackResurrection ?
-                        ref multipleWeakWithValueClosureHandleTrackResurrection :
-                        ref multipleWeakWithValueClosureHandle)
-                        .TryGet(new(typeof(TEvent), typeof(TClosure)), out MultipleWeakWithClosureEventHandle<TEvent, TClosure> manager))
-                        manager.Remove(handle, closure, callback);
-                }
-                else
-                    if ((trackResurrection ?
-                        ref multipleWeakWithReferenceClosureHandleTrackResurrection :
-                        ref multipleWeakWithReferenceClosureHandle)
-                        .TryGet(typeof(TEvent), out MultipleWeakWithClosureEventHandle<TEvent, object> manager))
                     manager.Remove(handle, closure, Unsafe.As<Action<object>>(callback));
-                globalLock.ReadEnd();
+                    InEventEnd();
+                }
             }
         }
 
@@ -442,26 +365,23 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
+            if (typeof(TClosure).IsValueType)
+            {
+                if (TryGet(ref trackResurrection ? ref multipleWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection : ref multipleWeakWithArgumentWithValueClosureWithHandleHandle,
+                    new(typeof(TEvent), typeof(TClosure)), out MultipleWeakWithArgumentWithClosureWithHandleEventHandle<TEvent, TClosure> manager))
+                {
+                    manager.Remove(handle, closure, callback);
+                    InEventEnd();
+                }
+            }
             else
             {
-                if (typeof(TClosure).IsValueType)
+                if (TryGet(ref trackResurrection ? ref multipleWeakWithArgumentWithReferenceClosureWithHandleHandleTrackResurrection : ref multipleWeakWithArgumentWithReferenceClosureWithHandleHandle,
+                    typeof(TEvent), out MultipleWeakWithArgumentWithClosureWithHandleEventHandle<TEvent, object> manager))
                 {
-                    if ((trackResurrection ?
-                        ref multipleWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection :
-                        ref multipleWeakWithArgumentWithValueClosureWithHandleHandle)
-                        .TryGet(new(typeof(TEvent), typeof(TClosure)), out MultipleWeakWithArgumentWithClosureWithHandleEventHandle<TEvent, TClosure> manager))
-                        manager.Remove(handle, closure, callback);
-                }
-                else
-                    if ((trackResurrection ?
-                        ref multipleWeakWithArgumentWithReferenceClosureWithHandleHandleTrackResurrection :
-                        ref multipleWeakWithArgumentWithReferenceClosureWithHandleHandle)
-                        .TryGet(typeof(TEvent), out MultipleWeakWithArgumentWithClosureWithHandleEventHandle<TEvent, object> manager))
                     manager.Remove(handle, closure, Unsafe.As<Action<object, object, TEvent>>(callback));
-                globalLock.ReadEnd();
+                    InEventEnd();
+                }
             }
         }
 
@@ -480,26 +400,23 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
+            if (typeof(TClosure).IsValueType)
+            {
+                if (TryGet(ref trackResurrection ? ref multipleWeakWithValueClosureWithHandleHandleTrackResurrection : ref multipleWeakWithValueClosureWithHandleHandle,
+                    new(typeof(TEvent), typeof(TClosure)), out MultipleWeakWithClosureWithHandleEventHandle<TEvent, TClosure> manager))
+                {
+                    manager.Remove(handle, closure, callback);
+                    InEventEnd();
+                }
+            }
             else
             {
-                if (typeof(TClosure).IsValueType)
+                if (TryGet(ref trackResurrection ? ref multipleWeakWithReferenceClosureWithHandleHandleTrackResurrection : ref multipleWeakWithReferenceClosureWithHandleHandle,
+                    typeof(TEvent), out MultipleWeakWithClosureWithHandleEventHandle<TEvent, object> manager))
                 {
-                    if ((trackResurrection ?
-                        ref multipleWeakWithValueClosureWithHandleHandleTrackResurrection :
-                        ref multipleWeakWithValueClosureWithHandleHandle)
-                        .TryGet(new(typeof(TEvent), typeof(TClosure)), out MultipleWeakWithClosureWithHandleEventHandle<TEvent, TClosure> manager))
-                        manager.Remove(handle, closure, callback);
-                }
-                else
-                    if ((trackResurrection ?
-                        ref multipleWeakWithReferenceClosureWithHandleHandleTrackResurrection :
-                        ref multipleWeakWithReferenceClosureWithHandleHandle)
-                        .TryGet(typeof(TEvent), out MultipleWeakWithClosureWithHandleEventHandle<TEvent, object> manager))
                     manager.Remove(handle, closure, Unsafe.As<Action<object, object>>(callback));
-                globalLock.ReadEnd();
+                    InEventEnd();
+                }
             }
         }
 
@@ -517,17 +434,11 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
-            else
+            if (TryGet(ref trackResurrection ? ref multipleWeakWithArgumentWithHandleHandleTrackResurrection : ref multipleWeakWithArgumentWithHandleHandle,
+                typeof(TEvent), out MultipleWeakWithArgumentWithHandleEventHandle<TEvent> manager))
             {
-                if ((trackResurrection ?
-                    ref multipleWeakWithArgumentWithHandleHandleTrackResurrection :
-                    ref multipleWeakWithArgumentWithHandleHandle)
-                    .TryGet(typeof(TEvent), out MultipleWeakWithArgumentWithHandleEventHandle<TEvent> manager))
-                    manager.Remove(handle, callback);
-                globalLock.ReadEnd();
+                manager.Remove(handle, callback);
+                InEventEnd();
             }
         }
 
@@ -545,17 +456,11 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallback();
 
-            globalLock.ReadBegin();
-            if (isDisposedOrDisposing)
-                ThrowObjectDisposedExceptionAndEndGlobalRead();
-            else
+            if (TryGet(ref trackResurrection ? ref multipleWeakWithHandleHandleTrackResurrection : ref multipleWeakWithHandleHandle,
+                typeof(TEvent), out MultipleWeakWithHandleEventHandle<TEvent> manager))
             {
-                if ((trackResurrection ?
-                    ref multipleWeakWithHandleHandleTrackResurrection :
-                    ref multipleWeakWithHandleHandle)
-                    .TryGet(typeof(TEvent), out MultipleWeakWithHandleEventHandle<TEvent> manager))
-                    manager.Remove(handle, callback);
-                globalLock.ReadEnd();
+                manager.Remove(handle, callback);
+                InEventEnd();
             }
         }
     }

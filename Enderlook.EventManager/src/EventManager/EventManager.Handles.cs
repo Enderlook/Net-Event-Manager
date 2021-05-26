@@ -7,158 +7,172 @@ namespace Enderlook.EventManager
 {
     public sealed partial class EventManager
     {
-        internal struct Handles<TKey>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void Purge<TKey>(ref Dictionary<TKey, EventHandle> dictionary, ref ValueList<TKey> purgedKeys)
         {
-            private ReadWriteLock @lock;
-            private Dictionary<TKey, EventHandle> dictionary;
+            ValueList<TKey> keys = purgedKeys;
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Purge(ref ValueList<TKey> purgedKeys)
+            foreach (KeyValuePair<TKey, EventHandle> kvp in dictionary)
             {
-                ValueList<TKey> keys = purgedKeys;
-
-                foreach (KeyValuePair<TKey, EventHandle> kvp in dictionary)
-                {
-                    if (kvp.Value.Purge())
-                        keys.Add(kvp.Key);
-                }
-
-                for (int i = 0; i < keys.Count; i++)
-                    dictionary.Remove(keys.Get(i));
-
-                keys.Clear();
-                purgedKeys = keys;
-
-                if (dictionary.Count == 0)
-                    dictionary = null;
+                if (kvp.Value.Purge())
+                    keys.Add(kvp.Key);
             }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool TryGet<TEventHandle>(TKey key, out TEventHandle eventHandle)
-                where TEventHandle : EventHandle
+            for (int i = 0; i < keys.Count; i++)
+                dictionary.Remove(keys.Get(i));
+
+            keys.Clear();
+            purgedKeys = keys;
+
+            if (dictionary.Count == 0)
+                dictionary = null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool TryGet<TKey, TEventHandle>(ref Dictionary<TKey, EventHandle> dictionary, TKey key, out TEventHandle eventHandle)
+            where TEventHandle : EventHandle
+        {
+            bool found;
+            EventHandle obj;
+            ReadBegin();
             {
+                if (isDisposedOrDisposing)
+                    ThrowObjectDisposedExceptionAndEndGlobalRead();
+
                 if (dictionary is null) // We could remove lazy initialization.
                 {
                     eventHandle = default;
+                    ReadEnd();
                     return false;
                 }
 
-                bool found;
-                EventHandle obj;
-                @lock.ReadBegin();
-                {
-                    found = dictionary.TryGetValue(key, out obj);
-                }
-                @lock.ReadEnd();
-                if (found)
-                {
-                    eventHandle = CastUtils.ExpectExactType<TEventHandle>(obj);
-                    return true;
-                }
-                else
-                {
-                    eventHandle = default;
-                    return false;
-                }
+                found = dictionary.TryGetValue(key, out obj);
             }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public TEventHandle GetOrCreate<TEventHandle, TEvent>(TKey key, EventManager eventManager)
-                where TEventHandle : TypedEventHandle<TEvent>, new()
+            if (found)
             {
-                if (dictionary is null) // We could remove lazy initialization.
-                    return GetOrCreate_SlowPath_CreateDictionary<TEventHandle, TEvent>(key, eventManager);
+                FromReadToInEvent();
+                eventHandle = CastUtils.ExpectExactType<TEventHandle>(obj);
+                return true;
+            }
+            else
+            {
+                ReadEnd();
+                eventHandle = default;
+                return false;
+            }
+        }
 
-                @lock.ReadBegin();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private TEventHandle GetOrCreate<TKey, TEventHandle, TEvent>(ref Dictionary<TKey, EventHandle> dictionary, TKey key)
+            where TEventHandle : TypedEventHandle<TEvent>, new()
+        {
+            ReadBegin();
+            {
+                if (isDisposedOrDisposing)
+                    ThrowObjectDisposedExceptionAndEndGlobalRead();
+
+                if (dictionary is null) // We could remove lazy initialization.
+                    return GetOrCreate_SlowPath_CreateDictionary<TKey, TEventHandle, TEvent>(ref dictionary, key);
+
                 if (dictionary.TryGetValue(key, out EventHandle obj))
                 {
-                    @lock.ReadEnd();
+                    FromReadToInEvent();
                     return CastUtils.ExpectExactType<TEventHandle>(obj);
                 }
                 else
-                    return GetOrCreate_SlowPath_CreateManager<TEventHandle, TEvent>(key, eventManager);
+                    return GetOrCreate_SlowPath_CreateManager<TKey, TEventHandle, TEvent>(ref dictionary, key);
             }
+        }
 
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            private TEventHandle GetOrCreate_SlowPath_CreateManager<TEventHandle, TEvent>(TKey key, EventManager eventManager)
-                where TEventHandle : TypedEventHandle<TEvent>, new()
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private TEventHandle GetOrCreate_SlowPath_CreateManager<TKey, TEventHandle, TEvent>(ref Dictionary<TKey, EventHandle> dictionary, TKey key)
+            where TEventHandle : TypedEventHandle<TEvent>, new()
+        {
+            TEventHandle eventHandle;
+            FromReadToWrite();
             {
-                @lock.ReadEnd();
-                TEventHandle eventHandle;
-                @lock.WriteBegin();
-                if (dictionary.TryGetValue(key, out EventHandle obj))
-                    eventHandle = CastUtils.ExpectExactType<TEventHandle>(obj);
-                else
+                // During the previous call and this one, the dictioanry could be purged.
+                if (dictionary is null) // We could remove lazy initialization.
                 {
+                    dictionary = new Dictionary<TKey, EventHandle>();
+                    goto add;
+                }
+
+                if (dictionary.TryGetValue(key, out EventHandle obj))
+                {
+                    eventHandle = CastUtils.ExpectExactType<TEventHandle>(obj);
+                    goto exit;
+                }
+
+                add:
+                eventHandle = new();
+                dictionary.Add(key, eventHandle);
+                AddManager<TEventHandle, TEvent>(eventHandle);
+            }
+            exit:
+            FromWriteToInEvent();
+            return eventHandle;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private TEventHandle GetOrCreate_SlowPath_CreateDictionary<TKey, TEventHandle, TEvent>(ref Dictionary<TKey, EventHandle> dictionary, TKey key)
+            where TEventHandle : TypedEventHandle<TEvent>, new()
+        {
+            TEventHandle eventHandle;
+            FromReadToWrite();
+            {
+                if (dictionary is null) // We could remove lazy initialization.
+                {
+                    dictionary = new();
                     eventHandle = new();
                     dictionary.Add(key, eventHandle);
-                    AddManager<TEventHandle, TEvent>(eventManager, eventHandle);
-                }
-                @lock.WriteEnd();
-                return eventHandle;
-            }
-
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            private TEventHandle GetOrCreate_SlowPath_CreateDictionary<TEventHandle, TEvent>(TKey key, EventManager eventManager)
-                where TEventHandle : TypedEventHandle<TEvent>, new()
-            {
-                TEventHandle eventHandle;
-                @lock.WriteBegin();
-                {
-                    if (dictionary is null)
-                    {
-                        dictionary = new();
-                        eventHandle = new();
-                        dictionary.Add(key, eventHandle);
-                        AddManager<TEventHandle, TEvent>(eventManager, eventHandle);
-                    }
-                    else
-                    {
-                        if (dictionary.TryGetValue(key, out EventHandle obj))
-                            eventHandle = CastUtils.ExpectExactType<TEventHandle>(obj);
-                        else
-                        {
-                            eventHandle = new();
-                            dictionary.Add(key, eventHandle);
-                            AddManager<TEventHandle, TEvent>(eventManager, eventHandle);
-                        }
-                    }
-                }
-                @lock.WriteEnd();
-                return eventHandle;
-            }
-
-            private static void AddManager<TEventHandle, TEvent>(EventManager eventManager, TEventHandle eventHandle)
-                where TEventHandle : TypedEventHandle<TEvent>, new()
-            {
-                int count_ = eventManager.managersList.LockAndGetCount();
-                if (eventManager.managersList.IsDefault)
-                {
-                    Debug.Assert(eventManager.managersDictionary is null);
-
-                    Dictionary<Type, Manager> dictionary = new();
-                    TypedManager<TEvent> manager = new();
-                    dictionary.Add(typeof(TEvent), manager);
-                    manager.Add(eventHandle);
-                    eventManager.managersDictionary = dictionary;
-                    eventManager.managersList.InitializeWithAndUnlock(manager);
+                    AddManager<TEventHandle, TEvent>(eventHandle);
                 }
                 else
                 {
-                    Debug.Assert(eventManager.managersDictionary is not null);
-
-                    if (eventManager.managersDictionary.TryGetValue(typeof(TEvent), out Manager key))
-                    {
-                        CastUtils.ExpectExactType<TypedManager<TEvent>>(key).Add(eventHandle);
-                        eventManager.managersList.Unlock(count_);
-                    }
+                    if (dictionary.TryGetValue(key, out EventHandle obj))
+                        eventHandle = CastUtils.ExpectExactType<TEventHandle>(obj);
                     else
                     {
-                        TypedManager<TEvent> manager = new();
-                        manager.Add(eventHandle);
-                        eventManager.managersDictionary.Add(typeof(TEvent), manager);
-                        eventManager.managersList.AddAndUnlock(count_, manager);
+                        eventHandle = new();
+                        dictionary.Add(key, eventHandle);
+                        AddManager<TEventHandle, TEvent>(eventHandle);
                     }
+                }
+            }
+            FromWriteToInEvent();
+            return eventHandle;
+        }
+
+        private void AddManager<TEventHandle, TEvent>(TEventHandle eventHandle)
+            where TEventHandle : TypedEventHandle<TEvent>, new()
+        {
+            if (managersList.IsDefault)
+            {
+                Debug.Assert(managersDictionary is null);
+
+                Dictionary<Type, Manager> dictionary = new();
+                TypedManager<TEvent> manager = new();
+                dictionary.Add(typeof(TEvent), manager);
+                manager.Add(eventHandle);
+                managersDictionary = dictionary;
+                managersList.InitializeWithAndUnlock(manager);
+            }
+            else
+            {
+                Debug.Assert(managersDictionary is not null);
+
+                if (managersDictionary.TryGetValue(typeof(TEvent), out Manager key))
+                {
+                    CastUtils.ExpectExactType<TypedManager<TEvent>>(key).Add(eventHandle);
+                }
+                else
+                {
+                    TypedManager<TEvent> manager = new();
+                    manager.Add(eventHandle);
+                    managersDictionary.Add(typeof(TEvent), manager);
+                    managersList.Add(manager);
                 }
             }
         }

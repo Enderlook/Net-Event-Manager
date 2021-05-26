@@ -13,12 +13,13 @@ namespace Enderlook.EventManager
             => managers.ConcurrentAdd(manager);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Raise(TEvent argument)
+        public void Raise(EventManager manager, TEvent argument)
         {
             ValueList<SliceWithEventHandle> stored = ValueList<SliceWithEventHandle>.Create(managers.ConcurrentCount());
             int index = 0;
             while (managers.ConcurrentTryMoveNext(ref index, out TypedEventHandle<TEvent> eventHandle))
                 stored.Add(eventHandle.ConcurrentGetRaiser());
+            manager.InEventEnd();
 
             for (int i = 0; i < stored.Count; i++)
             {

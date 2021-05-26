@@ -8,11 +8,11 @@ namespace Enderlook.EventManager
     {
         private bool ConcurrentPurge()
         {
-            globalLock.WriteBegin();
+            MassiveWriteBegin();
             {
                 if (isDisposedOrDisposing)
                 {
-                    globalLock.ReadEnd();
+                    ReadEnd();
                     return false;
                 }
 
@@ -20,80 +20,80 @@ namespace Enderlook.EventManager
                 GCMemoryInfo memoryInfo = GC.GetGCMemoryInfo();
                 if (memoryInfo.MemoryLoadBytes < memoryInfo.HighMemoryLoadThresholdBytes * .8)
                 {
-                    globalLock.WriteEnd();
+                    WriteEnd();
                     return true;
                 }
 #endif
 
                 ValueList<Type> keys = ValueList<Type>.Create();
                 {
-                    multipleStrongWithArgumentHandle.Purge(ref keys);
-                    multipleStrongHandle.Purge(ref keys);
-                    multipleStrongWithArgumentWithReferenceClosureHandle.Purge(ref keys);
-                    multipleStrongWithReferenceClosureHandle.Purge(ref keys);
-                    onceStrongWithArgumentHandle.Purge(ref keys);
-                    onceStrongHandle.Purge(ref keys);
-                    onceStrongWithArgumentWithReferenceClosureHandle.Purge(ref keys);
-                    onceStrongWithReferenceClosureHandle.Purge(ref keys);
+                    Purge(ref multipleStrongWithArgumentHandle, ref keys);
+                    Purge(ref multipleStrongHandle, ref keys);
+                    Purge(ref multipleStrongWithArgumentWithReferenceClosureHandle, ref keys);
+                    Purge(ref multipleStrongWithReferenceClosureHandle, ref keys);
+                    Purge(ref onceStrongWithArgumentHandle, ref keys);
+                    Purge(ref onceStrongHandle, ref keys);
+                    Purge(ref onceStrongWithArgumentWithReferenceClosureHandle, ref keys);
+                    Purge(ref onceStrongWithReferenceClosureHandle, ref keys);
 
-                    multipleWeakWithArgumentHandle.Purge(ref keys);
-                    multipleWeakHandle.Purge(ref keys);
-                    multipleWeakWithArgumentWithValueClosureHandle = default;
-                    multipleWeakWithArgumentWithReferenceClosureHandle.Purge(ref keys);
-                    multipleWeakWithReferenceClosureHandle.Purge(ref keys);
-                    multipleWeakWithArgumentWithReferenceClosureWithHandleHandle.Purge(ref keys);
-                    multipleWeakWithReferenceClosureWithHandleHandle.Purge(ref keys);
-                    multipleWeakWithArgumentWithHandleHandle.Purge(ref keys);
-                    multipleWeakWithHandleHandle.Purge(ref keys);
-                    multipleWeakWithArgumentHandleTrackResurrection.Purge(ref keys);
-                    multipleWeakHandleTrackResurrection.Purge(ref keys);
-                    multipleWeakWithArgumentWithReferenceClosureHandleTrackResurrection.Purge(ref keys);
-                    multipleWeakWithReferenceClosureHandleTrackResurrection.Purge(ref keys);
-                    multipleWeakWithArgumentWithReferenceClosureWithHandleHandleTrackResurrection.Purge(ref keys);
-                    multipleWeakWithReferenceClosureWithHandleHandleTrackResurrection.Purge(ref keys);
-                    multipleWeakWithArgumentWithHandleHandleTrackResurrection.Purge(ref keys);
-                    multipleWeakWithHandleHandleTrackResurrection.Purge(ref keys);
+                    Purge(ref multipleWeakWithArgumentHandle, ref keys);
+                    Purge(ref multipleWeakHandle, ref keys);
+                    Purge(ref multipleWeakWithArgumentWithReferenceClosureHandle, ref keys);
+                    Purge(ref multipleWeakWithReferenceClosureHandle, ref keys);
+                    Purge(ref multipleWeakWithArgumentWithReferenceClosureWithHandleHandle, ref keys);
+                    Purge(ref multipleWeakWithReferenceClosureWithHandleHandle, ref keys);
+                    Purge(ref multipleWeakWithArgumentWithHandleHandle, ref keys);
+                    Purge(ref multipleWeakWithHandleHandle, ref keys);
+                    Purge(ref multipleWeakWithArgumentHandleTrackResurrection, ref keys);
+                    Purge(ref multipleWeakHandleTrackResurrection, ref keys);
+                    Purge(ref multipleWeakWithArgumentWithReferenceClosureHandleTrackResurrection, ref keys);
+                    Purge(ref multipleWeakWithReferenceClosureHandleTrackResurrection, ref keys);
+                    Purge(ref multipleWeakWithArgumentWithReferenceClosureWithHandleHandleTrackResurrection, ref keys);
+                    Purge(ref multipleWeakWithReferenceClosureWithHandleHandleTrackResurrection, ref keys);
+                    Purge(ref multipleWeakWithArgumentWithHandleHandleTrackResurrection, ref keys);
+                    Purge(ref multipleWeakWithHandleHandleTrackResurrection, ref keys);
 
-                    onceWeakWithArgumentHandle.Purge(ref keys);
-                    onceWeakHandle.Purge(ref keys);
-                    onceWeakWithArgumentWithValueClosureHandle = default;
-                    onceWeakWithArgumentWithReferenceClosureHandle.Purge(ref keys);
-                    onceWeakWithReferenceClosureHandle.Purge(ref keys);
-                    onceWeakWithArgumentWithReferenceClosureWithHandleHandle.Purge(ref keys);
-                    onceWeakWithReferenceClosureWithHandleHandle.Purge(ref keys);
-                    onceWeakWithArgumentWithHandleHandle.Purge(ref keys);
-                    onceWeakWithHandleHandle.Purge(ref keys);
-                    onceWeakWithArgumentHandleTrackResurrection.Purge(ref keys);
-                    onceWeakHandleTrackResurrection.Purge(ref keys);
-                    onceWeakWithArgumentWithReferenceClosureHandleTrackResurrection.Purge(ref keys);
-                    onceWeakWithReferenceClosureHandleTrackResurrection.Purge(ref keys);
-                    onceWeakWithArgumentWithReferenceClosureWithHandleHandleTrackResurrection.Purge(ref keys);
-                    onceWeakWithReferenceClosureWithHandleHandleTrackResurrection.Purge(ref keys);
-                    onceWeakWithArgumentWithHandleHandleTrackResurrection.Purge(ref keys);
-                    onceWeakWithHandleHandleTrackResurrection.Purge(ref keys);
+                    Purge(ref onceWeakWithArgumentHandle, ref keys);
+                    Purge(ref onceWeakHandle, ref keys);
+                    Purge(ref onceWeakWithArgumentWithReferenceClosureHandle, ref keys);
+                    Purge(ref onceWeakWithReferenceClosureHandle, ref keys);
+                    Purge(ref onceWeakWithArgumentWithReferenceClosureWithHandleHandle, ref keys);
+                    Purge(ref onceWeakWithReferenceClosureWithHandleHandle, ref keys);
+                    Purge(ref onceWeakWithArgumentWithHandleHandle, ref keys);
+                    Purge(ref onceWeakWithHandleHandle, ref keys);
+                    Purge(ref onceWeakWithArgumentHandleTrackResurrection, ref keys);
+                    Purge(ref onceWeakHandleTrackResurrection, ref keys);
+                    Purge(ref onceWeakWithArgumentWithReferenceClosureHandleTrackResurrection, ref keys);
+                    Purge(ref onceWeakWithReferenceClosureHandleTrackResurrection, ref keys);
+                    Purge(ref onceWeakWithArgumentWithReferenceClosureWithHandleHandleTrackResurrection, ref keys);
+                    Purge(ref onceWeakWithReferenceClosureWithHandleHandleTrackResurrection, ref keys);
+                    Purge(ref onceWeakWithArgumentWithHandleHandleTrackResurrection, ref keys);
+                    Purge(ref onceWeakWithHandleHandleTrackResurrection, ref keys);
 
                     ValueList<Type2> keys2 = ValueList<Type2>.Create();
                     {
-                        multipleStrongWithArgumentWithValueClosureHandle.Purge(ref keys2);
-                        multipleStrongWithValueClosureHandle.Purge(ref keys2);
-                        onceStrongWithArgumentWithValueClosureHandle.Purge(ref keys2);
-                        onceStrongWithValueClosureHandle.Purge(ref keys2);
+                        Purge(ref multipleStrongWithArgumentWithValueClosureHandle, ref keys2);
+                        Purge(ref multipleStrongWithValueClosureHandle, ref keys2);
+                        Purge(ref onceStrongWithArgumentWithValueClosureHandle, ref keys2);
+                        Purge(ref onceStrongWithValueClosureHandle, ref keys2);
 
-                        multipleWeakWithValueClosureHandle.Purge(ref keys2);
-                        multipleWeakWithArgumentWithValueClosureWithHandleHandle.Purge(ref keys2);
-                        multipleWeakWithArgumentWithValueClosureHandleTrackResurrection.Purge(ref keys2);
-                        multipleWeakWithValueClosureWithHandleHandle.Purge(ref keys2);
-                        multipleWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection.Purge(ref keys2);
-                        multipleWeakWithValueClosureHandleTrackResurrection.Purge(ref keys2);
-                        multipleWeakWithValueClosureWithHandleHandleTrackResurrection.Purge(ref keys2);
+                        Purge(ref multipleWeakWithValueClosureHandle, ref keys2);
+                        Purge(ref multipleWeakWithArgumentWithValueClosureWithHandleHandle, ref keys2);
+                        Purge(ref multipleWeakWithArgumentWithValueClosureHandleTrackResurrection, ref keys2);
+                        Purge(ref multipleWeakWithValueClosureWithHandleHandle, ref keys2);
+                        Purge(ref multipleWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection, ref keys2);
+                        Purge(ref multipleWeakWithValueClosureHandleTrackResurrection, ref keys2);
+                        Purge(ref multipleWeakWithValueClosureWithHandleHandleTrackResurrection, ref keys2);
+                        Purge(ref multipleWeakWithArgumentWithValueClosureHandle, ref keys2);
 
-                        onceWeakWithValueClosureHandle.Purge(ref keys2);
-                        onceWeakWithArgumentWithValueClosureWithHandleHandle.Purge(ref keys2);
-                        onceWeakWithArgumentWithValueClosureHandleTrackResurrection.Purge(ref keys2);
-                        onceWeakWithValueClosureWithHandleHandle.Purge(ref keys2);
-                        onceWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection.Purge(ref keys2);
-                        onceWeakWithValueClosureHandleTrackResurrection.Purge(ref keys2);
-                        onceWeakWithValueClosureWithHandleHandleTrackResurrection.Purge(ref keys2);
+                        Purge(ref onceWeakWithValueClosureHandle, ref keys2);
+                        Purge(ref onceWeakWithArgumentWithValueClosureWithHandleHandle, ref keys2);
+                        Purge(ref onceWeakWithArgumentWithValueClosureHandleTrackResurrection, ref keys2);
+                        Purge(ref onceWeakWithValueClosureWithHandleHandle, ref keys2);
+                        Purge(ref onceWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection, ref keys2);
+                        Purge(ref onceWeakWithValueClosureHandleTrackResurrection, ref keys2);
+                        Purge(ref onceWeakWithValueClosureWithHandleHandleTrackResurrection, ref keys2);
+                        Purge(ref onceWeakWithArgumentWithValueClosureHandle, ref keys2);
                     }
                     keys2.Return();
 
@@ -108,7 +108,7 @@ namespace Enderlook.EventManager
                 }
                 keys.Return();
             }
-            globalLock.WriteEnd();
+            WriteEnd();
             return true;
         }
 

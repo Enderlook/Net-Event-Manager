@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Enderlook.EventManager
 {
@@ -9,10 +10,13 @@ namespace Enderlook.EventManager
     /// </summary>
     public sealed partial class EventManager : IDisposable
     {
-        private ReadWriteLock globalLock;
+        private int locked;
+        private uint readers;
+        private int inEvents;
+        private uint reserved;
+
         private bool isDisposedOrDisposing;
 
-        private ReadWriteLock managersDictionaryLock;
         private Dictionary<Type, Manager> managersDictionary;
         private ValueList<Manager> managersList;
 
@@ -24,102 +28,12 @@ namespace Enderlook.EventManager
         /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
         public void Raise<TEvent>(TEvent argument)
         {
-            managersDictionaryLock.ReadBegin();
-            bool found = managersDictionary.TryGetValue(typeof(TEvent), out Manager managers);
-            managersDictionaryLock.ReadEnd();
-            if (found)
-                CastUtils.ExpectExactType<TypedManager<TEvent>>(managers).Raise(argument);
-        }
-
-        /// <inheritdoc cref="IDisposable.Dispose"/>
-        public void Dispose()
-        {
-            if (isDisposedOrDisposing)
-                return;
-
-            globalLock.WriteBegin();
+            ReadBegin();
+            if (managersDictionary.TryGetValue(typeof(TEvent), out Manager managers))
             {
-                if (isDisposedOrDisposing)
-                {
-                    globalLock.WriteEnd();
-                    return;
-                }
-
-                GC.SuppressFinalize(this);
-
-                isDisposedOrDisposing = true;
-                managersDictionary = default;
-
-                multipleStrongWithArgumentHandle = default;
-                multipleStrongHandle = default;
-                multipleStrongWithArgumentWithValueClosureHandle = default;
-                multipleStrongWithArgumentWithReferenceClosureHandle = default;
-                multipleStrongWithValueClosureHandle = default;
-                multipleStrongWithReferenceClosureHandle = default;
-
-                onceStrongWithArgumentHandle = default;
-                onceStrongHandle = default;
-                onceStrongWithArgumentWithValueClosureHandle = default;
-                onceStrongWithArgumentWithReferenceClosureHandle = default;
-                onceStrongWithValueClosureHandle = default;
-                onceStrongWithReferenceClosureHandle = default;
-
-                multipleWeakWithArgumentHandle = default;
-                multipleWeakHandle = default;
-                multipleWeakWithArgumentWithValueClosureHandle = default;
-                multipleWeakWithArgumentWithReferenceClosureHandle = default;
-                multipleWeakWithValueClosureHandle = default;
-                multipleWeakWithReferenceClosureHandle = default;
-                multipleWeakWithArgumentWithValueClosureWithHandleHandle = default;
-                multipleWeakWithArgumentWithReferenceClosureWithHandleHandle = default;
-                multipleWeakWithValueClosureWithHandleHandle = default;
-                multipleWeakWithReferenceClosureWithHandleHandle = default;
-                multipleWeakWithArgumentWithHandleHandle = default;
-                multipleWeakWithHandleHandle = default;
-                multipleWeakWithArgumentHandleTrackResurrection = default;
-                multipleWeakHandleTrackResurrection = default;
-                multipleWeakWithArgumentWithValueClosureHandleTrackResurrection = default;
-                multipleWeakWithArgumentWithReferenceClosureHandleTrackResurrection = default;
-                multipleWeakWithValueClosureHandleTrackResurrection = default;
-                multipleWeakWithReferenceClosureHandleTrackResurrection = default;
-                multipleWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection = default;
-                multipleWeakWithArgumentWithReferenceClosureWithHandleHandleTrackResurrection = default;
-                multipleWeakWithValueClosureWithHandleHandleTrackResurrection = default;
-                multipleWeakWithReferenceClosureWithHandleHandleTrackResurrection = default;
-                multipleWeakWithArgumentWithHandleHandleTrackResurrection = default;
-                multipleWeakWithHandleHandleTrackResurrection = default;
-
-                onceWeakWithArgumentHandle = default;
-                onceWeakHandle = default;
-                onceWeakWithArgumentWithValueClosureHandle = default;
-                onceWeakWithArgumentWithReferenceClosureHandle = default;
-                onceWeakWithValueClosureHandle = default;
-                onceWeakWithReferenceClosureHandle = default;
-                onceWeakWithArgumentWithValueClosureWithHandleHandle = default;
-                onceWeakWithArgumentWithReferenceClosureWithHandleHandle = default;
-                onceWeakWithValueClosureWithHandleHandle = default;
-                onceWeakWithReferenceClosureWithHandleHandle = default;
-                onceWeakWithArgumentWithHandleHandle = default;
-                onceWeakWithHandleHandle = default;
-                onceWeakWithArgumentHandleTrackResurrection = default;
-                onceWeakHandleTrackResurrection = default;
-                onceWeakWithArgumentWithValueClosureHandleTrackResurrection = default;
-                onceWeakWithArgumentWithReferenceClosureHandleTrackResurrection = default;
-                onceWeakWithValueClosureHandleTrackResurrection = default;
-                onceWeakWithReferenceClosureHandleTrackResurrection = default;
-                onceWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection = default;
-                onceWeakWithArgumentWithReferenceClosureWithHandleHandleTrackResurrection = default;
-                onceWeakWithValueClosureWithHandleHandleTrackResurrection = default;
-                onceWeakWithReferenceClosureWithHandleHandleTrackResurrection = default;
-                onceWeakWithArgumentWithHandleHandleTrackResurrection = default;
-                onceWeakWithHandleHandleTrackResurrection = default;
-
-                ValueList<Manager> managers = managersList;
-                managersList = default;
-                for (int i = 0; i < managers.Count; i++)
-                    managers.Get(i).Dispose();
+                FromReadToInEvent();
+                CastUtils.ExpectExactType<TypedManager<TEvent>>(managers).Raise(this, argument);
             }
-            globalLock.WriteEnd();
         }
 
         ~EventManager() => Dispose();
@@ -130,8 +44,84 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void ThrowObjectDisposedExceptionAndEndGlobalRead()
         {
-            globalLock.ReadEnd();
+            ReadEnd();
             throw new ObjectDisposedException("Event Manager");
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ReadBegin()
+        {
+            while (Interlocked.Exchange(ref locked, 1) != 0) ;
+            readers++;
+            locked = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ReadEnd()
+        {
+            while (Interlocked.Exchange(ref locked, 1) != 0) ;
+            readers--;
+            locked = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void FromReadToWrite()
+        {
+            while (Interlocked.Exchange(ref locked, 1) != 0) ;
+            readers--;
+
+            if (readers == 0)
+                return;
+
+            reserved++;
+            locked = 0;
+
+            while (true)
+            {
+                while (Interlocked.Exchange(ref locked, 1) != 0) ;
+                if (readers > 0)
+                {
+                    reserved--;
+                    locked = 0;
+                }
+                else
+                    break;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void MassiveWriteBegin()
+        {
+            while (true)
+            {
+                while (Interlocked.Exchange(ref locked, 1) != 0) ;
+                if (readers + reserved + inEvents > 0)
+                    locked = 0;
+                else
+                    break;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void WriteEnd() => locked = 0;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void FromReadToInEvent()
+        {
+            while (Interlocked.Exchange(ref locked, 1) != 0) ;
+            readers--;
+            Interlocked.Increment(ref inEvents);
+            locked = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void FromWriteToInEvent()
+        {
+            Interlocked.Increment(ref inEvents);
+            locked = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void InEventEnd() => Interlocked.Decrement(ref inEvents);
     }
 }
