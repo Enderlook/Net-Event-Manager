@@ -11,20 +11,20 @@ namespace Enderlook.EventManager
         private static void Purge<TKey, TKey2>(ref Dictionary<TKey, EventHandle> dictionary, ref ValueList<TKey2> purgedKeys)
             where TKey : TKey2
         {
-            ValueList<TKey2> keys = purgedKeys;
+            if (dictionary is null)
+                return;
 
             foreach (KeyValuePair<TKey, EventHandle> kvp in dictionary)
             {
                 if (kvp.Value.Purge())
-                    keys.Add(kvp.Key);
+                    purgedKeys.Add(kvp.Key);
             }
 
-            for (int i = 0; i < keys.Count; i++)
+            for (int i = 0; i < purgedKeys.Count; i++)
                 // TODO: Remove this cast.
-                dictionary.Remove(CastUtils.ExpectExactType<TKey2, TKey>(ref keys.Get(i)));
+                dictionary.Remove(CastUtils.ExpectExactType<TKey2, TKey>(ref purgedKeys.Get(i)));
 
-            keys.Clear();
-            purgedKeys = keys;
+            purgedKeys.Clear();
 
             if (dictionary.Count == 0)
                 dictionary = null;

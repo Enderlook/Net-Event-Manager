@@ -36,6 +36,14 @@ namespace Enderlook.EventManager
             }
         }
 
+        /// <summary>
+        /// Creates the event manager.
+        /// </summary>
+        public EventManager() => new AutoPurger(this);
+
+        /// <summary>
+        /// Automatically disposes the object it case it wasn't disposed by the user.
+        /// </summary>
         ~EventManager() => Dispose();
 
         [MethodImpl(MethodImplOptions.NoInlining)]

@@ -164,7 +164,7 @@ namespace Enderlook.EventManager
             for (int i = 0; i < count_; i++)
             {
                 WeakDelegate<TDelegate> element = array_[i];
-                if (!element.FreeIfExpired())
+                if (element.FreeIfExpired())
                     continue;
                 array_[j++] = element;
             }
