@@ -12,7 +12,7 @@ namespace Enderlook.EventManager
             {
                 if (isDisposedOrDisposing)
                 {
-                    ReadEnd();
+                    WriteEnd();
                     return false;
                 }
 
