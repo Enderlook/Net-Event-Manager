@@ -25,7 +25,34 @@ namespace Enderlook.EventManager
                 }
 #endif
 
-                ValueList<Type> keys = ValueList<Type>.Create();
+                ValueList<Type2> keys2 = ValueList<Type2>.Create();
+                {
+                    Purge(ref multipleStrongWithArgumentWithValueClosureHandle, ref keys2);
+                    Purge(ref multipleStrongWithValueClosureHandle, ref keys2);
+                    Purge(ref onceStrongWithArgumentWithValueClosureHandle, ref keys2);
+                    Purge(ref onceStrongWithValueClosureHandle, ref keys2);
+
+                    Purge(ref multipleWeakWithValueClosureHandle, ref keys2);
+                    Purge(ref multipleWeakWithArgumentWithValueClosureWithHandleHandle, ref keys2);
+                    Purge(ref multipleWeakWithArgumentWithValueClosureHandleTrackResurrection, ref keys2);
+                    Purge(ref multipleWeakWithValueClosureWithHandleHandle, ref keys2);
+                    Purge(ref multipleWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection, ref keys2);
+                    Purge(ref multipleWeakWithValueClosureHandleTrackResurrection, ref keys2);
+                    Purge(ref multipleWeakWithValueClosureWithHandleHandleTrackResurrection, ref keys2);
+                    Purge(ref multipleWeakWithArgumentWithValueClosureHandle, ref keys2);
+
+                    Purge(ref onceWeakWithValueClosureHandle, ref keys2);
+                    Purge(ref onceWeakWithArgumentWithValueClosureWithHandleHandle, ref keys2);
+                    Purge(ref onceWeakWithArgumentWithValueClosureHandleTrackResurrection, ref keys2);
+                    Purge(ref onceWeakWithValueClosureWithHandleHandle, ref keys2);
+                    Purge(ref onceWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection, ref keys2);
+                    Purge(ref onceWeakWithValueClosureHandleTrackResurrection, ref keys2);
+                    Purge(ref onceWeakWithValueClosureWithHandleHandleTrackResurrection, ref keys2);
+                    Purge(ref onceWeakWithArgumentWithValueClosureHandle, ref keys2);
+                }
+                keys2.Return();
+
+                ValueList<object> keys = ValueList<object>.Create();
                 {
                     Purge(ref multipleStrongWithArgumentHandle, ref keys);
                     Purge(ref multipleStrongHandle, ref keys);
@@ -70,33 +97,6 @@ namespace Enderlook.EventManager
                     Purge(ref onceWeakWithArgumentWithHandleHandleTrackResurrection, ref keys);
                     Purge(ref onceWeakWithHandleHandleTrackResurrection, ref keys);
 
-                    ValueList<Type2> keys2 = ValueList<Type2>.Create();
-                    {
-                        Purge(ref multipleStrongWithArgumentWithValueClosureHandle, ref keys2);
-                        Purge(ref multipleStrongWithValueClosureHandle, ref keys2);
-                        Purge(ref onceStrongWithArgumentWithValueClosureHandle, ref keys2);
-                        Purge(ref onceStrongWithValueClosureHandle, ref keys2);
-
-                        Purge(ref multipleWeakWithValueClosureHandle, ref keys2);
-                        Purge(ref multipleWeakWithArgumentWithValueClosureWithHandleHandle, ref keys2);
-                        Purge(ref multipleWeakWithArgumentWithValueClosureHandleTrackResurrection, ref keys2);
-                        Purge(ref multipleWeakWithValueClosureWithHandleHandle, ref keys2);
-                        Purge(ref multipleWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection, ref keys2);
-                        Purge(ref multipleWeakWithValueClosureHandleTrackResurrection, ref keys2);
-                        Purge(ref multipleWeakWithValueClosureWithHandleHandleTrackResurrection, ref keys2);
-                        Purge(ref multipleWeakWithArgumentWithValueClosureHandle, ref keys2);
-
-                        Purge(ref onceWeakWithValueClosureHandle, ref keys2);
-                        Purge(ref onceWeakWithArgumentWithValueClosureWithHandleHandle, ref keys2);
-                        Purge(ref onceWeakWithArgumentWithValueClosureHandleTrackResurrection, ref keys2);
-                        Purge(ref onceWeakWithValueClosureWithHandleHandle, ref keys2);
-                        Purge(ref onceWeakWithArgumentWithValueClosureWithHandleHandleTrackResurrection, ref keys2);
-                        Purge(ref onceWeakWithValueClosureHandleTrackResurrection, ref keys2);
-                        Purge(ref onceWeakWithValueClosureWithHandleHandleTrackResurrection, ref keys2);
-                        Purge(ref onceWeakWithArgumentWithValueClosureHandle, ref keys2);
-                    }
-                    keys2.Return();
-
                     foreach (KeyValuePair<Type, Manager> kvp in managersDictionary)
                     {
                         if (kvp.Value.Purge())
@@ -104,7 +104,7 @@ namespace Enderlook.EventManager
                     }
 
                     for (int i = 0; i < keys.Count; i++)
-                        managersDictionary.Remove(keys.Get(i));
+                        managersDictionary.Remove(CastUtils.ExpectExactType<Type>(keys.Get(i)));
                 }
                 keys.Return();
             }

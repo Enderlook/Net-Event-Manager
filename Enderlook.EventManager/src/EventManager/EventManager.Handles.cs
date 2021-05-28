@@ -8,9 +8,10 @@ namespace Enderlook.EventManager
     public sealed partial class EventManager
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Purge<TKey>(ref Dictionary<TKey, EventHandle> dictionary, ref ValueList<TKey> purgedKeys)
+        private static void Purge<TKey, TKey2>(ref Dictionary<TKey, EventHandle> dictionary, ref ValueList<TKey2> purgedKeys)
+            where TKey : TKey2
         {
-            ValueList<TKey> keys = purgedKeys;
+            ValueList<TKey2> keys = purgedKeys;
 
             foreach (KeyValuePair<TKey, EventHandle> kvp in dictionary)
             {
@@ -19,7 +20,8 @@ namespace Enderlook.EventManager
             }
 
             for (int i = 0; i < keys.Count; i++)
-                dictionary.Remove(keys.Get(i));
+                // TODO: Remove this cast.
+                dictionary.Remove(CastUtils.ExpectExactType<TKey2, TKey>(ref keys.Get(i)));
 
             keys.Clear();
             purgedKeys = keys;

@@ -14,6 +14,14 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref TTo ExpectExactType<TFrom, TTo>(ref TFrom obj)
+        {
+            Debug.Assert(obj is not null);
+            Debug.Assert(obj.GetType() == typeof(TTo));
+            return ref Unsafe.As<TFrom, TTo>(ref obj);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TTo ExpectAssignableType<TTo>(object obj) where TTo : class
         {
             Debug.Assert(obj is not null);
