@@ -42,7 +42,7 @@ namespace Enderlook.EventManager
             closureComparer.Equals(closure, other.closure);
     }
 
-    internal partial struct WeakDelegate<TDelegate> : IEquatable<WeakDelegate<TDelegate>>, IWeak
+    internal struct WeakDelegate<TDelegate> : IEquatable<WeakDelegate<TDelegate>>, IWeak
         where TDelegate : IEquatable<TDelegate>
     {
         private GCHandle handle;
