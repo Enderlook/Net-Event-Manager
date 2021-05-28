@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net5</TargetFrameworks>
     <OutputType>Library</OutputType>
     <PackageId>Enderlook.EventManager</PackageId>
     <AssemblyName>Enderlook.EventManager</AssemblyName>
@@ -10,8 +10,14 @@
     <Product>Enderlook.EventManager</Product>
     <RepositoryUrl>https://github.com/Enderlook/Net-Event-Manager</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>9</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Buffers" Version="4.5.1" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.3" />
+  </ItemGroup>
 
 </Project>
