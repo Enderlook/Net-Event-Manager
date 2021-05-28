@@ -49,21 +49,12 @@ namespace Enderlook.EventManager
         public static ValueList<T> Create(int minimumCapacity = 0) => new(RentArray(minimumCapacity));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T Get(int index)
+        public ref T Get(int index)
         {
             int count_ = count;
             Debug.Assert(count_ != LOCK);
             Debug.Assert(index < count_);
-            return array[index];
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Set(int index, T element)
-        {
-            int count_ = count;
-            Debug.Assert(count_ != LOCK);
-            Debug.Assert(index < count_);
-            array[index] = element;
+            return ref array[index];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

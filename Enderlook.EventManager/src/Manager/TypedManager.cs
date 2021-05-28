@@ -41,7 +41,7 @@ namespace Enderlook.EventManager
             {
                 TypedEventHandle<TEvent> element = managers_.Get(i);
                 if (!element.IsEmpty)
-                    managers.Set(j++, element);
+                    managers.Get(j++) = element;
             }
 
             if (managers_.Count == 0)
