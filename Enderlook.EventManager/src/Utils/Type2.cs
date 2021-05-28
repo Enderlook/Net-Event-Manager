@@ -19,7 +19,7 @@ namespace Enderlook.EventManager
 
         public override int GetHashCode()
         {
-#if NETSTANDARD_2_1
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
             return HashCode.Combine(eventType, closureType);
 #else
             uint hash = 17;

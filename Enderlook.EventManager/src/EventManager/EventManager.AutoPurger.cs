@@ -16,7 +16,7 @@ namespace Enderlook.EventManager
                     return false;
                 }
 
-#if NETSTANDARD_2_1
+#if NET5_0_OR_GREATER
                 GCMemoryInfo memoryInfo = GC.GetGCMemoryInfo();
                 if (memoryInfo.MemoryLoadBytes < memoryInfo.HighMemoryLoadThresholdBytes * .8)
                 {

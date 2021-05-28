@@ -78,7 +78,7 @@ namespace Enderlook.EventManager
         public void Clear()
         {
             Debug.Assert(!IsLocked);
-#if NETSTANDARD_2_1
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
             if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
 #endif
                 Array.Clear(array, 0, count);
@@ -105,7 +105,7 @@ namespace Enderlook.EventManager
 
                 Array.Copy(array, 0, newArray, 0, count);
 
-#if NETSTANDARD_2_1
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
                 if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
 #endif
                     Array.Clear(array, 0, count);
@@ -135,7 +135,7 @@ namespace Enderlook.EventManager
         public static void Return(Slice slice)
         {
             Debug.Assert(typeof(T).IsValueType ? slice.array.GetType() == typeof(T[]) : slice.array.GetType() == typeof(object[]));
-#if NETSTANDARD_2_1
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
             if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
 #endif
                 Array.Clear(slice.array, 0, slice.count);

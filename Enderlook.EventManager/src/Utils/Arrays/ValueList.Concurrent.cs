@@ -55,7 +55,7 @@ namespace Enderlook.EventManager
                 T[] newArray = RentArray(count_ * GROW_FACTOR);
                 Array.Copy(array_, newArray, count_);
 
-#if NETSTANDARD_2_1
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
                 if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
 #endif
                     Array.Clear(array_, 0, count_);
@@ -89,7 +89,7 @@ namespace Enderlook.EventManager
                 {
                     int newCount = count_ - i;
                     Array.Copy(array_, i + 1, array_, i, newCount);
-#if NETSTANDARD_2_1
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
                     if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
 #endif
                         array_[count_] = default;

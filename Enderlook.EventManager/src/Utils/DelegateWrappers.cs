@@ -134,7 +134,7 @@ namespace Enderlook.EventManager
 
                     int newCount = count_ - j;
                     Array.Copy(array_, i + 1, array_, j, newCount);
-#if NETSTANDARD_2_1
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
                     if (RuntimeHelpers.IsReferenceOrContainsReferences<WeakDelegate<TDelegate>>())
 #endif
                         array_[count_] = default;
@@ -169,7 +169,7 @@ namespace Enderlook.EventManager
                 array_[j++] = element;
             }
 
-#if NETSTANDARD_2_1
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
             if (RuntimeHelpers.IsReferenceOrContainsReferences<WeakDelegate<TDelegate>>())
 #endif
                 Array.Clear(array_, j, count_ - j);
