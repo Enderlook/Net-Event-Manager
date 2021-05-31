@@ -39,7 +39,7 @@ namespace Enderlook.EventManager
             ReadBegin();
             {
                 if (isDisposedOrDisposing)
-                    ThrowObjectDisposedExceptionAndEndGlobalRead();
+                    ThrowObjectDisposedExceptionAndEndRead();
 
                 if (dictionary is null) // We could remove lazy initialization.
                 {
@@ -72,7 +72,7 @@ namespace Enderlook.EventManager
             ReadBegin();
             {
                 if (isDisposedOrDisposing)
-                    ThrowObjectDisposedExceptionAndEndGlobalRead();
+                    ThrowObjectDisposedExceptionAndEndRead();
 
                 if (dictionary is null) // We could remove lazy initialization.
                     return GetOrCreate_SlowPath_CreateDictionary<TKey, TEventHandle, TEvent>(ref dictionary, key);

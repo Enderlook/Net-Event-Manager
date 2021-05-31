@@ -48,7 +48,7 @@ namespace Enderlook.EventManager
 
         private static void ThrowNullCallbackException() => throw new ArgumentNullException("callback");
 
-        private void ThrowObjectDisposedExceptionAndEndGlobalRead()
+        private void ThrowObjectDisposedExceptionAndEndRead()
         {
             ReadEnd();
             throw new ObjectDisposedException("Event Manager");
