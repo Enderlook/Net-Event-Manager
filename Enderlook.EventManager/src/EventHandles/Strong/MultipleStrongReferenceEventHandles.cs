@@ -10,24 +10,28 @@ namespace Enderlook.EventManager
             new(list.ConcurrentClone().ToSlice(), this);
     }
 
-    internal sealed class MultipleStrongWithArgumentEventHandle<TEvent> : MultipleStrongTypedEventHandle<TEvent, object>
+    internal sealed class MultipleStrongWithArgumentEventHandle<TEvent> : MultipleStrongTypedEventHandle<TEvent, EquatableDelegate>
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(Action<TEvent> callback) => base.Add(callback);
+        // We use EquatableDelegate instead of object to prevent covariant checks during array access.
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(Action<TEvent> callback) => base.Remove(callback);
+        public void Add(Action<TEvent> callback) => base.Add(new(callback));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Remove(Action<TEvent> callback) => base.Remove(new(callback));
 
         public override void ConcurrentRaise(Slice slice, TEvent argument) => StrongTypedEventHandleHelper.ConcurrentRaise_Event(slice, argument);
     }
 
-    internal sealed class MultipleStrongEventHandle<TEvent> : MultipleStrongTypedEventHandle<TEvent, object>
+    internal sealed class MultipleStrongEventHandle<TEvent> : MultipleStrongTypedEventHandle<TEvent, EquatableDelegate>
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(Action callback) => base.Add(callback);
+        // We use EquatableDelegate instead of object to prevent covariant checks during array access.
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(Action callback) => base.Remove(callback);
+        public void Add(Action callback) => base.Add(new(callback));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Remove(Action callback) => base.Remove(new(callback));
 
         public override void ConcurrentRaise(Slice slice, TEvent argument) => StrongTypedEventHandleHelper.ConcurrentRaise_(slice);
     }
