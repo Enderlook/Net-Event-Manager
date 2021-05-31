@@ -9,7 +9,7 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConcurrentRaise_Event<TEvent>(Slice slice, TEvent argument)
         {
-            object[] array = CastUtils.ExpectExactType<object[]>(slice.array);
+            EquatableDelegate[] array = CastUtils.ExpectExactType<EquatableDelegate[]>(slice.array);
 
             if ((uint)slice.count > (uint)slice.array.Length)
             {
@@ -18,15 +18,15 @@ namespace Enderlook.EventManager
             }
 
             for (int i = 0; i < slice.count; i++)
-                CastUtils.ExpectExactType<Action<TEvent>>(array[i])(argument);
+                CastUtils.ExpectExactType<Action<TEvent>>(array[i].callback)(argument);
 
-            ValueList<object>.Return(slice);
+            ValueList<EquatableDelegate[]>.Return(slice);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConcurrentRaise_(Slice slice)
         {
-            object[] array = CastUtils.ExpectExactType<object[]>(slice.array);
+            EquatableDelegate[] array = CastUtils.ExpectExactType<EquatableDelegate[]>(slice.array);
 
             if ((uint)slice.count > (uint)slice.array.Length)
             {
@@ -35,9 +35,9 @@ namespace Enderlook.EventManager
             }
 
             for (int i = 0; i < slice.count; i++)
-                CastUtils.ExpectExactType<Action>(array[i])();
+                CastUtils.ExpectExactType<Action>(array[i].callback)();
 
-            ValueList<object>.Return(slice);
+            ValueList<EquatableDelegate[]>.Return(slice);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -29,6 +29,6 @@ namespace Enderlook.EventManager
 #endif
         }
 
-        public override bool Equals(object obj) => obj is Type2 type2 && Equals(type2);
+        public override bool Equals(object? obj) => obj is Type2 type2 && Equals(type2);
     }
 }

@@ -10,9 +10,10 @@
     <Product>Enderlook.EventManager</Product>
     <RepositoryUrl>https://github.com/Enderlook/Net-Event-Manager</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <LangVersion>9</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

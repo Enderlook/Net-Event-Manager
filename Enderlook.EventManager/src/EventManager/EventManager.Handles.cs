@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
@@ -8,8 +9,8 @@ namespace Enderlook.EventManager
     public sealed partial class EventManager
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Purge<TKey, TKey2>(ref Dictionary<TKey, EventHandle> dictionary, ref ValueList<TKey2> purgedKeys)
-            where TKey : TKey2
+        private static void Purge<TKey, TKey2>(ref Dictionary<TKey, EventHandle>? dictionary, ref ValueList<TKey2> purgedKeys)
+            where TKey : notnull, TKey2
         {
             if (dictionary is null)
                 return;
@@ -31,15 +32,16 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TryGet<TKey, TEventHandle>(ref Dictionary<TKey, EventHandle> dictionary, TKey key, out TEventHandle eventHandle)
+        private bool TryGet<TKey, TEventHandle>(ref Dictionary<TKey, EventHandle>? dictionary, TKey key, [NotNullWhen(true)] out TEventHandle? eventHandle)
+            where TKey : notnull
             where TEventHandle : EventHandle
         {
             bool found;
-            EventHandle obj;
+            EventHandle? obj;
             ReadBegin();
             {
                 if (isDisposedOrDisposing)
-                    ThrowObjectDisposedExceptionAndEndGlobalRead();
+                    ThrowObjectDisposedExceptionAndEndRead();
 
                 if (dictionary is null) // We could remove lazy initialization.
                 {
@@ -54,7 +56,8 @@ namespace Enderlook.EventManager
             if (found)
             {
                 FromReadToInEvent();
-                eventHandle = CastUtils.ExpectExactType<TEventHandle>(obj);
+                Debug.Assert(obj is not null);
+                eventHandle = CastUtils.ExpectExactType<TEventHandle>(obj!);
                 return true;
             }
             else
@@ -66,18 +69,19 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private TEventHandle GetOrCreate<TKey, TEventHandle, TEvent>(ref Dictionary<TKey, EventHandle> dictionary, TKey key)
+        private TEventHandle GetOrCreate<TKey, TEventHandle, TEvent>(ref Dictionary<TKey, EventHandle>? dictionary, TKey key)
+            where TKey : notnull
             where TEventHandle : TypedEventHandle<TEvent>, new()
         {
             ReadBegin();
             {
                 if (isDisposedOrDisposing)
-                    ThrowObjectDisposedExceptionAndEndGlobalRead();
+                    ThrowObjectDisposedExceptionAndEndRead();
 
                 if (dictionary is null) // We could remove lazy initialization.
                     return GetOrCreate_SlowPath_CreateDictionary<TKey, TEventHandle, TEvent>(ref dictionary, key);
 
-                if (dictionary.TryGetValue(key, out EventHandle obj))
+                if (dictionary.TryGetValue(key, out EventHandle? obj))
                 {
                     FromReadToInEvent();
                     return CastUtils.ExpectExactType<TEventHandle>(obj);
@@ -88,7 +92,8 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private TEventHandle GetOrCreate_SlowPath_CreateManager<TKey, TEventHandle, TEvent>(ref Dictionary<TKey, EventHandle> dictionary, TKey key)
+        private TEventHandle GetOrCreate_SlowPath_CreateManager<TKey, TEventHandle, TEvent>(ref Dictionary<TKey, EventHandle>? dictionary, TKey key)
+            where TKey : notnull
             where TEventHandle : TypedEventHandle<TEvent>, new()
         {
             TEventHandle eventHandle;
@@ -101,7 +106,7 @@ namespace Enderlook.EventManager
                     goto add;
                 }
 
-                if (dictionary.TryGetValue(key, out EventHandle obj))
+                if (dictionary.TryGetValue(key, out EventHandle? obj))
                 {
                     eventHandle = CastUtils.ExpectExactType<TEventHandle>(obj);
                     goto exit;
@@ -118,7 +123,8 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private TEventHandle GetOrCreate_SlowPath_CreateDictionary<TKey, TEventHandle, TEvent>(ref Dictionary<TKey, EventHandle> dictionary, TKey key)
+        private TEventHandle GetOrCreate_SlowPath_CreateDictionary<TKey, TEventHandle, TEvent>(ref Dictionary<TKey, EventHandle>? dictionary, TKey key)
+            where TKey : notnull
             where TEventHandle : TypedEventHandle<TEvent>, new()
         {
             TEventHandle eventHandle;
@@ -133,7 +139,7 @@ namespace Enderlook.EventManager
                 }
                 else
                 {
-                    if (dictionary.TryGetValue(key, out EventHandle obj))
+                    if (dictionary.TryGetValue(key, out EventHandle? obj))
                         eventHandle = CastUtils.ExpectExactType<TEventHandle>(obj);
                     else
                     {
@@ -150,10 +156,8 @@ namespace Enderlook.EventManager
         private void AddManager<TEventHandle, TEvent>(TEventHandle eventHandle)
             where TEventHandle : TypedEventHandle<TEvent>, new()
         {
-            if (managersList.IsDefault)
+            if (managersDictionary is null)
             {
-                Debug.Assert(managersDictionary is null);
-
                 Dictionary<Type, Manager> dictionary = new();
                 TypedManager<TEvent> manager = new();
                 dictionary.Add(typeof(TEvent), manager);
@@ -163,12 +167,8 @@ namespace Enderlook.EventManager
             }
             else
             {
-                Debug.Assert(managersDictionary is not null);
-
-                if (managersDictionary.TryGetValue(typeof(TEvent), out Manager key))
-                {
+                if (managersDictionary.TryGetValue(typeof(TEvent), out Manager? key))
                     CastUtils.ExpectExactType<TypedManager<TEvent>>(key).Add(eventHandle);
-                }
                 else
                 {
                     TypedManager<TEvent> manager = new();

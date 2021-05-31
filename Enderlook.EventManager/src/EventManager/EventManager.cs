@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -17,7 +19,7 @@ namespace Enderlook.EventManager
 
         private bool isDisposedOrDisposing;
 
-        private Dictionary<Type, Manager> managersDictionary;
+        private Dictionary<Type, Manager>? managersDictionary;
         private ValueList<Manager> managersList;
 
         /// <summary>
@@ -29,10 +31,13 @@ namespace Enderlook.EventManager
         public void Raise<TEvent>(TEvent argument)
         {
             ReadBegin();
-            if (managersDictionary.TryGetValue(typeof(TEvent), out Manager managers))
+            if (managersDictionary is null)
+                ReadEnd();
+            else if (managersDictionary.TryGetValue(typeof(TEvent), out Manager? managers))
             {
+                Debug.Assert(managers is not null);
                 FromReadToInEvent();
-                CastUtils.ExpectExactType<TypedManager<TEvent>>(managers).Raise(this, argument);
+                CastUtils.ExpectExactType<TypedManager<TEvent>>(managers!).Raise(this, argument);
             }
         }
 
@@ -46,11 +51,14 @@ namespace Enderlook.EventManager
         /// </summary>
         ~EventManager() => Dispose();
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ThrowNullCallback() => throw new ArgumentNullException("callback");
+        [DoesNotReturn]
+        private static void ThrowNullCallbackException() => throw new ArgumentNullException("callback");
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private void ThrowObjectDisposedExceptionAndEndGlobalRead()
+        [DoesNotReturn]
+        private static void ThrowNullHandleException() => throw new ArgumentNullException("handle");
+
+        [DoesNotReturn]
+        private void ThrowObjectDisposedExceptionAndEndRead()
         {
             ReadEnd();
             throw new ObjectDisposedException("Event Manager");

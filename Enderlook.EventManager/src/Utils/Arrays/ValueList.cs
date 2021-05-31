@@ -81,7 +81,7 @@ namespace Enderlook.EventManager
         {
             Debug.Assert(!IsLocked);
             ReturnArray(array);
-            array = null;
+            array = null!;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
