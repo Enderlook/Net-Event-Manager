@@ -22,7 +22,7 @@ namespace Enderlook.EventManager
         public void SubscribeOnce<TEvent>(Action<TEvent> callback)
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             GetOrCreate<Type, MultipleStrongWithArgumentEventHandle<TEvent>, TEvent>(
                 ref onceStrongWithArgumentHandle, typeof(TEvent))
@@ -39,7 +39,7 @@ namespace Enderlook.EventManager
         public void SubscribeOnce<TEvent>(Action callback)
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             GetOrCreate<Type, MultipleStrongEventHandle<TEvent>, TEvent>(ref onceStrongHandle, typeof(TEvent))
                 .Add(callback);
@@ -56,7 +56,7 @@ namespace Enderlook.EventManager
         public void SubscribeOnce<TEvent, TClosure>(TClosure closure, Action<TClosure, TEvent> callback)
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
                 GetOrCreate<Type2, MultipleStrongWithArgumentWithClosureEventHandle<TEvent, TClosure>, TEvent>(
@@ -79,7 +79,7 @@ namespace Enderlook.EventManager
         public void SubscribeOnce<TEvent, TClosure>(TClosure closure, Action<TClosure> callback)
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
                 GetOrCreate<Type2, MultipleStrongWithClosureEventHandle<TEvent, TClosure>, TEvent>(
@@ -101,7 +101,7 @@ namespace Enderlook.EventManager
         public void UnsubscribeOnce<TEvent>(Action<TEvent> callback)
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (TryGet(ref onceStrongWithArgumentHandle, typeof(TEvent), out MultipleStrongWithArgumentEventHandle<TEvent> manager))
             {
@@ -119,7 +119,7 @@ namespace Enderlook.EventManager
         public void UnsubscribeOnce<TEvent>(Action callback)
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (TryGet(ref onceStrongHandle, typeof(TEvent), out MultipleStrongEventHandle<TEvent> manager))
             {
@@ -138,7 +138,7 @@ namespace Enderlook.EventManager
         public void UnsubscribeOnce<TEvent, TClosure>(TClosure closure, Action<TClosure, TEvent> callback)
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
             {
@@ -168,7 +168,7 @@ namespace Enderlook.EventManager
         public void UnsubscribeOnce<TEvent, TClosure>(TClosure closure, Action<TClosure> callback)
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
             {

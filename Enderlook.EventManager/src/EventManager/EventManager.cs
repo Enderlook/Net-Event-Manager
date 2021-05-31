@@ -46,7 +46,7 @@ namespace Enderlook.EventManager
         /// </summary>
         ~EventManager() => Dispose();
 
-        private static void ThrowNullCallback() => throw new ArgumentNullException("callback");
+        private static void ThrowNullCallbackException() => throw new ArgumentNullException("callback");
 
         private void ThrowObjectDisposedExceptionAndEndGlobalRead()
         {

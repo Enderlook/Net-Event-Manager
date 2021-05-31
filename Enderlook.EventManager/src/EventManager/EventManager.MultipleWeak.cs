@@ -45,7 +45,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             GetOrCreate<Type, MultipleWeakWithArgumentEventHandle<TEvent>, TEvent>(
                 ref trackResurrection ? ref multipleWeakWithArgumentHandleTrackResurrection : ref multipleWeakWithArgumentHandle,
@@ -67,7 +67,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             GetOrCreate<Type, MultipleWeakEventHandle<TEvent>, TEvent>(
                 ref trackResurrection ? ref multipleWeakHandleTrackResurrection : ref multipleWeakHandle,
@@ -90,7 +90,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
                 GetOrCreate<Type2, MultipleWeakWithArgumentWithClosureEventHandle<TEvent, TClosure>, TEvent>(
@@ -119,7 +119,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
                 GetOrCreate<Type2, MultipleWeakWithClosureEventHandle<TEvent, TClosure>, TEvent>(
@@ -148,7 +148,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
                 GetOrCreate<Type2, MultipleWeakWithArgumentWithClosureWithHandleEventHandle<TEvent, TClosure>, TEvent>(
@@ -177,7 +177,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
                 GetOrCreate<Type2, MultipleWeakWithClosureWithHandleEventHandle<TEvent, TClosure>, TEvent>(
@@ -205,7 +205,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             GetOrCreate<Type, MultipleWeakWithArgumentWithHandleEventHandle<TEvent>, TEvent>(
                 ref trackResurrection ? ref multipleWeakWithArgumentWithHandleHandleTrackResurrection : ref multipleWeakWithArgumentWithHandleHandle,
@@ -227,7 +227,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             GetOrCreate<Type, MultipleWeakWithHandleEventHandle<TEvent>, TEvent>(
                 ref trackResurrection ? ref multipleWeakWithHandleHandleTrackResurrection : ref multipleWeakWithHandleHandle,
@@ -248,7 +248,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (TryGet(ref trackResurrection ? ref multipleWeakWithArgumentHandleTrackResurrection : ref multipleWeakWithArgumentHandle,
                 typeof(TEvent), out MultipleWeakWithArgumentEventHandle<TEvent> manager))
@@ -270,7 +270,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (TryGet(ref trackResurrection ? ref multipleWeakHandleTrackResurrection : ref multipleWeakHandle,
                 typeof(TEvent), out MultipleWeakEventHandle<TEvent> manager))
@@ -293,7 +293,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
             {
@@ -328,7 +328,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
             {
@@ -363,7 +363,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
             {
@@ -398,7 +398,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
             {
@@ -432,7 +432,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (TryGet(ref trackResurrection ? ref multipleWeakWithArgumentWithHandleHandleTrackResurrection : ref multipleWeakWithArgumentWithHandleHandle,
                 typeof(TEvent), out MultipleWeakWithArgumentWithHandleEventHandle<TEvent> manager))
@@ -454,7 +454,7 @@ namespace Enderlook.EventManager
             where THandle : class
         {
             if (callback is null)
-                ThrowNullCallback();
+                ThrowNullCallbackException();
 
             if (TryGet(ref trackResurrection ? ref multipleWeakWithHandleHandleTrackResurrection : ref multipleWeakWithHandleHandle,
                 typeof(TEvent), out MultipleWeakWithHandleEventHandle<TEvent> manager))
