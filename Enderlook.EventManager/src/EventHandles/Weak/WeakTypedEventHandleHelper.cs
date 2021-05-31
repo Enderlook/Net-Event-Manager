@@ -104,7 +104,7 @@ namespace Enderlook.EventManager
             for (int i = 0; i < slice.count; i++)
             {
                 WeakDelegate<DelegateWithClosure<TClosure>> @delegate = array[i];
-                if (@delegate.TryGetHandle(out object handle))
+                if (@delegate.TryGetHandle(out object? handle))
                     Unsafe.As<Action<object, TClosure, TEvent>>(@delegate.callback.callback)(handle, @delegate.callback.closure, argument);
             }
 
@@ -125,7 +125,7 @@ namespace Enderlook.EventManager
             for (int i = 0; i < slice.count; i++)
             {
                 WeakDelegate<DelegateWithClosure<TClosure>> @delegate = array[i];
-                if (@delegate.TryGetHandle(out object handle))
+                if (@delegate.TryGetHandle(out object? handle))
                     Unsafe.As<Action<object, TClosure>>(@delegate.callback.callback)(handle, @delegate.callback.closure);
             }
 
@@ -146,7 +146,7 @@ namespace Enderlook.EventManager
             for (int i = 0; i < slice.count; i++)
             {
                 WeakDelegate<EquatableDelegate> @delegate = array[i];
-                if (@delegate.TryGetHandle(out object handle))
+                if (@delegate.TryGetHandle(out object? handle))
                     Unsafe.As<Action<object, TEvent>>(@delegate.callback.callback)(handle, argument);
             }
 
@@ -167,7 +167,7 @@ namespace Enderlook.EventManager
             for (int i = 0; i < slice.count; i++)
             {
                 WeakDelegate<EquatableDelegate> @delegate = array[i];
-                if (@delegate.TryGetHandle(out object handle))
+                if (@delegate.TryGetHandle(out object? handle))
                     Unsafe.As<Action<object>>(@delegate.callback.callback)(handle);
             }
 

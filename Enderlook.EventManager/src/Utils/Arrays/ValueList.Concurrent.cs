@@ -92,7 +92,7 @@ namespace Enderlook.EventManager
 #if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
                     if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
 #endif
-                        array_[count_] = default;
+                        array_[count_] = default!;
                     Unlock(count_);
                     return;
                 }
@@ -169,7 +169,7 @@ namespace Enderlook.EventManager
                 return true;
             }
             count = count_;
-            element = default;
+            element = default!;
             return false;
         }
     }

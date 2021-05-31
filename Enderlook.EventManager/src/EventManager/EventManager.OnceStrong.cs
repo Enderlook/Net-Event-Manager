@@ -6,12 +6,12 @@ namespace Enderlook.EventManager
 {
     public sealed partial class EventManager
     {
-        private Dictionary<Type, EventHandle> onceStrongWithArgumentHandle;
-        private Dictionary<Type, EventHandle> onceStrongHandle;
-        private Dictionary<Type2, EventHandle> onceStrongWithArgumentWithValueClosureHandle;
-        private Dictionary<Type, EventHandle> onceStrongWithArgumentWithReferenceClosureHandle;
-        private Dictionary<Type2, EventHandle> onceStrongWithValueClosureHandle;
-        private Dictionary<Type, EventHandle> onceStrongWithReferenceClosureHandle;
+        private Dictionary<Type, EventHandle>? onceStrongWithArgumentHandle;
+        private Dictionary<Type, EventHandle>? onceStrongHandle;
+        private Dictionary<Type2, EventHandle>? onceStrongWithArgumentWithValueClosureHandle;
+        private Dictionary<Type, EventHandle>? onceStrongWithArgumentWithReferenceClosureHandle;
+        private Dictionary<Type2, EventHandle>? onceStrongWithValueClosureHandle;
+        private Dictionary<Type, EventHandle>? onceStrongWithReferenceClosureHandle;
 
         /// <summary>
         /// Subscribes the callback <paramref name="callback"/> to execute the next time the event type <typeparamref name="TEvent"/> is raised.
@@ -53,19 +53,19 @@ namespace Enderlook.EventManager
         /// <param name="callback">Callback to execute.</param>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
-        public void SubscribeOnce<TEvent, TClosure>(TClosure closure, Action<TClosure, TEvent> callback)
+        public void SubscribeOnce<TEvent, TClosure>(TClosure? closure, Action<TClosure?, TEvent> callback)
         {
             if (callback is null)
                 ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
-                GetOrCreate<Type2, MultipleStrongWithArgumentWithClosureEventHandle<TEvent, TClosure>, TEvent>(
+                GetOrCreate<Type2, MultipleStrongWithArgumentWithClosureEventHandle<TEvent, TClosure?>, TEvent>(
                     ref onceStrongWithArgumentWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)))
                     .Add(callback, closure);
             else
-                GetOrCreate<Type, MultipleStrongWithArgumentWithClosureEventHandle<TEvent, object>, TEvent>(
+                GetOrCreate<Type, MultipleStrongWithArgumentWithClosureEventHandle<TEvent, object?>, TEvent>(
                     ref onceStrongWithArgumentWithReferenceClosureHandle, typeof(TEvent))
-                    .Add(Unsafe.As<Action<object, TEvent>>(callback), closure);
+                    .Add(Unsafe.As<Action<object?, TEvent>>(callback), CastUtils.AsObject(closure));
             InEventEnd();
         }
 
@@ -76,19 +76,19 @@ namespace Enderlook.EventManager
         /// <param name="callback">Callback to execute.</param>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
-        public void SubscribeOnce<TEvent, TClosure>(TClosure closure, Action<TClosure> callback)
+        public void SubscribeOnce<TEvent, TClosure>(TClosure? closure, Action<TClosure?> callback)
         {
             if (callback is null)
                 ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
-                GetOrCreate<Type2, MultipleStrongWithClosureEventHandle<TEvent, TClosure>, TEvent>(
+                GetOrCreate<Type2, MultipleStrongWithClosureEventHandle<TEvent, TClosure?>, TEvent>(
                     ref onceStrongWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)))
                     .Add(callback, closure);
             else
-                GetOrCreate<Type, MultipleStrongWithClosureEventHandle<TEvent, object>, TEvent>(
+                GetOrCreate<Type, MultipleStrongWithClosureEventHandle<TEvent, object?>, TEvent>(
                     ref onceStrongWithReferenceClosureHandle, typeof(TEvent))
-                    .Add(Unsafe.As<Action<object>>(callback), closure);
+                    .Add(Unsafe.As<Action<object?>>(callback), CastUtils.AsObject(closure));
             InEventEnd();
         }
 
@@ -103,7 +103,7 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallbackException();
 
-            if (TryGet(ref onceStrongWithArgumentHandle, typeof(TEvent), out MultipleStrongWithArgumentEventHandle<TEvent> manager))
+            if (TryGet(ref onceStrongWithArgumentHandle, typeof(TEvent), out MultipleStrongWithArgumentEventHandle<TEvent>? manager))
             {
                 manager.Remove(callback);
                 InEventEnd();
@@ -121,7 +121,7 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallbackException();
 
-            if (TryGet(ref onceStrongHandle, typeof(TEvent), out MultipleStrongEventHandle<TEvent> manager))
+            if (TryGet(ref onceStrongHandle, typeof(TEvent), out MultipleStrongEventHandle<TEvent>? manager))
             {
                 manager.Remove(callback);
                 InEventEnd();
@@ -135,14 +135,14 @@ namespace Enderlook.EventManager
         /// <param name="callback">Callback to no longer execute.</param>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
-        public void UnsubscribeOnce<TEvent, TClosure>(TClosure closure, Action<TClosure, TEvent> callback)
+        public void UnsubscribeOnce<TEvent, TClosure>(TClosure? closure, Action<TClosure?, TEvent> callback)
         {
             if (callback is null)
                 ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
             {
-                if (TryGet(ref onceStrongWithArgumentWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)), out MultipleStrongWithArgumentWithClosureEventHandle<TEvent, TClosure> manager))
+                if (TryGet(ref onceStrongWithArgumentWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)), out MultipleStrongWithArgumentWithClosureEventHandle<TEvent, TClosure?>? manager))
                 {
                     manager.Remove(callback, closure);
                     InEventEnd();
@@ -150,9 +150,9 @@ namespace Enderlook.EventManager
             }
             else
             {
-                if (TryGet(ref onceStrongWithArgumentWithReferenceClosureHandle, typeof(TEvent), out MultipleStrongWithArgumentWithClosureEventHandle<TEvent, object> manager))
+                if (TryGet(ref onceStrongWithArgumentWithReferenceClosureHandle, typeof(TEvent), out MultipleStrongWithArgumentWithClosureEventHandle<TEvent, object?>? manager))
                 {
-                    manager.Remove(Unsafe.As<Action<object, TEvent>>(callback), closure);
+                    manager.Remove(Unsafe.As<Action<object?, TEvent>>(callback), CastUtils.AsObject(closure));
                     InEventEnd();
                 }
             }
@@ -165,14 +165,14 @@ namespace Enderlook.EventManager
         /// <param name="callback">Callback to no longer execute.</param>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
-        public void UnsubscribeOnce<TEvent, TClosure>(TClosure closure, Action<TClosure> callback)
+        public void UnsubscribeOnce<TEvent, TClosure>(TClosure? closure, Action<TClosure?> callback)
         {
             if (callback is null)
                 ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
             {
-                if (TryGet(ref onceStrongWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)), out MultipleStrongWithClosureEventHandle<TEvent, TClosure> manager))
+                if (TryGet(ref onceStrongWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)), out MultipleStrongWithClosureEventHandle<TEvent, TClosure?>? manager))
                 {
                     manager.Remove(callback, closure);
                     InEventEnd();
@@ -180,9 +180,9 @@ namespace Enderlook.EventManager
             }
             else
             {
-                if (TryGet(ref onceStrongWithReferenceClosureHandle, typeof(TEvent), out MultipleStrongWithClosureEventHandle<TEvent, object> manager))
+                if (TryGet(ref onceStrongWithReferenceClosureHandle, typeof(TEvent), out MultipleStrongWithClosureEventHandle<TEvent, object?>? manager))
                 {
-                    manager.Remove(Unsafe.As<Action<object>>(callback), closure);
+                    manager.Remove(Unsafe.As<Action<object?>>(callback), CastUtils.AsObject(closure));
                     InEventEnd();
                 }
             }

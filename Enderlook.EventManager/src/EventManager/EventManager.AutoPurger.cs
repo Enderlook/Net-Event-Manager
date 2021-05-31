@@ -16,6 +16,12 @@ namespace Enderlook.EventManager
                     return false;
                 }
 
+                if (managersDictionary is null)
+                {
+                    WriteEnd();
+                    return true;
+                }
+
 #if NET5_0_OR_GREATER
                 GCMemoryInfo memoryInfo = GC.GetGCMemoryInfo();
                 if (memoryInfo.MemoryLoadBytes < memoryInfo.HighMemoryLoadThresholdBytes * .8)
@@ -107,6 +113,12 @@ namespace Enderlook.EventManager
                         managersDictionary.Remove(CastUtils.ExpectExactType<Type>(keys.Get(i)));
                 }
                 keys.Return();
+
+                if (managersDictionary.Count == 0)
+                {
+                    managersDictionary = null;
+                    managersList.Return();
+                }
             }
             WriteEnd();
             return true;
@@ -120,7 +132,7 @@ namespace Enderlook.EventManager
 
             ~AutoPurger()
             {
-                object obj = handle.Target;
+                object? obj = handle.Target;
                 if (obj is null)
                     handle.Free();
                 else

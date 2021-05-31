@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -75,14 +76,14 @@ namespace Enderlook.EventManager
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetHandle(out object handle)
+        public bool TryGetHandle([NotNullWhen(true)] out object? handle)
         {
             handle = this.handle.Target;
             return handle is not null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetHandleFreeIfExpired(out object handle)
+        public bool TryGetHandleFreeIfExpired([NotNullWhen(true)] out object? handle)
         {
             handle = this.handle.Target;
 
@@ -119,7 +120,7 @@ namespace Enderlook.EventManager
             {
                 WeakDelegate<TDelegate> element2 = array_[i];
 
-                if (!element2.TryGetHandleFreeIfExpired(out object handle_))
+                if (!element2.TryGetHandleFreeIfExpired(out object? handle_))
                     continue;
 
                 if (!handleComparer.Equals(CastUtils.ExpectExactType<THandle>(handle_), handle))
