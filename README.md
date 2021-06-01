@@ -249,3 +249,4 @@ public sealed partial class EventManager
 	public static bool EnableMultithreadingForDisposal { get; set; }
 }
 ```
+- Check for math overflow and underflow on debug builds.

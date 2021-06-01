@@ -50,7 +50,7 @@ namespace Enderlook.EventManager
             int count = list.Count;
             WeakDelegate<TElement>[] array = list.ArrayUnlocked;
 
-            if ((uint)count > (uint)array.Length)
+            if (unchecked((uint)count > (uint)array.Length))
             {
                 Debug.Fail("Index out of range.");
                 return;

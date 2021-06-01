@@ -11,7 +11,7 @@ namespace Enderlook.EventManager
         {
             EquatableDelegate[] array = CastUtils.ExpectExactType<EquatableDelegate[]>(slice.array);
 
-            if ((uint)slice.count > (uint)slice.array.Length)
+            if (unchecked((uint)slice.count > (uint)slice.array.Length))
             {
                 Debug.Fail("Index out of range.");
                 return;
@@ -28,7 +28,7 @@ namespace Enderlook.EventManager
         {
             EquatableDelegate[] array = CastUtils.ExpectExactType<EquatableDelegate[]>(slice.array);
 
-            if ((uint)slice.count > (uint)slice.array.Length)
+            if (unchecked((uint)slice.count > (uint)slice.array.Length))
             {
                 Debug.Fail("Index out of range.");
                 return;
@@ -45,7 +45,7 @@ namespace Enderlook.EventManager
         {
             DelegateWithClosure<TClosure>[] array = CastUtils.ExpectExactType<DelegateWithClosure<TClosure>[]>(slice.array);
 
-            if ((uint)slice.count > (uint)array.Length)
+            if (unchecked((uint)slice.count > (uint)array.Length))
             {
                 Debug.Fail("Index out of range.");
                 return;
@@ -65,7 +65,7 @@ namespace Enderlook.EventManager
         {
             DelegateWithClosure<TClosure>[] array = CastUtils.ExpectExactType<DelegateWithClosure<TClosure>[]>(slice.array);
 
-            if ((uint)slice.count > (uint)array.Length)
+            if (unchecked((uint)slice.count > (uint)array.Length))
             {
                 Debug.Fail("Index out of range.");
                 return;

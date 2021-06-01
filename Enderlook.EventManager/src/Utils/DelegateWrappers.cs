@@ -109,7 +109,7 @@ namespace Enderlook.EventManager
             int count_ = list.LockAndGetCount();
             WeakDelegate<TDelegate>[] array_ = list.ArrayFromLocked;
 
-            if ((uint)count_ >= (uint)array_.Length)
+            if (unchecked((uint)count_ >= (uint)array_.Length))
             {
                 Debug.Fail("Index out of range.");
                 return;
@@ -153,7 +153,7 @@ namespace Enderlook.EventManager
             Debug.Assert(count_ != -1);
             WeakDelegate<TDelegate>[] array_ = list.ArrayUnlocked;
 
-            if ((uint)count_ >= array_.Length)
+            if (unchecked((uint)count_ >= array_.Length))
             {
                 if (count_ == 0)
                     return;
