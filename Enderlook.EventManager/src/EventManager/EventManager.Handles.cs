@@ -8,17 +8,23 @@ namespace Enderlook.EventManager
 {
     public sealed partial class EventManager
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Purge<TKey, TKey2>(ref Dictionary<TKey, EventHandle>? dictionary, ref ValueList<TKey2> purgedKeys)
+        private bool Purge<TKey, TKey2>(ref Dictionary<TKey, EventHandle>? dictionary, ref ValueList<TKey2> purgedKeys)
             where TKey : notnull, TKey2
         {
             if (dictionary is null)
-                return;
+                return (state & IS_CANCELATION_REQUESTED) != 0;
 
             foreach (KeyValuePair<TKey, EventHandle> kvp in dictionary)
             {
                 if (kvp.Value.Purge())
                     purgedKeys.Add(kvp.Key);
+
+                /* We could check inside the loop if cancelation is requested.
+                 * However that means, that if each time the manager start purging a consumer request cancelation
+                 * the manager would never clean itself completely, since the iteration of the dictionary starts from zero.
+                 * if ((state & IS_CANCELATION_REQUESTED) != 0)
+                 *    break;
+                 */
             }
 
             for (int i = 0; i < purgedKeys.Count; i++)
@@ -29,6 +35,8 @@ namespace Enderlook.EventManager
 
             if (dictionary.Count == 0)
                 dictionary = null;
+
+            return (state & IS_CANCELATION_REQUESTED) != 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -40,9 +48,6 @@ namespace Enderlook.EventManager
             EventHandle? obj;
             ReadBegin();
             {
-                if (isDisposedOrDisposing)
-                    ThrowObjectDisposedExceptionAndEndRead();
-
                 if (dictionary is null) // We could remove lazy initialization.
                 {
                     eventHandle = default;
@@ -75,9 +80,6 @@ namespace Enderlook.EventManager
         {
             ReadBegin();
             {
-                if (isDisposedOrDisposing)
-                    ThrowObjectDisposedExceptionAndEndRead();
-
                 if (dictionary is null) // We could remove lazy initialization.
                     return GetOrCreate_SlowPath_CreateDictionary<TKey, TEventHandle, TEvent>(ref dictionary, key);
 

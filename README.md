@@ -235,3 +235,17 @@ public sealed partial class EventManager : IDisposable
 - Apply nullable analysis on API.
 - Fix some null reference error bugs.
 
+## v0.3
+
+- Become auto-cleaning abortable and incremental.
+- Add internal multithreading on `.Dispose()` method and auto-cleaning and add the following API:
+```cs
+public sealed partial class EventManager
+{
+	/// Whenever auto-cleaning of event managers can use multithreading or must run in single-threaded.
+	public static bool EnableMultithreadingForAutoCleaning { get; set; }
+
+	/// Whenever disposing of event managers can use multithreading or must run in single-threaded.
+	public static bool EnableMultithreadingForDisposal { get; set; }
+}
+```
