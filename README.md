@@ -240,15 +240,5 @@ public sealed partial class EventManager : IDisposable
 - Fix exceptions when raising events.
 - Reduce garbage produced when a subscribed delegate throws.
 - Become auto-cleaning abortable and incremental.
-- Add internal multithreading on `.Dispose()` method and auto-cleaning and add the following API:
-```cs
-public sealed partial class EventManager
-{
-	/// Whenever auto-cleaning of event managers can use multithreading or must run in single-threaded.
-	public static bool EnableMultithreadingForAutoCleaning { get; set; }
-
-	/// Whenever disposing of event managers can use multithreading or must run in single-threaded.
-	public static bool EnableMultithreadingForDisposal { get; set; }
-}
-```
+- Add internal multithreading on `.Dispose()` method and auto-cleaning.
 - Check for math overflow and underflow on debug builds.
