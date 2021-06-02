@@ -238,6 +238,7 @@ public sealed partial class EventManager : IDisposable
 ## v0.3
 
 - Fix exceptions when raising events.
+- Fix memory leaks of weak subscribers.
 - Reduce garbage produced when a subscribed delegate throws.
 - Become auto-cleaning abortable and incremental.
 - Add internal multithreading on `.Dispose()` method and auto-cleaning.
