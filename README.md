@@ -163,6 +163,7 @@ Initial Release
 - Remove `TEventBase` generic parameter from `EventManager<TEventBase>`.
 - Become `EventManager` thread-safe.
 - Increase perfomance in `EventManager` subscribe and unsubscribe methods by replacing `Delegate.Combine` and `Delegate.Remove` with pooled arrays of delegates.
+- Add target frameworks for .Net Standard 2.1 and .Net 5.
 - Add the following APIs:
 ```cs
 public sealed partial class EventManager : IDisposable
