@@ -17,10 +17,15 @@ namespace Enderlook.EventManager
                 return;
             }
 
-            for (int i = 0; i < slice.count; i++)
-                CastUtils.ExpectExactType<Action<TEvent>>(array[i].callback)(argument);
-
-            ValueList<EquatableDelegate[]>.Return(slice);
+            try
+            {
+                for (int i = 0; i < slice.count; i++)
+                    CastUtils.ExpectExactType<Action<TEvent>>(array[i].callback)(argument);
+            }
+            finally
+            {
+                ValueList<EquatableDelegate>.Return(slice);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -34,10 +39,15 @@ namespace Enderlook.EventManager
                 return;
             }
 
-            for (int i = 0; i < slice.count; i++)
-                CastUtils.ExpectExactType<Action>(array[i].callback)();
-
-            ValueList<EquatableDelegate[]>.Return(slice);
+            try
+            {
+                for (int i = 0; i < slice.count; i++)
+                    CastUtils.ExpectExactType<Action>(array[i].callback)();
+            }
+            finally
+            {
+                ValueList<EquatableDelegate>.Return(slice);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -51,13 +61,18 @@ namespace Enderlook.EventManager
                 return;
             }
 
-            for (int i = 0; i < slice.count; i++)
+            try
             {
-                DelegateWithClosure<TClosure> element = array[i];
-                Unsafe.As<Action<TClosure, TEvent>>(element.callback)(element.closure, argument);
+                for (int i = 0; i < slice.count; i++)
+                {
+                    DelegateWithClosure<TClosure> element = array[i];
+                    Unsafe.As<Action<TClosure, TEvent>>(element.callback)(element.closure, argument);
+                }
             }
-
-            ValueList<DelegateWithClosure<TClosure>>.Return(slice);
+            finally
+            {
+                ValueList<DelegateWithClosure<TClosure>>.Return(slice);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -71,13 +86,18 @@ namespace Enderlook.EventManager
                 return;
             }
 
-            for (int i = 0; i < slice.count; i++)
+            try
             {
-                DelegateWithClosure<TClosure> element = array[i];
-                Unsafe.As<Action<TClosure>>(element.callback)(element.closure);
+                for (int i = 0; i < slice.count; i++)
+                {
+                    DelegateWithClosure<TClosure> element = array[i];
+                    Unsafe.As<Action<TClosure>>(element.callback)(element.closure);
+                }
             }
-
-            ValueList<DelegateWithClosure<TClosure>>.Return(slice);
+            finally
+            {
+                ValueList<DelegateWithClosure<TClosure>>.Return(slice);
+            }
         }
     }
 }

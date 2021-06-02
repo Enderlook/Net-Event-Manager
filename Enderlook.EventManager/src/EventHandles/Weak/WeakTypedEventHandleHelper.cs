@@ -17,14 +17,19 @@ namespace Enderlook.EventManager
                 return;
             }
 
-            for (int i = 0; i < slice.count; i++)
+            try
             {
-                WeakDelegate<EquatableDelegate> @delegate = array[i];
-                if (@delegate.TryGetHandle(out object _))
-                    CastUtils.ExpectExactType<Action<TEvent>>(@delegate.callback.callback)(argument);
+                for (int i = 0; i < slice.count; i++)
+                {
+                    WeakDelegate<EquatableDelegate> @delegate = array[i];
+                    if (@delegate.TryGetHandle(out object _))
+                        CastUtils.ExpectExactType<Action<TEvent>>(@delegate.callback.callback)(argument);
+                }
             }
-
-            ValueList<WeakDelegate<EquatableDelegate>>.Return(slice);
+            finally
+            {
+                ValueList<WeakDelegate<EquatableDelegate>>.Return(slice);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -38,14 +43,19 @@ namespace Enderlook.EventManager
                 return;
             }
 
-            for (int i = 0; i < slice.count; i++)
+            try
             {
-                WeakDelegate<EquatableDelegate> @delegate = array[i];
-                if (@delegate.TryGetHandle(out object _))
-                    CastUtils.ExpectExactType<Action>(@delegate.callback.callback)();
+                for (int i = 0; i < slice.count; i++)
+                {
+                    WeakDelegate<EquatableDelegate> @delegate = array[i];
+                    if (@delegate.TryGetHandle(out object _))
+                        CastUtils.ExpectExactType<Action>(@delegate.callback.callback)();
+                }
             }
-
-            ValueList<WeakDelegate<EquatableDelegate>>.Return(slice);
+            finally
+            {
+                ValueList<WeakDelegate<EquatableDelegate>>.Return(slice);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -59,14 +69,19 @@ namespace Enderlook.EventManager
                 return;
             }
 
-            for (int i = 0; i < slice.count; i++)
+            try
             {
-                WeakDelegate<DelegateWithClosure<TClosure>> @delegate = array[i];
-                if (@delegate.TryGetHandle(out object _))
-                    Unsafe.As<Action<TClosure, TEvent>>(@delegate.callback.callback)(@delegate.callback.closure, argument);
+                for (int i = 0; i < slice.count; i++)
+                {
+                    WeakDelegate<DelegateWithClosure<TClosure>> @delegate = array[i];
+                    if (@delegate.TryGetHandle(out object _))
+                        Unsafe.As<Action<TClosure, TEvent>>(@delegate.callback.callback)(@delegate.callback.closure, argument);
+                }
             }
-
-            ValueList<WeakDelegate<DelegateWithClosure<EquatableDelegate>>>.Return(slice);
+            finally
+            {
+                ValueList<WeakDelegate<DelegateWithClosure<TClosure>>>.Return(slice);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -80,14 +95,19 @@ namespace Enderlook.EventManager
                 return;
             }
 
-            for (int i = 0; i < slice.count; i++)
+            try
             {
-                WeakDelegate<DelegateWithClosure<TClosure>> @delegate = array[i];
-                if (@delegate.TryGetHandle(out object _))
-                    Unsafe.As<Action<TClosure>>(@delegate.callback.callback)(@delegate.callback.closure);
+                for (int i = 0; i < slice.count; i++)
+                {
+                    WeakDelegate<DelegateWithClosure<TClosure>> @delegate = array[i];
+                    if (@delegate.TryGetHandle(out object _))
+                        Unsafe.As<Action<TClosure>>(@delegate.callback.callback)(@delegate.callback.closure);
+                }
             }
-
-            ValueList<WeakDelegate<DelegateWithClosure<EquatableDelegate>>>.Return(slice);
+            finally
+            {
+                ValueList<WeakDelegate<DelegateWithClosure<TClosure>>>.Return(slice);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -101,14 +121,19 @@ namespace Enderlook.EventManager
                 return;
             }
 
-            for (int i = 0; i < slice.count; i++)
+            try
             {
-                WeakDelegate<DelegateWithClosure<TClosure>> @delegate = array[i];
-                if (@delegate.TryGetHandle(out object? handle))
-                    Unsafe.As<Action<object, TClosure, TEvent>>(@delegate.callback.callback)(handle, @delegate.callback.closure, argument);
+                for (int i = 0; i < slice.count; i++)
+                {
+                    WeakDelegate<DelegateWithClosure<TClosure>> @delegate = array[i];
+                    if (@delegate.TryGetHandle(out object? handle))
+                        Unsafe.As<Action<object, TClosure, TEvent>>(@delegate.callback.callback)(handle, @delegate.callback.closure, argument);
+                }
             }
-
-            ValueList<WeakDelegate<DelegateWithClosure<EquatableDelegate>>>.Return(slice);
+            finally
+            {
+                ValueList<WeakDelegate<DelegateWithClosure<TClosure>>>.Return(slice);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -122,14 +147,19 @@ namespace Enderlook.EventManager
                 return;
             }
 
-            for (int i = 0; i < slice.count; i++)
+            try
             {
-                WeakDelegate<DelegateWithClosure<TClosure>> @delegate = array[i];
-                if (@delegate.TryGetHandle(out object? handle))
-                    Unsafe.As<Action<object, TClosure>>(@delegate.callback.callback)(handle, @delegate.callback.closure);
+                for (int i = 0; i < slice.count; i++)
+                {
+                    WeakDelegate<DelegateWithClosure<TClosure>> @delegate = array[i];
+                    if (@delegate.TryGetHandle(out object? handle))
+                        Unsafe.As<Action<object, TClosure>>(@delegate.callback.callback)(handle, @delegate.callback.closure);
+                }
             }
-
-            ValueList<WeakDelegate<DelegateWithClosure<EquatableDelegate>>>.Return(slice);
+            finally
+            {
+                ValueList<WeakDelegate<DelegateWithClosure<TClosure>>>.Return(slice);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -143,14 +173,19 @@ namespace Enderlook.EventManager
                 return;
             }
 
-            for (int i = 0; i < slice.count; i++)
+            try
             {
-                WeakDelegate<EquatableDelegate> @delegate = array[i];
-                if (@delegate.TryGetHandle(out object? handle))
-                    Unsafe.As<Action<object, TEvent>>(@delegate.callback.callback)(handle, argument);
+                for (int i = 0; i < slice.count; i++)
+                {
+                    WeakDelegate<EquatableDelegate> @delegate = array[i];
+                    if (@delegate.TryGetHandle(out object? handle))
+                        Unsafe.As<Action<object, TEvent>>(@delegate.callback.callback)(handle, argument);
+                }
             }
-
-            ValueList<WeakDelegate<DelegateWithClosure<EquatableDelegate>>>.Return(slice);
+            finally
+            {
+                ValueList<WeakDelegate<EquatableDelegate>>.Return(slice);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -164,14 +199,19 @@ namespace Enderlook.EventManager
                 return;
             }
 
-            for (int i = 0; i < slice.count; i++)
+            try
             {
-                WeakDelegate<EquatableDelegate> @delegate = array[i];
-                if (@delegate.TryGetHandle(out object? handle))
-                    Unsafe.As<Action<object>>(@delegate.callback.callback)(handle);
+                for (int i = 0; i < slice.count; i++)
+                {
+                    WeakDelegate<EquatableDelegate> @delegate = array[i];
+                    if (@delegate.TryGetHandle(out object? handle))
+                        Unsafe.As<Action<object>>(@delegate.callback.callback)(handle);
+                }
             }
-
-            ValueList<WeakDelegate<DelegateWithClosure<EquatableDelegate>>>.Return(slice);
+            finally
+            {
+                ValueList<WeakDelegate<EquatableDelegate>>.Return(slice);
+            }
         }
     }
 }
