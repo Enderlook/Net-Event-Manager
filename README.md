@@ -230,3 +230,8 @@ public sealed partial class EventManager : IDisposable
 }
 ```
 
+## v0.2.1
+
+- Apply nullable analysis on API.
+- Fix some null reference error bugs.
+
