@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,57 +10,46 @@ namespace Enderlook.EventManager
     public sealed partial class EventManager
     {
         private const int PurgeCount = 59;
+        private const int PurgeAttempts = 3;
 
         private Action<int, ParallelLoopState>? autoPurgeAction;
 
         private bool ConcurrentPurge()
         {
-            // The callback was called befeore finishing the previous purge.
-            if ((state & IS_PURGING) != 0)
-                return true;
-
-            MassiveWriteBegin();
+            for (int j = 0; j < PurgeAttempts; j++)
             {
-                if (state == IS_DISPOSED_OR_DISPOSING)
-                {
-                    WriteEnd();
-                    return false;
-                }
-
-                if (managersDictionary is null)
-                {
-                    WriteEnd();
+                // The callback was called before finishing the previous purge.
+                if ((state & IS_PURGING) != 0)
                     return true;
-                }
+
+                if (state == IS_DISPOSED_OR_DISPOSING)
+                    return false;
+
+                MassiveWriteBegin();
+                {
+                    if (state == IS_DISPOSED_OR_DISPOSING)
+                    {
+                        WriteEnd();
+                        return false;
+                    }
+
+                    if (managersDictionary is null)
+                    {
+                        WriteEnd();
+                        return true;
+                    }
 
 #if NET5_0_OR_GREATER
-                GCMemoryInfo memoryInfo = GC.GetGCMemoryInfo();
-                if (memoryInfo.MemoryLoadBytes < memoryInfo.HighMemoryLoadThresholdBytes * .8)
-                {
-                    WriteEnd();
-                    return true;
-                }
+                    GCMemoryInfo memoryInfo = GC.GetGCMemoryInfo();
+                    if (memoryInfo.MemoryLoadBytes < memoryInfo.HighMemoryLoadThresholdBytes * .8)
+                    {
+                        WriteEnd();
+                        return true;
+                    }
 #endif
 
-                state = IS_PURGING;
+                    state = IS_PURGING;
 
-                if (!EnableMultithreadingForAutoCleaning)
-                {
-                    ValueList<object> keys1 = ValueList<object>.Create();
-                    ValueList<Type2> keys2 = ValueList<Type2>.Create();
-                    {
-                        for (int i = 0; i <= PurgeCount; i++)
-                        {
-                            purgingIndex = (purgingIndex + 1) % PurgeCount;
-                            if (Purge(purgingIndex, ref keys1, ref keys2))
-                                break;
-                        }
-                    }
-                    keys2.Return();
-                    return Finalize(keys1);
-                }
-                else
-                {
                     ParallelOptions options = new();
                     purgingIndex = (purgingIndex + (int)(Parallel.For(0, PurgeCount + 1, options, autoPurgeAction ??= (index, loop) =>
                     {
@@ -67,7 +57,7 @@ namespace Enderlook.EventManager
                             return;
 
                         if ((state & IS_CANCELATION_REQUESTED) != 0)
-                            loop.Break();
+                            loop.Stop();
 
                         ValueList<object> keys1 = ValueList<object>.Create();
                         ValueList<Type2> keys2 = ValueList<Type2>.Create();
@@ -78,33 +68,40 @@ namespace Enderlook.EventManager
                         keys1.Return();
                         keys2.Return();
                     }).LowestBreakIteration ?? 0)) % PurgeCount;
-                    return Finalize(ValueList<object>.Create());
+
+                    bool isCancelationRequested = (state & IS_CANCELATION_REQUESTED) != 0;
+
+                    ValueList<object> keys = ValueList<object>.Create();
+                    {
+                        foreach (KeyValuePair<Type, Manager> kvp in managersDictionary)
+                        {
+                            if (kvp.Value.Purge())
+                                keys.Add(kvp.Key);
+                        }
+
+                        for (int i = 0; i < keys.Count; i++)
+                            managersDictionary.Remove(CastUtils.ExpectExactType<Type>(keys.Get(i)));
+                    }
+                    keys.Return();
+
+                    while (Interlocked.Exchange(ref stateLock, 1) != 0) ; ;
+                    {
+                        state = 0;
+                    }
+                    stateLock = 0;
+
+                    WriteEnd();
+
+                    if (isCancelationRequested && Thread.Yield())
+                        continue;
+
+                    return true;
                 }
             }
 
-            bool Finalize(ValueList<object> keys)
-            {
-                foreach (KeyValuePair<Type, Manager> kvp in managersDictionary)
-                {
-                    if (kvp.Value.Purge())
-                        keys.Add(kvp.Key);
-                }
+            Debug.Fail("Impossible state.");
 
-                for (int i = 0; i < keys.Count; i++)
-                    managersDictionary.Remove(CastUtils.ExpectExactType<Type>(keys.Get(i)));
-
-                keys.Return();
-
-                while (Interlocked.Exchange(ref stateLock, 1) != 0) ; ;
-                {
-                    state = 0;
-                }
-                stateLock = 0;
-
-                WriteEnd();
-
-                return true;
-            }
+            return true;
         }
 
         private bool Purge(int index, ref ValueList<object> keys1, ref ValueList<Type2> keys2)

@@ -13,18 +13,6 @@ namespace Enderlook.EventManager
     /// </summary>
     public sealed partial class EventManager : IDisposable
     {
-        /// <summary>
-        /// Whenever auto-cleaning of event managers can use multithreading or must run in single-threaded.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public static bool EnableMultithreadingForAutoCleaning { get; set; }
-
-        /// <summary>
-        /// Whenever disposing of event managers can use multithreading or must run in single-threaded.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public static bool EnableMultithreadingForDisposal { get; set; }
-
         private int locked;
         private uint readers;
         private int inEvents;

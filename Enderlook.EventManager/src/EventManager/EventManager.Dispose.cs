@@ -94,19 +94,9 @@ namespace Enderlook.EventManager
                 onceWeakWithArgumentWithHandleHandleTrackResurrection = default;
                 onceWeakWithHandleHandleTrackResurrection = default;
 
-                if (!EnableMultithreadingForDisposal)
-                {
-                    ValueList<Manager> managers = managersList;
-                    managersList = default;
-                    for (int i = 0; i < managers.Count; i++)
-                        managers.Get(i).Dispose();
-                }
-                else
-                {
-                    ValueList<Manager> managers = managersList;
-                    managersList = default;
-                    Parallel.For(0, managers.Count, (i) => managers.Get(i).Dispose());
-                }
+                ValueList<Manager> managers = managersList;
+                managersList = default;
+                Parallel.For(0, managers.Count, (i) => managers.Get(i).Dispose());
             }
             WriteEnd();
         }
