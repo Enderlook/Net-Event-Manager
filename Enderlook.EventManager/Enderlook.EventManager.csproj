@@ -22,4 +22,8 @@
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Enderlook.EventManager-SourceGenerator\Enderlook.EventManager-SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
 </Project>
