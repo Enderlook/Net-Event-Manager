@@ -50,15 +50,10 @@ namespace Enderlook.EventManager
         private Dictionary<Type, EventHandle>? {fieldPrefix}WeakWithArgumentWithHandleHandleTrackResurrection;
         private Dictionary<Type, EventHandle>? {fieldPrefix}WeakWithHandleHandleTrackResurrection;
 
-        /// <summary>
-        /// Subscribes the callback <paramref name=""callback""/> to execute {methodDescription} the event type <typeparamref name=""TEvent""/> is raised.<br/>
-        /// A weak reference to <paramref name=""handle""/> is stored. If the reference becomes null, the callback is not executed.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""callback"">Callback to execute.</param>
-        /// <param name=""trackResurrection"">Whenever it should track the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakSubscribeSummaryAndHandleParameter(methodDescription)}
+        {EventManagerGeneratorHelper.CallbackParameter}
+        {EventManagerGeneratorHelper.TrackResurrectionParameter}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakSubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -74,15 +69,10 @@ namespace Enderlook.EventManager
             InEventEnd();
         }}
 
-        /// <summary>
-        /// Subscribes the callback <paramref name=""callback""/> to execute {methodDescription} the event type <typeparamref name=""TEvent""/> is raised.<br/>
-        /// A weak reference to <paramref name=""handle""/> is stored. If the reference becomes null, the callback is not executed.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""callback"">Callback to execute.</param>
-        /// <param name=""trackResurrection"">Whenever it should track the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakSubscribeSummaryAndHandleParameter(methodDescription)}
+        {EventManagerGeneratorHelper.CallbackParameter}
+        {EventManagerGeneratorHelper.TrackResurrectionParameter}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakSubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection)
             where THandle : class
         {{
@@ -98,16 +88,11 @@ namespace Enderlook.EventManager
             InEventEnd();
         }}
 
-        /// <summary>
-        /// Subscribes the callback <paramref name=""callback""/> to execute {methodDescription} the event type <typeparamref name=""TEvent""/> is raised.<br/>
-        /// A weak reference to <paramref name=""handle""/> is stored. If the reference becomes null, the callback is not executed.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""closure"">Closure of the callback to execute.</param>
-        /// <param name=""callback"">Callback to execute.</param>
-        /// <param name=""trackResurrection"">Whenever it should track the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakSubscribeSummaryAndHandleParameter(methodDescription)}
+        {EventManagerGeneratorHelper.ClosureParameter}
+        {EventManagerGeneratorHelper.CallbackParameter}
+        {EventManagerGeneratorHelper.TrackResurrectionParameter}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakSubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<TClosure?, TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -129,16 +114,11 @@ namespace Enderlook.EventManager
             InEventEnd();
         }}
 
-        /// <summary>
-        /// Subscribes the callback <paramref name=""callback""/> to execute {methodDescription} the event type <typeparamref name=""TEvent""/> is raised.<br/>
-        /// A weak reference to <paramref name=""handle""/> is stored. If the reference becomes null, the callback is not executed.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""closure"">Closure of the callback to execute.</param>
-        /// <param name=""callback"">Callback to execute.</param>
-        /// <param name=""trackResurrection"">Whenever it should track the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakSubscribeSummaryAndHandleParameter(methodDescription)}
+        {EventManagerGeneratorHelper.ClosureParameter}
+        {EventManagerGeneratorHelper.CallbackParameter}
+        {EventManagerGeneratorHelper.TrackResurrectionParameter}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakSubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<TClosure?> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -160,16 +140,11 @@ namespace Enderlook.EventManager
             InEventEnd();
         }}
 
-        /// <summary>
-        /// Subscribes the callback <paramref name=""callback""/> to execute {methodDescription} the event type <typeparamref name=""TEvent""/> is raised.<br/>
-        /// A weak reference to <paramref name=""handle""/> is stored. If the reference becomes null, the callback is not executed.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""closure"">Closure of the callback to execute.</param>
-        /// <param name=""callback"">Callback to execute.</param>
-        /// <param name=""trackResurrection"">Whenever it should track the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakSubscribeSummaryAndHandleParameter(methodDescription)}
+        {EventManagerGeneratorHelper.ClosureParameter}
+        {EventManagerGeneratorHelper.CallbackParameter}
+        {EventManagerGeneratorHelper.TrackResurrectionParameter}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakSubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<THandle, TClosure?, TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -191,16 +166,11 @@ namespace Enderlook.EventManager
             InEventEnd();
         }}
 
-        /// <summary>
-        /// Subscribes the callback <paramref name=""callback""/> to execute {methodDescription} the event type <typeparamref name=""TEvent""/> is raised.<br/>
-        /// A weak reference to <paramref name=""handle""/> is stored. If the reference becomes null, the callback is not executed.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""closure"">Closure of the callback to execute.</param>
-        /// <param name=""callback"">Callback to execute.</param>
-        /// <param name=""trackResurrection"">Whenever it should track the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakSubscribeSummaryAndHandleParameter(methodDescription)}
+        {EventManagerGeneratorHelper.ClosureParameter}
+        {EventManagerGeneratorHelper.CallbackParameter}
+        {EventManagerGeneratorHelper.TrackResurrectionParameter}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakSubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<THandle, TClosure?> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -222,15 +192,10 @@ namespace Enderlook.EventManager
             InEventEnd();
         }}
 
-        /// <summary>
-        /// Subscribes the callback <paramref name=""callback""/> to execute {methodDescription} the event type <typeparamref name=""TEvent""/> is raised.<br/>
-        /// A weak reference to <paramref name=""handle""/> is stored. If the reference becomes null, the callback is not executed.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""callback"">Callback to execute.</param>
-        /// <param name=""trackResurrection"">Whenever it should track the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakSubscribeSummaryAndHandleParameter(methodDescription)}
+        {EventManagerGeneratorHelper.CallbackParameter}
+        {EventManagerGeneratorHelper.TrackResurrectionParameter}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakSubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -246,15 +211,10 @@ namespace Enderlook.EventManager
             InEventEnd();
         }}
 
-        /// <summary>
-        /// Subscribes the callback <paramref name=""callback""/> to execute {methodDescription} the event type <typeparamref name=""TEvent""/> is raised.<br/>
-        /// A weak reference to <paramref name=""handle""/> is stored. If the reference becomes null, the callback is not executed.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""callback"">Callback to execute.</param>
-        /// <param name=""trackResurrection"">Whenever it should track the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakSubscribeSummaryAndHandleParameter(methodDescription)}
+        {EventManagerGeneratorHelper.CallbackParameter}
+        {EventManagerGeneratorHelper.TrackResurrectionParameter}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakSubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -270,14 +230,10 @@ namespace Enderlook.EventManager
             InEventEnd();
         }}
 
-        /// <summary>
-        /// Unsubscribes a callback suscribed by <see cref=""WeakSubscribe{methodPostfix}{{THandle, TEvent}}(THandle, Action{{TEvent}}, bool)""/>.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""callback"">Callback to no longer execute.</param>
-        /// <param name=""trackResurrection"">Whenever it was tracking the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakUnsubscribeSummary($"WeakSubscribe{methodPostfix}{{THandle, TEvent}}(THandle, Action{{TEvent}}, bool)")}
+        {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
+        {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakUnsubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -294,14 +250,10 @@ namespace Enderlook.EventManager
             }}
         }}
 
-        /// <summary>
-        /// Unsubscribes a callback suscribed by <see cref=""WeakSubscribe{methodPostfix}{{THandle, TEvent}}(THandle, Action, bool)""/>.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""callback"">Callback to no longer execute.</param>
-        /// <param name=""trackResurrection"">Whenever it was tracking the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakUnsubscribeSummary($"WeakSubscribe{methodPostfix}{{THandle, TEvent}}(THandle, Action, bool)")}
+        {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
+        {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakUnsubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection)
             where THandle : class
         {{
@@ -318,15 +270,11 @@ namespace Enderlook.EventManager
             }}
         }}
 
-        /// <summary>
-        /// Unsubscribes a callback suscribed by <see cref=""WeakSubscribe{methodPostfix}{{THandle, TClosure, TEvent}}(THandle, TClosure, Action{{TClosure, TEvent}}, bool)""/>.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""closure"">Closure of the callback to no longer execute.</param>
-        /// <param name=""callback"">Callback to no longer execute.</param>
-        /// <param name=""trackResurrection"">Whenever it was tracking the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakUnsubscribeSummary($"WeakSubscribe{methodPostfix}{{THandle, TClosure, TEvent}}(THandle, TClosure, Action{{TClosure, TEvent}}, bool)")}
+        {EventManagerGeneratorHelper.ClosureParameter}
+        {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
+        {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakUnsubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<TClosure?, TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -355,15 +303,11 @@ namespace Enderlook.EventManager
             }}
         }}
 
-        /// <summary>
-        /// Unsubscribes a callback suscribed by <see cref=""WeakSubscribe{methodPostfix}{{THandle, TClosure, TEvent}}(THandle, TClosure, Action{{TClosure}}, bool)""/>.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""closure"">Closure of the callback to no longer execute.</param>
-        /// <param name=""callback"">Callback to no longer execute.</param>
-        /// <param name=""trackResurrection"">Whenever it was tracking the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakUnsubscribeSummary($"WeakSubscribe{methodPostfix}{{THandle, TClosure, TEvent}}(THandle, TClosure, Action{{TClosure}}, bool)")}
+        {EventManagerGeneratorHelper.ClosureParameter}
+        {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
+        {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakUnsubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<TClosure?> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -392,15 +336,11 @@ namespace Enderlook.EventManager
             }}
         }}
 
-        /// <summary>
-        /// Unsubscribes a callback suscribed by <see cref=""WeakSubscribe{methodPostfix}{{THandle, TClosure, TEvent}}(THandle, TClosure, Action{{THandle, TClosure, TEvent}}, bool)""/>.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""closure"">Closure of the callback to no longer execute.</param>
-        /// <param name=""callback"">Callback to no longer execute.</param>
-        /// <param name=""trackResurrection"">Whenever it was tracking the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakUnsubscribeSummary($"WeakSubscribe{methodPostfix}{{THandle, TClosure, TEvent}}(THandle, TClosure, Action{{THandle, TClosure, TEvent}}, bool)")}
+        {EventManagerGeneratorHelper.ClosureParameter}
+        {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
+        {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakUnsubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<THandle, TClosure?, TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -429,15 +369,11 @@ namespace Enderlook.EventManager
             }}
         }}
 
-        /// <summary>
-        /// Unsubscribes a callback suscribed by <see cref=""WeakSubscribe{methodPostfix}{{THandle, TClosure, TEvent}}(THandle, TClosure, Action{{THandle, TClosure}}, bool)""/>.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""closure"">Closure of the callback to no longer execute.</param>
-        /// <param name=""callback"">Callback to no longer execute.</param>
-        /// <param name=""trackResurrection"">Whenever it was tracking the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakUnsubscribeSummary($"WeakSubscribe{methodPostfix}{{THandle, TClosure, TEvent}}(THandle, TClosure, Action{{THandle, TClosure}}, bool)")}
+        {EventManagerGeneratorHelper.ClosureParameter}
+        {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
+        {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakUnsubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<THandle, TClosure?> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -466,14 +402,10 @@ namespace Enderlook.EventManager
             }}
         }}
 
-        /// <summary>
-        /// Unsubscribes a callback suscribed by <see cref=""WeakSubscribe{methodPostfix}{{THandle, TEvent}}(THandle, Action{{THandle, TEvent}}, bool)""/>.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""callback"">Callback to no longer execute.</param>
-        /// <param name=""trackResurrection"">Whenever it was tracking the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakUnsubscribeSummary($"WeakSubscribe{methodPostfix}{{THandle, TEvent}}(THandle, Action{{THandle, TEvent}}, bool)")}
+        {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
+        {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakUnsubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -490,14 +422,10 @@ namespace Enderlook.EventManager
             }}
         }}
 
-        /// <summary>
-        /// Unsubscribes a callback suscribed by <see cref=""WeakSubscribe{methodPostfix}{{THandle, TEvent}}(THandle, Action{{THandle}}, bool)""/>.
-        /// </summary>
-        /// <param name=""handle"">Object whose weak reference will be stored.</param>
-        /// <param name=""callback"">Callback to no longer execute.</param>
-        /// <param name=""trackResurrection"">Whenever it was tracking the resurrection of the handle.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetWeakUnsubscribeSummary($"WeakSubscribe{methodPostfix}{{THandle, TEvent}}(THandle, Action{{THandle}}, bool)")}
+        {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
+        {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
+        {EventManagerGeneratorHelper.WeakExceptions}
         public void WeakUnsubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection)
             where THandle : class
         {{

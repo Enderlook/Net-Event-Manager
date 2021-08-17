@@ -31,12 +31,9 @@ namespace Enderlook.EventManager
         private Dictionary<Type2, EventHandle>? {fieldPrefix}StrongWithValueClosureHandle;
         private Dictionary<Type, EventHandle>? {fieldPrefix}StrongWithReferenceClosureHandle;
 
-        /// <summary>
-        /// Subscribes the callback <paramref name=""callback""/> to execute {methodDescription} the event type <typeparamref name=""TEvent""/> is raised.
-        /// </summary>
-        /// <param name=""callback"">Callback to execute.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetStrongSubscribeSummary(methodDescription)}
+        {EventManagerGeneratorHelper.CallbackParameter}
+        {EventManagerGeneratorHelper.StrongExceptions}
         public void Subscribe{methodPostfix}<TEvent>(Action<TEvent> callback)
         {{
             if (callback is null)
@@ -48,12 +45,9 @@ namespace Enderlook.EventManager
             InEventEnd();
         }}
 
-        /// <summary>
-        /// Subscribes the callback <paramref name=""callback""/> to execute {methodDescription} the event type <typeparamref name=""TEvent""/> is raised.
-        /// </summary>
-        /// <param name=""callback"">Callback to execute.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetStrongSubscribeSummary(methodDescription)}
+        {EventManagerGeneratorHelper.CallbackParameter}
+        {EventManagerGeneratorHelper.StrongExceptions}
         public void Subscribe{methodPostfix}<TEvent>(Action callback)
         {{
             if (callback is null)
@@ -64,13 +58,10 @@ namespace Enderlook.EventManager
             InEventEnd();
         }}
 
-        /// <summary>
-        /// Subscribes the callback <paramref name=""callback""/> to execute {methodDescription} the event type <typeparamref name=""TEvent""/> is raised.
-        /// </summary>
-        /// <param name=""closure"">Parameter to pass to <paramref name=""callback""/>.</param>
-        /// <param name=""callback"">Callback to execute.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetStrongSubscribeSummary(methodDescription)}
+        {EventManagerGeneratorHelper.ClosureParameter}
+        {EventManagerGeneratorHelper.CallbackParameter}
+        {EventManagerGeneratorHelper.StrongExceptions}
         public void Subscribe{methodPostfix}<TEvent, TClosure>(TClosure? closure, Action<TClosure?, TEvent> callback)
         {{
             if (callback is null)
@@ -87,13 +78,10 @@ namespace Enderlook.EventManager
             InEventEnd();
         }}
 
-        /// <summary>
-        /// Subscribes the callback <paramref name=""callback""/> to execute {methodDescription} the event type <typeparamref name=""TEvent""/> is raised.
-        /// </summary>
-        /// <param name=""closure"">Parameter to pass to <paramref name=""callback""/>.</param>
-        /// <param name=""callback"">Callback to execute.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetStrongSubscribeSummary(methodDescription)}
+        {EventManagerGeneratorHelper.ClosureParameter}
+        {EventManagerGeneratorHelper.CallbackParameter}
+        {EventManagerGeneratorHelper.StrongExceptions}
         public void Subscribe{methodPostfix}<TEvent, TClosure>(TClosure? closure, Action<TClosure?> callback)
         {{
             if (callback is null)
@@ -110,12 +98,9 @@ namespace Enderlook.EventManager
             InEventEnd();
         }}
 
-        /// <summary>
-        /// Unsubscribes a callback suscribed by <see cref=""Subscribe{methodPostfix}{{TEvent}}(Action{{TEvent}})""/>.
-        /// </summary>
-        /// <param name=""callback"">Callback to no longer execute.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetStrongUnsubscribeSummary($"Subscribe{methodPostfix}{{TEvent}}(Action{{TEvent}})")}
+        {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
+        {EventManagerGeneratorHelper.StrongExceptions}
         public void Unsubscribe{methodPostfix}<TEvent>(Action<TEvent> callback)
         {{
             if (callback is null)
@@ -128,12 +113,9 @@ namespace Enderlook.EventManager
             }}
         }}
 
-        /// <summary>
-        /// Unsubscribes a callback suscribed by <see cref=""Subscribe{methodPostfix}{{TEvent}}(Action)""/>.
-        /// </summary>
-        /// <param name=""callback"">Callback to no longer execute.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetStrongUnsubscribeSummary($"Subscribe{methodPostfix}{{TEvent}}(Action)")}
+        {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
+        {EventManagerGeneratorHelper.StrongExceptions}
         public void Unsubscribe{methodPostfix}<TEvent>(Action callback)
         {{
             if (callback is null)
@@ -146,13 +128,10 @@ namespace Enderlook.EventManager
             }}
         }}
 
-        /// <summary>
-        /// Unsubscribes a callback suscribed by <see cref=""Subscribe{methodPostfix}{{TEvent, TClosure}}(TClosure, Action{{TClosure, TEvent}})""/>.
-        /// </summary>
-        /// <param name=""closure"">Parameter to pass to <paramref name=""callback""/>.</param>
-        /// <param name=""callback"">Callback to no longer execute.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetStrongUnsubscribeSummary($"Subscribe{methodPostfix}{{TEvent, TClosure}}(TClosure, Action{{TClosure, TEvent}})")}
+        {EventManagerGeneratorHelper.ClosureParameter}
+        {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
+        {EventManagerGeneratorHelper.StrongExceptions}
         public void Unsubscribe{methodPostfix}<TEvent, TClosure>(TClosure? closure, Action<TClosure?, TEvent> callback)
         {{
             if (callback is null)
@@ -176,13 +155,10 @@ namespace Enderlook.EventManager
             }}
         }}
 
-        /// <summary>
-        /// Unsubscribes a callback suscribed by <see cref=""Subscribe{methodPostfix}{{TEvent, TClosure}}(TClosure, Action{{TClosure}})""/>.
-        /// </summary>
-        /// <param name=""closure"">Parameter to pass to <paramref name=""callback""/>.</param>
-        /// <param name=""callback"">Callback to no longer execute.</param>
-        /// <exception cref=""ArgumentNullException"">Thrown when <paramref name=""callback""/> is <see langword=""null""/>.</exception>
-        /// <exception cref=""ObjectDisposedException"">Thrown when this instance has already been disposed.</exception>
+        {EventManagerGeneratorHelper.GetStrongUnsubscribeSummary($"Subscribe{methodPostfix}{{TEvent, TClosure}}(TClosure, Action{{TClosure}})")}
+        {EventManagerGeneratorHelper.ClosureParameter}
+        {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
+        {EventManagerGeneratorHelper.StrongExceptions}
         public void Unsubscribe{methodPostfix}<TEvent, TClosure>(TClosure? closure, Action<TClosure?> callback)
         {{
             if (callback is null)
