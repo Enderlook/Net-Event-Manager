@@ -65,7 +65,7 @@ namespace Enderlook.EventManager
         private static void ThrowNullHandleException() => throw new ArgumentNullException("handle");
 
         [DoesNotReturn]
-        private void ThrowObjectDisposedException() => throw new ObjectDisposedException("Event Manager");
+        private static void ThrowObjectDisposedException() => throw new ObjectDisposedException("Event Manager");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ReadBegin()
