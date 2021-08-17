@@ -12,6 +12,7 @@
     <RepositoryType>git</RepositoryType>
     <Version>0.3.0</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <LangVersion>9</LangVersion>
     <Nullable>enable</Nullable>
     <CheckForOverflowUnderflow Condition="'$(Configuration)' == 'Debug'">true</CheckForOverflowUnderflow>
