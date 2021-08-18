@@ -10,15 +10,20 @@
     <Product>Enderlook.EventManager</Product>
     <RepositoryUrl>https://github.com/Enderlook/Net-Event-Manager</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>0.2.1</Version>
+    <Version>0.3.0</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <LangVersion>9</LangVersion>
     <Nullable>enable</Nullable>
+    <CheckForOverflowUnderflow Condition="'$(Configuration)' == 'Debug'">true</CheckForOverflowUnderflow>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Buffers" Version="4.5.1" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Enderlook.EventManager-SourceGenerator\Enderlook.EventManager-SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

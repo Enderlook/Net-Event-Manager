@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Enderlook.EventManager
 {
@@ -7,12 +9,12 @@ namespace Enderlook.EventManager
         /// <inheritdoc cref="IDisposable.Dispose"/>
         public void Dispose()
         {
-            if (isDisposedOrDisposing)
+            if (state == IS_DISPOSED_OR_DISPOSING)
                 return;
 
             MassiveWriteBegin();
             {
-                if (isDisposedOrDisposing)
+                if (state == IS_DISPOSED_OR_DISPOSING)
                 {
                     WriteEnd();
                     return;
@@ -20,7 +22,12 @@ namespace Enderlook.EventManager
 
                 GC.SuppressFinalize(this);
 
-                isDisposedOrDisposing = true;
+                while (Interlocked.Exchange(ref stateLock, 1) != 0) ; ;
+                {
+                    state = IS_DISPOSED_OR_DISPOSING;
+                }
+                stateLock = 0;
+
                 managersDictionary = default;
 
                 multipleStrongWithArgumentHandle = default;
@@ -89,8 +96,7 @@ namespace Enderlook.EventManager
 
                 ValueList<Manager> managers = managersList;
                 managersList = default;
-                for (int i = 0; i < managers.Count; i++)
-                    managers.Get(i).Dispose();
+                Parallel.For(0, managers.Count, (i) => managers.Get(i).Dispose());
             }
             WriteEnd();
         }

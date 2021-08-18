@@ -28,7 +28,7 @@ namespace Enderlook.EventManager
         public void AddAndUnlock(int count, T element)
         {
             T[] array_ = array;
-            if ((uint)count < (uint)array_.Length)
+            if (unchecked((uint)count < (uint)array_.Length))
             {
                 array_[count++] = element;
                 this.count = count;
@@ -76,7 +76,7 @@ namespace Enderlook.EventManager
             int count_ = LockAndGetCount();
             T[] array_ = array;
 
-            if ((uint)count_ >= (uint)array_.Length)
+            if (unchecked((uint)count_ >= (uint)array_.Length))
             {
                 Debug.Fail("Index out of range.");
                 return;

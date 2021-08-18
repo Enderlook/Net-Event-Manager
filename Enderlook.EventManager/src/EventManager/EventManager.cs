@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -17,7 +18,13 @@ namespace Enderlook.EventManager
         private int inEvents;
         private uint reserved;
 
-        private bool isDisposedOrDisposing;
+        private int stateLock;
+        private int state;
+        private const int IS_DISPOSED_OR_DISPOSING = 1 << 1;
+        private const int IS_PURGING = 1 << 2;
+        private const int IS_CANCELATION_REQUESTED = 1 << 3;
+
+        private int purgingIndex;
 
         private Dictionary<Type, Manager>? managersDictionary;
         private ValueList<Manager> managersList;
@@ -47,7 +54,7 @@ namespace Enderlook.EventManager
         public EventManager() => new AutoPurger(this);
 
         /// <summary>
-        /// Automatically disposes the object it case it wasn't disposed by the user.
+        /// Automatically disposes the object in case it wasn't disposed by the user.
         /// </summary>
         ~EventManager() => Dispose();
 
@@ -58,18 +65,48 @@ namespace Enderlook.EventManager
         private static void ThrowNullHandleException() => throw new ArgumentNullException("handle");
 
         [DoesNotReturn]
-        private void ThrowObjectDisposedExceptionAndEndRead()
-        {
-            ReadEnd();
-            throw new ObjectDisposedException("Event Manager");
-        }
+        private static void ThrowObjectDisposedException() => throw new ObjectDisposedException("Event Manager");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ReadBegin()
         {
+            if (state != 0)
+                SlowPath();
+
             while (Interlocked.Exchange(ref locked, 1) != 0) ;
+
+            if (state == IS_DISPOSED_OR_DISPOSING)
+                ThrowObjectDisposedException();
+
             readers++;
             locked = 0;
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            void SlowPath()
+            {
+                int state = this.state;
+
+                if (state == IS_DISPOSED_OR_DISPOSING)
+                    ThrowObjectDisposedException();
+
+                if ((state & IS_PURGING) != 0)
+                {
+                    while (Interlocked.Exchange(ref stateLock, 1) != 0) ; ;
+                    {
+                        state = this.state;
+
+                        if (state == IS_DISPOSED_OR_DISPOSING)
+                        {
+                            stateLock = 0;
+                            ThrowObjectDisposedException();
+                        }
+
+                        if ((state & IS_PURGING) != 0)
+                            this.state |= IS_CANCELATION_REQUESTED;
+                    }
+                    stateLock = 0;
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

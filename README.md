@@ -163,6 +163,7 @@ Initial Release
 - Remove `TEventBase` generic parameter from `EventManager<TEventBase>`.
 - Become `EventManager` thread-safe.
 - Increase perfomance in `EventManager` subscribe and unsubscribe methods by replacing `Delegate.Combine` and `Delegate.Remove` with pooled arrays of delegates.
+- Add target frameworks for .Net Standard 2.1 and .Net 5.
 - Add the following APIs:
 ```cs
 public sealed partial class EventManager : IDisposable
@@ -229,3 +230,17 @@ public sealed partial class EventManager : IDisposable
 }
 ```
 
+## v0.2.1
+
+- Apply nullable analysis on API.
+- Fix some null reference error bugs.
+
+## v0.3
+
+- Fix exceptions when raising events.
+- Fix memory leaks of weak subscribers.
+- Fix documentation.
+- Reduce garbage produced when a subscribed delegate throws.
+- Become auto-cleaning abortable and incremental.
+- Add internal multithreading on `.Dispose()` method and auto-cleaning.
+- Check for math overflow and underflow on debug builds.
