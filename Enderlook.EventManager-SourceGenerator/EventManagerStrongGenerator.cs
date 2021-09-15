@@ -10,11 +10,11 @@ namespace Enderlook.EventManager
     {
         public void Execute(GeneratorExecutionContext context)
         {
-            context.AddSource("EventManager.OnceStrong", SourceText.From(GetFile("once", "Once", "the next time"), Encoding.UTF8));
-            context.AddSource("EventManager.MultipleStrong", SourceText.From(GetFile("multiple", "", "when"), Encoding.UTF8));
+            context.AddSource("EventManager.OnceStrong", SourceText.From(GetFile("Once", "the next time", "Once"), Encoding.UTF8));
+            context.AddSource("EventManager.MultipleStrong", SourceText.From(GetFile("", "when", "Multiple"), Encoding.UTF8));
         }
 
-        private string GetFile(string fieldPrefix, string methodPostfix, string methodDescription) =>
+        private string GetFile(string methodPostfix, string methodDescription, string typePrefix) =>
 $@"
 using System;
 using System.Collections.Generic;
@@ -24,13 +24,6 @@ namespace Enderlook.EventManager
 {{
     public sealed partial class EventManager
     {{
-        private Dictionary<Type, EventHandle>? {fieldPrefix}StrongWithArgumentHandle;
-        private Dictionary<Type, EventHandle>? {fieldPrefix}StrongHandle;
-        private Dictionary<Type2, EventHandle>? {fieldPrefix}StrongWithArgumentWithValueClosureHandle;
-        private Dictionary<Type, EventHandle>? {fieldPrefix}StrongWithArgumentWithReferenceClosureHandle;
-        private Dictionary<Type2, EventHandle>? {fieldPrefix}StrongWithValueClosureHandle;
-        private Dictionary<Type, EventHandle>? {fieldPrefix}StrongWithReferenceClosureHandle;
-
         {EventManagerGeneratorHelper.GetStrongSubscribeSummary(methodDescription)}
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.StrongExceptions}
@@ -39,10 +32,7 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallbackException();
 
-            GetOrCreate<Type, MultipleStrongWithArgumentEventHandle<TEvent>, TEvent>(
-                ref {fieldPrefix}StrongWithArgumentHandle, typeof(TEvent))
-                .Add(callback);
-            InEventEnd();
+            Subscribe<TEvent, Strong{typePrefix}CallbackExecuter<TEvent, InvariantObject, StrongActionArgument<TEvent>>, InvariantObject>(new(callback));
         }}
 
         {EventManagerGeneratorHelper.GetStrongSubscribeSummary(methodDescription)}
@@ -53,9 +43,7 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallbackException();
 
-            GetOrCreate<Type, MultipleStrongEventHandle<TEvent>, TEvent>(ref {fieldPrefix}StrongHandle, typeof(TEvent))
-                .Add(callback);
-            InEventEnd();
+            Subscribe<TEvent, Strong{typePrefix}CallbackExecuter<TEvent, InvariantObject, StrongActionVoid<TEvent>>, InvariantObject>(new(callback));
         }}
 
         {EventManagerGeneratorHelper.GetStrongSubscribeSummary(methodDescription)}
@@ -68,14 +56,9 @@ namespace Enderlook.EventManager
                 ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
-                GetOrCreate<Type2, MultipleStrongWithArgumentWithClosureEventHandle<TEvent, TClosure?>, TEvent>(
-                    ref {fieldPrefix}StrongWithArgumentWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)))
-                    .Add(callback, closure);
+                Subscribe<TEvent, Strong{typePrefix}CallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTVoid<TClosure, TEvent>>, InvariantObjectAndT<TClosure?>>(new(callback, closure));
             else
-                GetOrCreate<Type, MultipleStrongWithArgumentWithClosureEventHandle<TEvent, object?>, TEvent>(
-                    ref {fieldPrefix}StrongWithArgumentWithReferenceClosureHandle, typeof(TEvent))
-                    .Add(Unsafe.As<Action<object?, TEvent>>(callback), CastUtils.AsObject(closure));
-            InEventEnd();
+                Subscribe<TEvent, Strong{typePrefix}CallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TEvent>>, InvariantObjectAndT<object?>>(new(callback, closure));
         }}
 
         {EventManagerGeneratorHelper.GetStrongSubscribeSummary(methodDescription)}
@@ -88,14 +71,9 @@ namespace Enderlook.EventManager
                 ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
-                GetOrCreate<Type2, MultipleStrongWithClosureEventHandle<TEvent, TClosure?>, TEvent>(
-                    ref {fieldPrefix}StrongWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)))
-                    .Add(callback, closure);
+                Subscribe<TEvent, Strong{typePrefix}CallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTVoid<TClosure, TEvent>>, InvariantObjectAndT<TClosure?>>(new(callback, closure));
             else
-                GetOrCreate<Type, MultipleStrongWithClosureEventHandle<TEvent, object?>, TEvent>(
-                    ref {fieldPrefix}StrongWithReferenceClosureHandle, typeof(TEvent))
-                    .Add(Unsafe.As<Action<object?>>(callback), CastUtils.AsObject(closure));
-            InEventEnd();
+                Subscribe<TEvent, Strong{typePrefix}CallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TEvent>>, InvariantObjectAndT<object?>>(new(callback, closure));
         }}
 
         {EventManagerGeneratorHelper.GetStrongUnsubscribeSummary($"Subscribe{methodPostfix}{{TEvent}}(Action{{TEvent}})")}
@@ -106,11 +84,7 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallbackException();
 
-            if (TryGet(ref {fieldPrefix}StrongWithArgumentHandle, typeof(TEvent), out MultipleStrongWithArgumentEventHandle<TEvent>? manager))
-            {{
-                manager.Remove(callback);
-                InEventEnd();
-            }}
+            Unsubscribe<TEvent, Strong{typePrefix}CallbackExecuter<TEvent, InvariantObject, StrongActionArgument<TEvent>>, InvariantObjectComparer<Action<TEvent>>, InvariantObject>(new(new(callback)));
         }}
 
         {EventManagerGeneratorHelper.GetStrongUnsubscribeSummary($"Subscribe{methodPostfix}{{TEvent}}(Action)")}
@@ -121,11 +95,7 @@ namespace Enderlook.EventManager
             if (callback is null)
                 ThrowNullCallbackException();
 
-            if (TryGet(ref {fieldPrefix}StrongHandle, typeof(TEvent), out MultipleStrongEventHandle<TEvent>? manager))
-            {{
-                manager.Remove(callback);
-                InEventEnd();
-            }}
+            Unsubscribe<TEvent, Strong{typePrefix}CallbackExecuter<TEvent, InvariantObject, StrongActionVoid<TEvent>>, InvariantObjectComparer<Action>, InvariantObject>(new(new(callback)));
         }}
 
         {EventManagerGeneratorHelper.GetStrongUnsubscribeSummary($"Subscribe{methodPostfix}{{TEvent, TClosure}}(TClosure, Action{{TClosure, TEvent}})")}
@@ -138,21 +108,9 @@ namespace Enderlook.EventManager
                 ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
-            {{
-                if (TryGet(ref {fieldPrefix}StrongWithArgumentWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)), out MultipleStrongWithArgumentWithClosureEventHandle<TEvent, TClosure?>? manager))
-                {{
-                    manager.Remove(callback, closure);
-                    InEventEnd();
-                }}
-            }}
+                Unsubscribe<TEvent, Strong{typePrefix}CallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTArgument<TClosure, TEvent>>, StrongValueClosureActionComparer<TClosure?, TEvent>, InvariantObjectAndT<TClosure?>>(new(new(callback, closure)));
             else
-            {{
-                if (TryGet(ref {fieldPrefix}StrongWithArgumentWithReferenceClosureHandle, typeof(TEvent), out MultipleStrongWithArgumentWithClosureEventHandle<TEvent, object?>? manager))
-                {{
-                    manager.Remove(Unsafe.As<Action<object?, TEvent>>(callback), CastUtils.AsObject(closure));
-                    InEventEnd();
-                }}
-            }}
+                Unsubscribe<TEvent, Strong{typePrefix}CallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TEvent>>, StrongReferenceClosureActionComparer<TClosure?, TEvent>, InvariantObjectAndT<object?>>(new(new(callback, closure)));
         }}
 
         {EventManagerGeneratorHelper.GetStrongUnsubscribeSummary($"Subscribe{methodPostfix}{{TEvent, TClosure}}(TClosure, Action{{TClosure}})")}
@@ -165,21 +123,9 @@ namespace Enderlook.EventManager
                 ThrowNullCallbackException();
 
             if (typeof(TClosure).IsValueType)
-            {{
-                if (TryGet(ref {fieldPrefix}StrongWithValueClosureHandle, new(typeof(TEvent), typeof(TClosure)), out MultipleStrongWithClosureEventHandle<TEvent, TClosure?>? manager))
-                {{
-                    manager.Remove(callback, closure);
-                    InEventEnd();
-                }}
-            }}
+                Unsubscribe<TEvent, Strong{typePrefix}CallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTVoid<TClosure, TEvent>>, StrongValueClosureActionComparer<TClosure?>, InvariantObjectAndT<TClosure?>>(new(new(callback, closure)));
             else
-            {{
-                if (TryGet(ref {fieldPrefix}StrongWithReferenceClosureHandle, typeof(TEvent), out MultipleStrongWithClosureEventHandle<TEvent, object?>? manager))
-                {{
-                    manager.Remove(Unsafe.As<Action<object?>>(callback), CastUtils.AsObject(closure));
-                    InEventEnd();
-                }}
-            }}
+                Unsubscribe<TEvent, Strong{typePrefix}CallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TEvent>>, StrongReferenceClosureActionComparer<TClosure?>, InvariantObjectAndT<object?>>(new(new(callback, closure)));
         }}
     }}
 }}

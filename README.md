@@ -99,56 +99,51 @@ public sealed class EventManager : IDisposable
 	
 	/// Subscribes an action to run when the event `TEvent` is raised.
 	/// A weak reference to handle is stored. If the reference gets garbage collected, the listener is automatically removed.
-	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback);
-	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action callback);
-	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback);
-	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback);
-	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback);
-	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action callback);
-	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback);
-	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback);
+	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection);
+	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection);
+	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection);
+	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection);
 	
 	/// Subscribes an action to run when the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
 	/// A weak reference to handle is stored. If the reference gets garbage collected, the listener is automatically removed.
-	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback);
-	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback);
-	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback);
-	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback);
-	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback);
-	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback);
-	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback);
-	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback);
+	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
+	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
 	
 	/// Subscribes an action to run the next time the event `TEvent` is raised.
-	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<TEvent> callback);
-	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action callback);
-	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback);
-	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle> callback);
-	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<TEvent> callback);
-	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action callback);
-	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback);
-	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle> callback);
+	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection);
+	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection);
+	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection);
+	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection);
 		
 	/// Subscribes an action to run the next time the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
-	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback);
-	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback);
-	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback);
-	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback);
-	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback);
-	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback);
-	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback);
-	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback);
+	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
+	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
 	
 	/// Raise the specified event.
 	public void Raise<TEvent>(TEvent eventArgument);
 	
 	/// Dispose the underlying content of this event manager.
 	public void Dispose();
-	
-	/// Forces the purge of removed delegates to avoid memory leaks.
-	/// This method is only required to execute, if you unsubscribed too many listeners of a given `TEvent`
-	/// but haven't executed `Raise<TEvent>` yet and want to release their references.
-	public void Purge();
 }
 ```
 
@@ -188,45 +183,45 @@ public sealed partial class EventManager : IDisposable
 	
 	/// Subscribes an action to run when the event `TEvent` is raised.
 	/// A weak reference to handle is stored. If the reference gets garbage collected, the listener is automatically removed.
-	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback);
-	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action callback);
-	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback);
-	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action callback);
-	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback);
-	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback);
-	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback);
-	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback);
+	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection);
+	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection);
+	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection);
+	public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection);
 	
 	/// Subscribes an action to run when the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
 	/// A weak reference to handle is stored. If the reference gets garbage collected, the listener is automatically removed.
-	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback);
-	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback);
-	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback);
-	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback);	
-	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback);
-	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback);
-	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback);
-	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback);
+	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
+	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);	
+	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
 	
 	/// Subscribes an action to run the next time the event `TEvent` is raised.
-	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<TEvent> callback);
-	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action callback);
-	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback);
-	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle> callback);
-	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<TEvent> callback);
-	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action callback);
-	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback);
-	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle> callback);
-		
+	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection);
+	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection);
+	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection);
+	public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection);
+
 	/// Subscribes an action to run the next time the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
-	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback);
-	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback);
-	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback);
-	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback);
-	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback);
-	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback);
-	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback);
-	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback);
+	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
+	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
+	public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
 }
 ```
 
@@ -244,3 +239,10 @@ public sealed partial class EventManager : IDisposable
 - Become auto-cleaning abortable and incremental.
 - Add internal multithreading on `.Dispose()` method and auto-cleaning.
 - Check for math overflow and underflow on debug builds.
+
+## v0.3.1
+
+- Reduce assembly size.
+- Reduce instance of `EventManager` size.
+- Reduce amount of required allocations.
+- Reduce initial cost by using lazily initialization.

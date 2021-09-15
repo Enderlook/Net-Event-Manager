@@ -5,14 +5,14 @@ namespace Enderlook.EventManager
 {
     internal readonly struct Slice
     {
-        public readonly Array array;
-        public readonly int count;
+        public readonly Array Array;
+        public readonly int Count;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Slice(Array array, int count)
         {
-            this.array = array;
-            this.count = count;
+            Array = array;
+            Count = count;
         }
     }
 }

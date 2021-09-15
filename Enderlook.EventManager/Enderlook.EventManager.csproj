@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net5</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net5;net6</TargetFrameworks>
     <OutputType>Library</OutputType>
     <PackageId>Enderlook.EventManager</PackageId>
     <AssemblyName>Enderlook.EventManager</AssemblyName>
@@ -10,8 +10,9 @@
     <Product>Enderlook.EventManager</Product>
     <RepositoryUrl>https://github.com/Enderlook/Net-Event-Manager</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <LangVersion>9</LangVersion>
     <Nullable>enable</Nullable>
     <CheckForOverflowUnderflow Condition="'$(Configuration)' == 'Debug'">true</CheckForOverflowUnderflow>
