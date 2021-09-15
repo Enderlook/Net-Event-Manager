@@ -239,3 +239,10 @@ public sealed partial class EventManager : IDisposable
 - Become auto-cleaning abortable and incremental.
 - Add internal multithreading on `.Dispose()` method and auto-cleaning.
 - Check for math overflow and underflow on debug builds.
+
+## v0.3.1
+
+- Reduce assembly size.
+- Reduce instance of `EventManager` size.
+- Reduce amount of required allocations.
+- Reduce initial cost by using lazily initialization.
