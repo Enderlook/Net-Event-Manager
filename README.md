@@ -11,7 +11,7 @@ The following example show some of the functions of the event manager:
 ```cs
 public static class Player
 {
-	private static EventManager<IPlayerEvents> eventManager = new EventManager<IPlayerEvents>();
+	private static EventManager eventManager = new EventManager();
 
 	public static void Main()
 	{
@@ -54,11 +54,9 @@ public static class Player
 	private static void OnPlayerPickedUpItemOnce(PlayerPickedUpItemEvent @event)
 		=> Console.WriteLine($"This was registered to only execute once.");
 
-	public interface IPlayerEvents { }
+	public readonly struct PlayerHurtEvent { }
 
-	public readonly struct PlayerHurtEvent : IPlayerEvents { }
-
-	public readonly struct PlayerPickedUpItemEvent : IPlayerEvents
+	public readonly struct PlayerPickedUpItemEvent
 	{
 		public readonly string Item;
 
