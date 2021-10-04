@@ -35,7 +35,7 @@ namespace Enderlook.EventManager
             => Utils.ExecuteActionLike(callback.Value, callback.ValueT);
     }
 
-    internal struct WeakActionArgument<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>
+    internal struct WeakActionArgument<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>,  ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
@@ -43,9 +43,16 @@ namespace Enderlook.EventManager
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, argument);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
+        {
+            object? target = callback.Handle.Target;
+            Utils.WeakExecuteActionLike(target, callback.Value, argument);
+        }
     }
 
-    internal struct WeakActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>
+    internal struct WeakActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>, ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
@@ -53,9 +60,16 @@ namespace Enderlook.EventManager
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
+        {
+            object? target = callback.Handle.Target;
+            Utils.WeakExecuteActionLike(target, callback.Value);
+        }
     }
 
-    internal struct WeakActionHandleVoid<THandle, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>
+    internal struct WeakActionHandleVoid<THandle, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>, ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
@@ -63,9 +77,16 @@ namespace Enderlook.EventManager
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, Utils.ExpectExactTypeOrNull<THandle>(target));
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
+        {
+            object? target = callback.Handle.Target;
+            Utils.WeakExecuteActionLike(target, callback.Value, Utils.ExpectExactTypeOrNull<THandle>(target));
+        }
     }
 
-    internal struct WeakActionHandleArgument<THandle, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>
+    internal struct WeakActionHandleArgument<THandle, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>, ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
@@ -73,9 +94,16 @@ namespace Enderlook.EventManager
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, Utils.ExpectExactTypeOrNull<THandle>(target), argument);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
+        {
+            object? target = callback.Handle.Target;
+            Utils.WeakExecuteActionLike(target, callback.Value, Utils.ExpectExactTypeOrNull<THandle>(target), argument);
+        }
     }
 
-    internal struct WeakInvariantObjectAndTArgument<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>
+    internal struct WeakInvariantObjectAndTArgument<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>, ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure>>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
@@ -83,9 +111,16 @@ namespace Enderlook.EventManager
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, callback.ValueT, argument);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
+        {
+            object? target = callback.Handle.Target;
+            Utils.WeakExecuteActionLike(target, callback.Value, callback.ValueT, argument);
+        }
     }
 
-    internal struct WeakInvariantObjectAndTVoid<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>
+    internal struct WeakInvariantObjectAndTVoid<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>, ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure>>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
@@ -93,9 +128,16 @@ namespace Enderlook.EventManager
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, callback.ValueT);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
+        {
+            object? target = callback.Handle.Target;
+            Utils.WeakExecuteActionLike(target, callback.Value, callback.ValueT);
+        }
     }
 
-    internal struct WeakInvariantObjectAndTArgumentWithHandle<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>
+    internal struct WeakInvariantObjectAndTArgumentWithHandle<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>, ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure>>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
@@ -103,9 +145,16 @@ namespace Enderlook.EventManager
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, target, callback.ValueT, argument);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
+        {
+            object? target = callback.Handle.Target;
+            Utils.WeakExecuteActionLike(target, callback.Value, target, callback.ValueT, argument);
+        }
     }
 
-    internal struct WeakInvariantObjectAndTVoidWithHandle<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>
+    internal struct WeakInvariantObjectAndTVoidWithHandle<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>, ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure>>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
@@ -113,12 +162,26 @@ namespace Enderlook.EventManager
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, target, callback.ValueT);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
+        {
+            object? target = callback.Handle.Target;
+            Utils.WeakExecuteActionLike(target, callback.Value, target, callback.ValueT);
+        }
     }
 
-    internal struct WeakInvariantObjectAndTArgumentWithHandleWithoutClosure<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>
+    internal struct WeakInvariantObjectAndTArgumentWithHandleWithoutClosure<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>, ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure>>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
+        {
+            object? target = callback.Handle.Target;
+            Utils.WeakExecuteActionLike(target, callback.Value, target, callback.ValueT);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
         {
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, target, callback.ValueT);

@@ -107,20 +107,18 @@ namespace Enderlook.EventManager
             && closureComparer.Equals(Utils.ExpectExactTypeOrNull<TClosure>(source.ValueT), Utils.ExpectExactTypeOrNull<TClosure>(element.ValueT));
     }
 
-    internal readonly struct InvariantObjectAndGCHandleComparer<TDelegate, THandle> : IPredicator<InvariantObjectAndGCHandle>
+    internal readonly struct InvariantObjectAndGCHandleComparer<TDelegate, THandle> : IPredicator<InvariantObjectAndGCHandle>, IPredicator<InvariantObjectAndGCHandleTrackResurrection>
     {
         private readonly TDelegate @delegate;
         private readonly THandle handle;
-        private readonly bool trackResurrection;
         private readonly EqualityComparer<TDelegate> delegateComparer;
         private readonly EqualityComparer<THandle> handleComparer;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InvariantObjectAndGCHandleComparer(TDelegate @delegate, THandle handle, bool trackResurrection)
+        public InvariantObjectAndGCHandleComparer(TDelegate @delegate, THandle handle)
         {
             this.@delegate = @delegate;
             this.handle = handle;
-            this.trackResurrection = trackResurrection;
             delegateComparer = EqualityComparer<TDelegate>.Default;
             handleComparer = EqualityComparer<THandle>.Default;
         }
@@ -128,27 +126,29 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool DoesMatch(InvariantObjectAndGCHandle element)
             => delegateComparer.Equals(@delegate, Utils.ExpectExactType<TDelegate>(element.Value))
-            && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target))
-            && trackResurrection == element.TrackResurrection;
+            && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool DoesMatch(InvariantObjectAndGCHandleTrackResurrection element)
+            => delegateComparer.Equals(@delegate, Utils.ExpectExactType<TDelegate>(element.Value))
+            && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target));
     }
 
-    internal readonly struct InvariantObjectAndValueTAndGCHandleComparer<TDelegate, TValue, THandle> : IPredicator<InvariantObjectAndTAndGCHandle<TValue>>
+    internal readonly struct InvariantObjectAndValueTAndGCHandleComparer<TDelegate, TValue, THandle> : IPredicator<InvariantObjectAndTAndGCHandle<TValue>>, IPredicator<InvariantObjectAndTAndGCHandleTrackResurrection<TValue>>
     {
         private readonly TDelegate @delegate;
         private readonly TValue value;
         private readonly THandle handle;
-        private readonly bool trackResurrection;
         private readonly EqualityComparer<TDelegate> delegateComparer;
         private readonly EqualityComparer<THandle> handleComparer;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InvariantObjectAndValueTAndGCHandleComparer(TDelegate @delegate, TValue value, THandle handle, bool trackResurrection)
+        public InvariantObjectAndValueTAndGCHandleComparer(TDelegate @delegate, TValue value, THandle handle)
         {
             Debug.Assert(typeof(TValue).IsValueType);
             this.@delegate = @delegate;
             this.value = value;
             this.handle = handle;
-            this.trackResurrection = trackResurrection;
             delegateComparer = EqualityComparer<TDelegate>.Default;
             handleComparer = EqualityComparer<THandle>.Default;
         }
@@ -157,28 +157,31 @@ namespace Enderlook.EventManager
         public bool DoesMatch(InvariantObjectAndTAndGCHandle<TValue> element)
             => delegateComparer.Equals(@delegate, Utils.ExpectExactType<TDelegate>(element.Value))
             && EqualityComparer<TValue>.Default.Equals(value, element.ValueT)
-            && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target))
-            && trackResurrection == element.TrackResurrection;
+            && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool DoesMatch(InvariantObjectAndTAndGCHandleTrackResurrection<TValue> element)
+            => delegateComparer.Equals(@delegate, Utils.ExpectExactType<TDelegate>(element.Value))
+            && EqualityComparer<TValue>.Default.Equals(value, element.ValueT)
+            && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target));
     }
 
-    internal readonly struct InvariantObjectAndReferenceTAndGCHandleComparer<TDelegate, TValue, THandle> : IPredicator<InvariantObjectAndTAndGCHandle<object?>>
+    internal readonly struct InvariantObjectAndReferenceTAndGCHandleComparer<TDelegate, TValue, THandle> : IPredicator<InvariantObjectAndTAndGCHandle<object?>>, IPredicator<InvariantObjectAndTAndGCHandleTrackResurrection<object?>>
     {
         private readonly TDelegate @delegate;
         private readonly TValue value;
         private readonly THandle handle;
-        private readonly bool trackResurrection;
         private readonly EqualityComparer<TDelegate> delegateComparer;
         private readonly EqualityComparer<TValue> closureComparer;
         private readonly EqualityComparer<THandle> handleComparer;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InvariantObjectAndReferenceTAndGCHandleComparer(TDelegate @delegate, TValue value, THandle handle, bool trackResurrection)
+        public InvariantObjectAndReferenceTAndGCHandleComparer(TDelegate @delegate, TValue value, THandle handle)
         {
             Debug.Assert(!typeof(TValue).IsValueType);
             this.@delegate = @delegate;
             this.value = value;
             this.handle = handle;
-            this.trackResurrection = trackResurrection;
             delegateComparer = EqualityComparer<TDelegate>.Default;
             closureComparer = EqualityComparer<TValue>.Default;
             handleComparer = EqualityComparer<THandle>.Default;
@@ -188,7 +191,12 @@ namespace Enderlook.EventManager
         public bool DoesMatch(InvariantObjectAndTAndGCHandle<object?> element)
             => delegateComparer.Equals(@delegate, Utils.ExpectExactType<TDelegate>(element.Value))
             && closureComparer.Equals(value, Utils.ExpectExactTypeOrNull<TValue>(element.ValueT))
-            && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target))
-            && trackResurrection == element.TrackResurrection;
+            && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool DoesMatch(InvariantObjectAndTAndGCHandleTrackResurrection<object?> element)
+            => delegateComparer.Equals(@delegate, Utils.ExpectExactType<TDelegate>(element.Value))
+            && closureComparer.Equals(value, Utils.ExpectExactTypeOrNull<TValue>(element.ValueT))
+            && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target));
     }
 }

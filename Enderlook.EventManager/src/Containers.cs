@@ -30,14 +30,39 @@ namespace Enderlook.EventManager
     {
         public readonly object Value;
         public readonly GCHandle Handle;
-        public readonly bool TrackResurrection; // TODO: This could be removed by creating a new type.
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InvariantObjectAndGCHandle(object value, object handle, bool trackResurrection)
+        public InvariantObjectAndGCHandle(object value, object handle)
         {
             Value = value;
-            Handle = GCHandle.Alloc(handle, trackResurrection ? GCHandleType.WeakTrackResurrection : GCHandleType.Weak);
-            TrackResurrection = trackResurrection;
+            Handle = GCHandle.Alloc(handle, GCHandleType.Weak);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Free() => Handle.Free();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool FreeIfIsCollected()
+        {
+            if (Handle.Target is null)
+            {
+                Handle.Free();
+                return true;
+            }
+            return false;
+        }
+    }
+
+    internal readonly struct InvariantObjectAndGCHandleTrackResurrection : IWeak
+    {
+        public readonly object Value;
+        public readonly GCHandle Handle;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public InvariantObjectAndGCHandleTrackResurrection(object value, object handle)
+        {
+            Value = value;
+            Handle = GCHandle.Alloc(handle, GCHandleType.WeakTrackResurrection);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -60,15 +85,42 @@ namespace Enderlook.EventManager
         public readonly object Value;
         public readonly T ValueT;
         public readonly GCHandle Handle;
-        public readonly bool TrackResurrection; // TODO: This could be removed by creating a new type.
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InvariantObjectAndTAndGCHandle(object value, object handle, bool trackResurrection, T valueT)
+        public InvariantObjectAndTAndGCHandle(object value, object handle, T valueT)
         {
             Value = value;
             ValueT = valueT;
-            Handle = GCHandle.Alloc(handle, trackResurrection ? GCHandleType.WeakTrackResurrection : GCHandleType.Weak);
-            TrackResurrection = trackResurrection;
+            Handle = GCHandle.Alloc(handle, GCHandleType.Weak);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Free() => Handle.Free();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool FreeIfIsCollected()
+        {
+            if (Handle.Target is null)
+            {
+                Handle.Free();
+                return true;
+            }
+            return false;
+        }
+    }
+
+    internal readonly struct InvariantObjectAndTAndGCHandleTrackResurrection<T> : IWeak
+    {
+        public readonly object Value;
+        public readonly T ValueT;
+        public readonly GCHandle Handle;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public InvariantObjectAndTAndGCHandleTrackResurrection(object value, object handle, T valueT)
+        {
+            Value = value;
+            ValueT = valueT;
+            Handle = GCHandle.Alloc(handle, GCHandleType.WeakTrackResurrection);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
