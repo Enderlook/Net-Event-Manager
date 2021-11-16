@@ -125,8 +125,16 @@ namespace Enderlook.EventManager
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool DoesMatch(InvariantObjectAndGCHandle element)
-            => delegateComparer.Equals(@delegate, Utils.ExpectExactType<TDelegate>(element.Value))
-            && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target));
+        {
+#if NET6_0
+            (object? Target, object? Dependent) tuple = element.Token.TargetAndDependent;
+            return delegateComparer.Equals(@delegate, Utils.ExpectExactTypeOrNull<TDelegate>(tuple.Target))
+              && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(tuple.Dependent));
+#else
+            return delegateComparer.Equals(@delegate, Utils.ExpectExactType<TDelegate>(element.Value))
+              && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target));
+#endif
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool DoesMatch(InvariantObjectAndGCHandleTrackResurrection element)
@@ -155,9 +163,18 @@ namespace Enderlook.EventManager
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool DoesMatch(InvariantObjectAndTAndGCHandle<TValue> element)
-            => delegateComparer.Equals(@delegate, Utils.ExpectExactType<TDelegate>(element.Value))
-            && EqualityComparer<TValue>.Default.Equals(value, element.ValueT)
-            && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target));
+        {
+#if NET6_0
+            (object? Target, object? Dependent) tuple = element.Token.TargetAndDependent;
+            return delegateComparer.Equals(@delegate, Utils.ExpectExactTypeOrNull<TDelegate>(tuple.Target))
+                && EqualityComparer<TValue>.Default.Equals(value, element.ValueT)
+                && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(tuple.Dependent));
+#else
+            return delegateComparer.Equals(@delegate, Utils.ExpectExactType<TDelegate>(element.Value))
+                && EqualityComparer<TValue>.Default.Equals(value, element.ValueT)
+                && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target));
+#endif
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool DoesMatch(InvariantObjectAndTAndGCHandleTrackResurrection<TValue> element)
@@ -189,9 +206,18 @@ namespace Enderlook.EventManager
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool DoesMatch(InvariantObjectAndTAndGCHandle<object?> element)
-            => delegateComparer.Equals(@delegate, Utils.ExpectExactType<TDelegate>(element.Value))
-            && closureComparer.Equals(value, Utils.ExpectExactTypeOrNull<TValue>(element.ValueT))
-            && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target));
+        {
+#if NET6_0
+            (object? Target, object? Dependent) tuple = element.Token.TargetAndDependent;
+            return delegateComparer.Equals(@delegate, Utils.ExpectExactTypeOrNull<TDelegate>(tuple.Target))
+                && closureComparer.Equals(value, Utils.ExpectExactTypeOrNull<TValue>(element.ValueT))
+                && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(tuple.Dependent));
+#else
+            return delegateComparer.Equals(@delegate, Utils.ExpectExactType<TDelegate>(element.Value))
+                && closureComparer.Equals(value, Utils.ExpectExactTypeOrNull<TValue>(element.ValueT))
+                && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(element.Handle.Target));
+#endif
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool DoesMatch(InvariantObjectAndTAndGCHandleTrackResurrection<object?> element)

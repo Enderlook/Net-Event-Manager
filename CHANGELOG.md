@@ -101,3 +101,4 @@ public sealed partial class EventManager : IDisposable
 ##
 
 - Increase perfomance on weak handles.
+- Use `DependentHandle` instead of `GCHandle` were possible on .NET 6 builds.

@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager
 {
@@ -40,8 +41,14 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
         {
+#if NET6_0
+            (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
+            Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, argument);
+#else
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, argument);
+#endif
+
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -57,8 +64,13 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
         {
+#if NET6_0
+            (object ? Target, object ? Dependent) tuple = callback.Token.TargetAndDependent;
+            Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent);
+#else
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value);
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -74,8 +86,13 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
         {
+#if NET6_0
+            (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
+            Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, Utils.ExpectExactTypeOrNull<THandle>(tuple.Dependent));
+#else
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, Utils.ExpectExactTypeOrNull<THandle>(target));
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -91,8 +108,13 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
         {
+#if NET6_0
+            (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
+            Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, Utils.ExpectExactTypeOrNull<THandle>(tuple.Dependent), argument);
+#else
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, Utils.ExpectExactTypeOrNull<THandle>(target), argument);
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -108,8 +130,13 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
         {
+#if NET6_0
+            (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
+            Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, callback.ValueT, argument);
+#else
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, callback.ValueT, argument);
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -125,8 +152,13 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
         {
+#if NET6_0
+            (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
+            Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, callback.ValueT);
+#else
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, callback.ValueT);
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -142,8 +174,13 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
         {
+#if NET6_0
+            (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
+            Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Target, callback.ValueT, argument);
+#else
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, target, callback.ValueT, argument);
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -159,8 +196,13 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
         {
+#if NET6_0
+            (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
+            Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Dependent, callback.ValueT);
+#else
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, target, callback.ValueT);
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -176,8 +218,13 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
         {
+#if NET6_0
+            (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
+            Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Dependent, callback.ValueT);
+#else
             object? target = callback.Handle.Target;
             Utils.WeakExecuteActionLike(target, callback.Value, target, callback.ValueT);
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

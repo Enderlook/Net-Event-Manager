@@ -84,34 +84,38 @@ namespace Enderlook.EventManager
         public static void ExecuteActionLike(object obj) => ExpectExactType<Action>(obj)();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WeakExecuteActionLike<T1>(object? handle, object obj, T1 t1)
+        public static void WeakExecuteActionLike<T1>(object? handle, object? obj, T1 t1)
         {
             if (handle is null)
                 return;
+            Debug.Assert(obj is not null);
             ExecuteActionLike(obj, t1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WeakExecuteActionLike<T1, T2>(object? handle, object obj, T1 t1, T2 t2)
+        public static void WeakExecuteActionLike<T1, T2>(object? handle, object? obj, T1 t1, T2 t2)
         {
             if (handle is null)
                 return;
+            Debug.Assert(obj is not null);
             ExecuteActionLike(obj, t1, t2);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WeakExecuteActionLike<T1, T2, T3>(object? handle, object obj, T1 t1, T2 t2, T3 t3)
+        public static void WeakExecuteActionLike<T1, T2, T3>(object? handle, object? obj, T1 t1, T2 t2, T3 t3)
         {
             if (handle is null)
                 return;
+            Debug.Assert(obj is not null);
             ExecuteActionLike(obj, t1, t2, t3);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WeakExecuteActionLike(object? handle, object obj)
+        public static void WeakExecuteActionLike(object? handle, object? obj)
         {
             if (handle is null)
                 return;
+            Debug.Assert(obj is not null);
             ExecuteActionLike(obj);
         }
 
