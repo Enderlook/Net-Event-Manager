@@ -97,3 +97,7 @@ public sealed partial class EventManager : IDisposable
 - Reduce instance of `EventManager` size.
 - Reduce amount of required allocations.
 - Reduce initial cost by using lazily initialization.
+
+##
+
+- Increase perfomance on weak handles.
