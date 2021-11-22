@@ -13,10 +13,18 @@ namespace Enderlook.EventManager
         private Action<int, ParallelLoopState>? autoPurgeAction;
         private ParallelOptions? options;
 
+        private int millisecondsTimeStamp;
         private int purgingIndex;
 
         private bool ConcurrentPurge()
         {
+            const int LowAfterMilliseconds = 180 * 1000; // Trim after 60 seconds for low pressure.
+            const int MediumAfterMilliseconds = 90 * 1000; // Trim after 60 seconds for medium pressure.
+            const double HighPressureThreshold = .90; // Percent of GC memory pressure threshold we consider "high".
+            const double MediumPressureThreshold = .70; // Percent of GC memory pressure threshold we consider "medium".
+
+            int currentMilliseconds = Environment.TickCount;
+
             for (int j = 0; j < PurgeAttempts; j++)
             {
                 // The callback was called before finishing the previous purge.
@@ -40,14 +48,29 @@ namespace Enderlook.EventManager
                         return true;
                     }
 
+                    int trimMilliseconds;
+
 #if NET5_0_OR_GREATER
                     GCMemoryInfo memoryInfo = GC.GetGCMemoryInfo();
-                    if (memoryInfo.MemoryLoadBytes < memoryInfo.HighMemoryLoadThresholdBytes * .8)
+
+                    if (memoryInfo.MemoryLoadBytes >= memoryInfo.HighMemoryLoadThresholdBytes * HighPressureThreshold)
+                        trimMilliseconds = 0;
+                    else if (memoryInfo.MemoryLoadBytes >= memoryInfo.HighMemoryLoadThresholdBytes * MediumPressureThreshold)
+                        trimMilliseconds = MediumAfterMilliseconds;
+                    else
+                        trimMilliseconds = LowAfterMilliseconds;
+#else
+                    trimMilliseconds = 0;
+#endif
+
+                    if (millisecondsTimeStamp == 0)
+                        millisecondsTimeStamp = currentMilliseconds;
+
+                    if ((currentMilliseconds - millisecondsTimeStamp) <= trimMilliseconds)
                     {
                         WriteEnd();
                         return true;
                     }
-#endif
 
                     state = IS_PURGING;
 
