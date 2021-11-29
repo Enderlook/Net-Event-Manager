@@ -151,11 +151,12 @@ namespace Enderlook.EventManager
 #endif
         }
 
+#if NET5_0_OR_GREATER
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T Zeroed<T>() where T : struct
-        {
-            Debug.Assert(typeof(T).IsValueType);
-            return new T();
-        }
+        public static ref T Null<T>() where T : struct => ref Unsafe.NullRef<T>();
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T Null<T>() where T : struct => new T();
+#endif
     }
 }

@@ -43,7 +43,7 @@ namespace Enderlook.EventManager
         {
             TCallback[] callbacks_ = Utils.Take(ref callbacks);
             int count_ = count;
-            if (Utils.Zeroed<TCallbackHelper>().IsOnce())
+            if (Utils.Null<TCallbackHelper>().IsOnce())
             {
                 count = 0;
                 Utils.Untake(ref callbacks, ArrayUtils.RentArray<TCallback>(count_)); // Alternatively we could do, ListUtils.InitialArray<TCallback>();
@@ -61,7 +61,7 @@ namespace Enderlook.EventManager
         public override void Raise(Slice slice, TEvent argument)
         {
             TCallback[] callbacks_ = Utils.ExpectExactType<TCallback[]>(slice.Array);
-            Utils.Zeroed<TCallbackHelper>().Invoke(argument, callbacks_, slice.Count);
+            Utils.Null<TCallbackHelper>().Invoke(argument, callbacks_, slice.Count);
         }
 
         public override void Purge()
@@ -70,7 +70,7 @@ namespace Enderlook.EventManager
             Debug.Assert(array is not null);
             {
                 int count_ = count;
-                Utils.Zeroed<TCallbackHelper>().Purge(ref array, ref count_);
+                Utils.Null<TCallbackHelper>().Purge(ref array, ref count_);
                 count = count_;
             }
             callbacks = array;
@@ -101,7 +101,7 @@ namespace Enderlook.EventManager
             {
                 TCallback[]? array = callbacks;
                 Debug.Assert(array is not null);
-                Utils.Zeroed<TCallbackHelper>().Dispose(array, count_);
+                Utils.Null<TCallbackHelper>().Dispose(array, count_);
                 ArrayUtils.ReturnArray(array, count_);
             }
         }

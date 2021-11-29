@@ -29,7 +29,7 @@ namespace Enderlook.EventManager
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(TEvent argument, TCallback callback)
         {
-            Utils.Zeroed<TCallbackExecuter>().Invoke(argument, callback);
+            Utils.Null<TCallbackExecuter>().Invoke(argument, callback);
             callback.Free();
         }
     }
@@ -146,7 +146,7 @@ namespace Enderlook.EventManager
 
             while (Unsafe.IsAddressLessThan(ref current, ref end))
             {
-                Utils.Zeroed<TCallbackExecuter>().Invoke(argument, current);
+                Utils.Null<TCallbackExecuter>().Invoke(argument, current);
                 current = ref Unsafe.Add(ref current, 1);
             }
         }
