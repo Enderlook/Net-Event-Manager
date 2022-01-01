@@ -101,6 +101,7 @@ public sealed partial class EventManager : IDisposable
 ##
 
 - Increase perfomance on weak handles.
+- Increase constant propagation of certain branches.
 - Use `DependentHandle` instead of `GCHandle` were possible on .NET 6 builds.
 - Add timer to auto purger in .NET >= 5 taking into account memory pressure.
 - Add the following APIs:

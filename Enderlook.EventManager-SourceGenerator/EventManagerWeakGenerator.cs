@@ -29,6 +29,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.TrackResurrectionParameter}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakSubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -47,6 +48,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.TrackResurrectionParameter}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakSubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection)
             where THandle : class
         {{
@@ -66,6 +68,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.TrackResurrectionParameter}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakSubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<TClosure?, TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -95,6 +98,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.TrackResurrectionParameter}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakSubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<TClosure?> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -124,6 +128,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.TrackResurrectionParameter}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakSubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<THandle, TClosure?, TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -153,6 +158,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.TrackResurrectionParameter}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakSubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<THandle, TClosure?> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -181,6 +187,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.TrackResurrectionParameter}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakSubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -199,6 +206,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.TrackResurrectionParameter}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakSubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -217,6 +225,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
         {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakUnsubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -235,6 +244,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
         {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakUnsubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection)
             where THandle : class
         {{
@@ -254,6 +264,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
         {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakUnsubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<TClosure?, TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -283,6 +294,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
         {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakUnsubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<TClosure?> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -312,6 +324,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
         {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakUnsubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<THandle, TClosure?, TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -341,6 +354,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
         {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakUnsubscribe{methodPostfix}<THandle, TClosure, TEvent>(THandle handle, TClosure? closure, Action<THandle, TClosure?> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -369,6 +383,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
         {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakUnsubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection)
             where THandle : class
         {{
@@ -387,6 +402,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
         {EventManagerGeneratorHelper.TrackResurrectionParameterUnsubscribe}
         {EventManagerGeneratorHelper.WeakExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WeakUnsubscribe{methodPostfix}<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection)
             where THandle : class
         {{

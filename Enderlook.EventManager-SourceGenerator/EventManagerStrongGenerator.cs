@@ -27,6 +27,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.GetStrongSubscribeSummary(methodDescription)}
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.StrongExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Subscribe{methodPostfix}<TEvent>(Action<TEvent> callback)
         {{
             if (callback is null)
@@ -38,6 +39,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.GetStrongSubscribeSummary(methodDescription)}
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.StrongExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Subscribe{methodPostfix}<TEvent>(Action callback)
         {{
             if (callback is null)
@@ -50,6 +52,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.ClosureParameter}
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.StrongExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Subscribe{methodPostfix}<TEvent, TClosure>(TClosure? closure, Action<TClosure?, TEvent> callback)
         {{
             if (callback is null)
@@ -65,6 +68,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.ClosureParameter}
         {EventManagerGeneratorHelper.CallbackParameter}
         {EventManagerGeneratorHelper.StrongExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Subscribe{methodPostfix}<TEvent, TClosure>(TClosure? closure, Action<TClosure?> callback)
         {{
             if (callback is null)
@@ -79,6 +83,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.GetStrongUnsubscribeSummary($"Subscribe{methodPostfix}{{TEvent}}(Action{{TEvent}})")}
         {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
         {EventManagerGeneratorHelper.StrongExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unsubscribe{methodPostfix}<TEvent>(Action<TEvent> callback)
         {{
             if (callback is null)
@@ -90,6 +95,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.GetStrongUnsubscribeSummary($"Subscribe{methodPostfix}{{TEvent}}(Action)")}
         {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
         {EventManagerGeneratorHelper.StrongExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unsubscribe{methodPostfix}<TEvent>(Action callback)
         {{
             if (callback is null)
@@ -102,6 +108,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.ClosureParameter}
         {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
         {EventManagerGeneratorHelper.StrongExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unsubscribe{methodPostfix}<TEvent, TClosure>(TClosure? closure, Action<TClosure?, TEvent> callback)
         {{
             if (callback is null)
@@ -117,6 +124,7 @@ namespace Enderlook.EventManager
         {EventManagerGeneratorHelper.ClosureParameter}
         {EventManagerGeneratorHelper.CallbackParameterUnsubscribe}
         {EventManagerGeneratorHelper.StrongExceptions}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unsubscribe{methodPostfix}<TEvent, TClosure>(TClosure? closure, Action<TClosure?> callback)
         {{
             if (callback is null)
