@@ -24,7 +24,7 @@ namespace Enderlook.EventManager
         private void ReadBegin()
         {
             if (state != 0)
-                SlowPath();
+                TryRequestPurgeCancellation();
 
             Lock(ref globalLock);
             {
@@ -34,32 +34,32 @@ namespace Enderlook.EventManager
                 readers++;
             }
             Unlock(ref globalLock);
+        }
 
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            void SlowPath()
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void TryRequestPurgeCancellation()
+        {
+            int state = this.state;
+
+            if (state == IS_DISPOSED_OR_DISPOSING)
+                ThrowObjectDisposedException();
+
+            if ((state & IS_PURGING) != 0)
             {
-                int state = this.state;
-
-                if (state == IS_DISPOSED_OR_DISPOSING)
-                    ThrowObjectDisposedException();
-
-                if ((state & IS_PURGING) != 0)
+                Lock(ref stateLock);
                 {
-                    Lock(ref stateLock);
+                    state = this.state;
+
+                    if (state == IS_DISPOSED_OR_DISPOSING)
                     {
-                        state = this.state;
-
-                        if (state == IS_DISPOSED_OR_DISPOSING)
-                        {
-                            Unlock(ref stateLock);
-                            ThrowObjectDisposedException();
-                        }
-
-                        if ((state & IS_PURGING) != 0)
-                            this.state |= IS_CANCELATION_REQUESTED;
+                        Unlock(ref stateLock);
+                        ThrowObjectDisposedException();
                     }
-                    Unlock(ref stateLock);
+
+                    if ((state & IS_PURGING) != 0)
+                        this.state |= IS_CANCELATION_REQUESTED;
                 }
+                Unlock(ref stateLock);
             }
         }
 
