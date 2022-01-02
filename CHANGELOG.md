@@ -108,6 +108,9 @@ public sealed partial class EventManager : IDisposable
 ```cs
 public sealed partial class EventManager : IDisposable
 {
+	/// Raises event using the parameterless constructor of the event type.
+	public void Raise<TEvent>() where TEvent : new();
+
 	/// Unsubscribes all actions.
 	public void Reset();
 }

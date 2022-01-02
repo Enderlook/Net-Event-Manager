@@ -48,6 +48,14 @@ namespace Enderlook.EventManager
             }
         }
 
+        /// <summary>
+        /// Raises an event type <typeparamref name="TEvent"/> using the parameterless constructor of the type.
+        /// </summary>
+        /// <typeparam name="TEvent">Type of the event.</typeparam>
+        /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
+        public void Raise<TEvent>() where TEvent : new()
+            => Raise(new TEvent());
+
         internal void Unsubscribe<TEvent, TCallbackHelper, TPredicator, TCallback>(TPredicator predicator)
             where TCallbackHelper : struct, ICallbackExecuter<TEvent, TCallback>
             where TPredicator : IPredicator<TCallback>

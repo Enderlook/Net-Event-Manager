@@ -140,6 +140,9 @@ public sealed class EventManager : IDisposable
 	/// Raise the specified event.
 	public void Raise<TEvent>(TEvent eventArgument);
 	
+	/// Equivalent to Raise<TEvent>(new TEvent()).
+	public void Raise<TEvent>() where TEvent : new();
+	
 	/// Dispose the underlying content of this event manager.
 	public void Dispose();
 }
