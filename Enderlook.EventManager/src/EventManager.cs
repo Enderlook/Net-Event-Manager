@@ -112,7 +112,7 @@ namespace Enderlook.EventManager
                         if (holders is null)
                         {
                             holders = ArrayUtils.RentArray<object>(1);
-                            AutoPurger _ = new AutoPurger(this);
+                            AutoPurger _ = new(this);
                         }
 
                         ArrayUtils.Add(ref holders, ref holdersCount, holder_);
