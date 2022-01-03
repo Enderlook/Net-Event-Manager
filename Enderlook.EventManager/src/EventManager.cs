@@ -23,6 +23,11 @@ namespace Enderlook.EventManager
         private int holdersCount;
 
         /// <summary>
+        /// A shared instance of the event manager.
+        /// </summary>
+        public static EventManager Shared { get; } = new EventManager();
+
+        /// <summary>
         /// Automatically disposes the object in case it wasn't disposed by the user.
         /// </summary>
         ~EventManager() => Dispose();

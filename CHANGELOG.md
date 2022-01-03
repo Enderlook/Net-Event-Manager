@@ -108,6 +108,9 @@ public sealed partial class EventManager : IDisposable
 ```cs
 public sealed partial class EventManager : IDisposable
 {
+	/// A shared default instance of the `EventManager`.
+	public static EventManager Shared { get; }
+
 	/// Raises event using the parameterless constructor of the event type.
 	public void Raise<TEvent>() where TEvent : new();
 
