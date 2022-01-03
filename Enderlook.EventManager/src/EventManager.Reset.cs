@@ -22,7 +22,7 @@ namespace Enderlook.EventManager
                 int holdersCount = this.holdersCount;
                 if (holdersCount != 0)
                 {
-                    object[]? holders = this.holders;
+                    InvariantObject[]? holders = this.holders;
                     Debug.Assert(holders is not null);
 
                     holdersPerType.Clear();
@@ -31,9 +31,9 @@ namespace Enderlook.EventManager
                     millisecondsTimeStamp = 0;
 
                     if (holdersCount == 1)
-                        Utils.ExpectAssignableType<InvokersHolder>(holders[0]).Dispose();
+                        Utils.ExpectAssignableType<InvokersHolder>(holders[0].Value).Dispose();
                     else
-                        Parallel.For(0, holdersCount, i => Utils.ExpectAssignableType<InvokersHolder>(holders[i]).Dispose());
+                        Parallel.For(0, holdersCount, i => Utils.ExpectAssignableType<InvokersHolder>(holders[i].Value).Dispose());
 
                     Array.Clear(holders, 0, holdersCount);
                 }

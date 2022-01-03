@@ -94,12 +94,12 @@ namespace Enderlook.EventManager
 
                     int holdersCountOld = holdersCount;
                     int holdersCount_ = holdersCountOld;
-                    object[] holders_ = holders;
+                    InvariantObject[] holders_ = holders;
                     // TODO: This loop could actually be done without locking the whole event manager,
                     // as long as the `holders` array is locked.
                     for (int i = 0; i < holdersCount_; i++)
                     {
-                        InvokersHolder holder = Utils.ExpectAssignableType<InvokersHolder>(holders_[i]);
+                        InvokersHolder holder = Utils.ExpectAssignableType<InvokersHolder>(holders_[i].Value);
                         if (holder.RemoveIfEmpty())
                         {
                             holdersPerType.Remove(holder.GetType());
@@ -109,7 +109,7 @@ namespace Enderlook.EventManager
                             {
                                 if (--holdersCount_ == i)
                                     goto end;
-                                holder = Utils.ExpectAssignableType<InvokersHolder>(holders_[holdersCount_]);
+                                holder = Utils.ExpectAssignableType<InvokersHolder>(holders_[holdersCount_].Value);
                                 if (!holder.RemoveIfEmpty())
                                     break;
                                 holdersPerType.Remove(holder.GetType());

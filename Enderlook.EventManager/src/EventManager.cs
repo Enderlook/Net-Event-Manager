@@ -19,7 +19,7 @@ namespace Enderlook.EventManager
         private Dictionary<Type, InvokersHolderManager> managersPerType = new();
 
         // Elements type derives from InvokersHolder.
-        private object[]? holders;
+        private InvariantObject[]? holders;
         private int holdersCount;
 
         /// <summary>
@@ -111,11 +111,11 @@ namespace Enderlook.EventManager
 
                         if (holders is null)
                         {
-                            holders = ArrayUtils.RentArray<object>(1);
+                            holders = ArrayUtils.RentArray<InvariantObject>(1);
                             AutoPurger _ = new(this);
                         }
 
-                        ArrayUtils.Add(ref holders, ref holdersCount, holder_);
+                        ArrayUtils.Add(ref holders, ref holdersCount, new(holder_));
 
                         if (managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? packHolder))
                             Utils.ExpectExactType<InvokersHolderManager<TEvent>>(packHolder).Add(holder_);
