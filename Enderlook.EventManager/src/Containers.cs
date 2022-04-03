@@ -3,187 +3,186 @@ using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Enderlook.EventManager
+namespace Enderlook.EventManager;
+
+internal readonly struct InvariantObject
 {
-    internal readonly struct InvariantObject
-    {
-        public readonly object Value;
+    public readonly object Value;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InvariantObject(object value) => Value = value;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public InvariantObject(object value) => Value = value;
+}
+
+internal readonly struct InvariantObjectAndT<T>
+{
+    public readonly object Value;
+    public readonly T ValueT;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public InvariantObjectAndT(object value, T valueT)
+    {
+        Debug.Assert(typeof(T).IsValueType || typeof(T) == typeof(object));
+        ValueT = valueT;
+        Value = value;
     }
+}
 
-    internal readonly struct InvariantObjectAndT<T>
-    {
-        public readonly object Value;
-        public readonly T ValueT;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InvariantObjectAndT(object value, T valueT)
-        {
-            Debug.Assert(typeof(T).IsValueType || typeof(T) == typeof(object));
-            ValueT = valueT;
-            Value = value;
-        }
-    }
-
-    internal struct InvariantObjectAndGCHandle : IWeak
-    {
+internal struct InvariantObjectAndGCHandle : IWeak
+{
 #if NET6_0
-        public DependentHandle Token;
+    public DependentHandle Token;
 #else
-        public readonly object Value;
-        public readonly GCHandle Handle;
+    public readonly object Value;
+    public readonly GCHandle Handle;
 #endif
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InvariantObjectAndGCHandle(object value, object handle)
-        {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public InvariantObjectAndGCHandle(object value, object handle)
+    {
 #if NET6_0
-            Token = new DependentHandle(handle, value);
+        Token = new DependentHandle(handle, value);
 #else
-            Value = value;
-            Handle = GCHandle.Alloc(handle, GCHandleType.Weak);
+        Value = value;
+        Handle = GCHandle.Alloc(handle, GCHandleType.Weak);
 #endif
-        }
+    }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Free()
-        {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Free()
+    {
 #if NET6_0
+        Token.Dispose();
+#else
+        Handle.Free();
+#endif
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool FreeIfIsCollected()
+    {
+#if NET6_0
+        if (Token.Dependent is null)
+        {
             Token.Dispose();
-#else
+            return true;
+        }
+        return false;
+        #else
+        if (Handle.Target is null)
+        {
             Handle.Free();
-#endif
+            return true;
         }
+        return false;
+#endif
+    }
+}
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool FreeIfIsCollected()
-        {
-#if NET6_0
-            if (Token.Dependent is null)
-            {
-                Token.Dispose();
-                return true;
-            }
-            return false;
-            #else
-            if (Handle.Target is null)
-            {
-                Handle.Free();
-                return true;
-            }
-            return false;
-#endif
-        }
+internal readonly struct InvariantObjectAndGCHandleTrackResurrection : IWeak
+{
+    public readonly object Value;
+    public readonly GCHandle Handle;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public InvariantObjectAndGCHandleTrackResurrection(object value, object handle)
+    {
+        Value = value;
+        Handle = GCHandle.Alloc(handle, GCHandleType.WeakTrackResurrection);
     }
 
-    internal readonly struct InvariantObjectAndGCHandleTrackResurrection : IWeak
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Free() => Handle.Free();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool FreeIfIsCollected()
     {
-        public readonly object Value;
-        public readonly GCHandle Handle;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InvariantObjectAndGCHandleTrackResurrection(object value, object handle)
+        if (Handle.Target is null)
         {
-            Value = value;
-            Handle = GCHandle.Alloc(handle, GCHandleType.WeakTrackResurrection);
+            Handle.Free();
+            return true;
         }
+        return false;
+    }
+}
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Free() => Handle.Free();
+internal struct InvariantObjectAndTAndGCHandle<T> : IWeak
+{
+    public readonly T ValueT;
+#if NET6_0
+    public DependentHandle Token;
+#else
+    public readonly object Value;
+    public readonly GCHandle Handle;
+#endif
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool FreeIfIsCollected()
-        {
-            if (Handle.Target is null)
-            {
-                Handle.Free();
-                return true;
-            }
-            return false;
-        }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public InvariantObjectAndTAndGCHandle(object value, object handle, T valueT)
+    {
+        ValueT = valueT;
+#if NET6_0
+        Token = new DependentHandle(handle, value);
+#else
+        Value = value;
+        Handle = GCHandle.Alloc(handle, GCHandleType.Weak);
+#endif
     }
 
-    internal struct InvariantObjectAndTAndGCHandle<T> : IWeak
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Free()
     {
-        public readonly T ValueT;
 #if NET6_0
-        public DependentHandle Token;
+        Token.Dispose();
 #else
-        public readonly object Value;
-        public readonly GCHandle Handle;
+        Handle.Free();
 #endif
+    }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InvariantObjectAndTAndGCHandle(object value, object handle, T valueT)
-        {
-            ValueT = valueT;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool FreeIfIsCollected()
+    {
 #if NET6_0
-            Token = new DependentHandle(handle, value);
-#else
-            Value = value;
-            Handle = GCHandle.Alloc(handle, GCHandleType.Weak);
-#endif
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Free()
+        if (Token.Dependent is null)
         {
-#if NET6_0
             Token.Dispose();
-#else
-            Handle.Free();
-#endif
+            return true;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool FreeIfIsCollected()
+        return false;
+#else
+        if (Handle.Target is null)
         {
-#if NET6_0
-            if (Token.Dependent is null)
-            {
-                Token.Dispose();
-                return true;
-            }
-            return false;
-#else
-            if (Handle.Target is null)
-            {
-                Handle.Free();
-                return true;
-            }
-            return false;
-#endif
+            Handle.Free();
+            return true;
         }
+        return false;
+#endif
+    }
+}
+
+internal readonly struct InvariantObjectAndTAndGCHandleTrackResurrection<T> : IWeak
+{
+    public readonly object Value;
+    public readonly T ValueT;
+    public readonly GCHandle Handle;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public InvariantObjectAndTAndGCHandleTrackResurrection(object value, object handle, T valueT)
+    {
+        Value = value;
+        ValueT = valueT;
+        Handle = GCHandle.Alloc(handle, GCHandleType.WeakTrackResurrection);
     }
 
-    internal readonly struct InvariantObjectAndTAndGCHandleTrackResurrection<T> : IWeak
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Free() => Handle.Free();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool FreeIfIsCollected()
     {
-        public readonly object Value;
-        public readonly T ValueT;
-        public readonly GCHandle Handle;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InvariantObjectAndTAndGCHandleTrackResurrection(object value, object handle, T valueT)
+        if (Handle.Target is null)
         {
-            Value = value;
-            ValueT = valueT;
-            Handle = GCHandle.Alloc(handle, GCHandleType.WeakTrackResurrection);
+            Handle.Free();
+            return true;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Free() => Handle.Free();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool FreeIfIsCollected()
-        {
-            if (Handle.Target is null)
-            {
-                Handle.Free();
-                return true;
-            }
-            return false;
-        }
+        return false;
     }
 }
