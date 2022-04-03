@@ -10,17 +10,17 @@ internal abstract class InvokersHolderManager
 
 internal class InvokersHolderManager<TEvent> : InvokersHolderManager
 {
-    private object[]? holders = ArrayUtils.InitialArray<object>();
+    private InvariantObject[]? holders = ArrayUtils.InitialArray<InvariantObject>();
     private int count;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Add(InvokersHolder<TEvent> holder)
-        => ArrayUtils.ConcurrentAdd(ref holders, ref count, holder);
+        => ArrayUtils.ConcurrentAdd(ref holders, ref count, new(holder));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Raise(TEvent? argument, EventManager eventManager)
     {
-        object[] holders_ = Utils.Take(ref holders);
+        InvariantObject[] holders_ = Utils.Take(ref holders);
         {
             int count_ = count;
 
@@ -32,13 +32,13 @@ internal class InvokersHolderManager<TEvent> : InvokersHolderManager
 
             SliceOfCallbacks[] slices = ArrayUtils.RentArray<SliceOfCallbacks>(count_);
             {
-                ref object currentHolder = ref Utils.GetArrayDataReference(holders_);
-                ref object endHolder = ref Unsafe.Add(ref currentHolder, count_);
+                ref InvariantObject currentHolder = ref Utils.GetArrayDataReference(holders_);
+                ref InvariantObject endHolder = ref Unsafe.Add(ref currentHolder, count_);
                 ref SliceOfCallbacks sliceCurrent = ref Utils.GetArrayDataReference(slices);
 
                 while (Unsafe.IsAddressLessThan(ref currentHolder, ref endHolder))
                 {
-                    InvokersHolder<TEvent>? holder = Utils.ExpectAssignableType<InvokersHolder<TEvent>>(currentHolder);
+                    InvokersHolder<TEvent>? holder = Utils.ExpectAssignableType<InvokersHolder<TEvent>>(currentHolder.Value);
                     Slice callbacks = holder.GetCallbacks();
                     sliceCurrent = new(holder, callbacks);
 
@@ -65,18 +65,18 @@ internal class InvokersHolderManager<TEvent> : InvokersHolderManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override void Remove(InvokersHolder holder)
     {
-        object[]? holders_ = holders;
+        InvariantObject[]? holders_ = holders;
         Debug.Assert(holders_ is not null);
         int count_ = count;
-        ref object start = ref Utils.GetArrayDataReference(holders_);
-        ref object current = ref start;
-        ref object end = ref Unsafe.Add(ref current, count_);
+        ref InvariantObject start = ref Utils.GetArrayDataReference(holders_);
+        ref InvariantObject current = ref start;
+        ref InvariantObject end = ref Unsafe.Add(ref current, count_);
         while (Unsafe.IsAddressLessThan(ref current, ref end))
         {
-            if (ReferenceEquals(current, holder))
+            if (ReferenceEquals(current.Value, holder))
             {
                 current = Unsafe.Add(ref start, count_ - 1);
-                Unsafe.Add(ref start, count - 1) = null!;
+                Unsafe.Add(ref start, count - 1) = new(null!);
             }
             current = ref Unsafe.Add(ref current, 1);
         }
