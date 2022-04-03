@@ -13,7 +13,7 @@ public sealed class EventManagerWeakGenerator : ISourceGenerator
         context.AddSource("EventManager.OnceWeak", SourceText.From(GetFile("Once", "the next time", "Once"), Encoding.UTF8));
         context.AddSource("EventManager.MultipleWeak", SourceText.From(GetFile("", "when", "Multiple"), Encoding.UTF8));
     }
-    
+
     private string GetFile(string methodPostfix, string methodDescription, string typePrefix)
     {
         return $@"
