@@ -2,43 +2,42 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 
-namespace Enderlook.EventManager
+namespace Enderlook.EventManager;
+
+public sealed partial class EventManager
 {
-    public sealed partial class EventManager
+    /// <summary>
+    /// Unsubscribe all listeners.
+    /// </summary>
+    public void Reset()
     {
-        /// <summary>
-        /// Unsubscribe all listeners.
-        /// </summary>
-        public void Reset()
+        if (state != 0)
+            TryRequestPurgeCancellation();
+
+        MassiveWriteBegin();
         {
-            if (state != 0)
-                TryRequestPurgeCancellation();
+            if (state == IS_DISPOSED_OR_DISPOSING)
+                ThrowObjectDisposedException();
 
-            MassiveWriteBegin();
+            int holdersCount = this.holdersCount;
+            if (holdersCount != 0)
             {
-                if (state == IS_DISPOSED_OR_DISPOSING)
-                    ThrowObjectDisposedException();
+                InvariantObject[]? holders = this.holders;
+                Debug.Assert(holders is not null);
 
-                int holdersCount = this.holdersCount;
-                if (holdersCount != 0)
-                {
-                    InvariantObject[]? holders = this.holders;
-                    Debug.Assert(holders is not null);
+                holdersPerType.Clear();
+                managersPerType.Clear();
+                purgingIndex = 0;
+                millisecondsTimeStamp = 0;
 
-                    holdersPerType.Clear();
-                    managersPerType.Clear();
-                    purgingIndex = 0;
-                    millisecondsTimeStamp = 0;
+                if (holdersCount == 1)
+                    Utils.ExpectAssignableType<InvokersHolder>(holders[0].Value).Dispose();
+                else
+                    Parallel.For(0, holdersCount, i => Utils.ExpectAssignableType<InvokersHolder>(holders[i].Value).Dispose());
 
-                    if (holdersCount == 1)
-                        Utils.ExpectAssignableType<InvokersHolder>(holders[0].Value).Dispose();
-                    else
-                        Parallel.For(0, holdersCount, i => Utils.ExpectAssignableType<InvokersHolder>(holders[i].Value).Dispose());
-
-                    Array.Clear(holders, 0, holdersCount);
-                }
+                Array.Clear(holders, 0, holdersCount);
             }
-            WriteEnd();
         }
+        WriteEnd();
     }
 }
