@@ -46,7 +46,7 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
         if (Utils.Null<TCallbackHelper>().IsOnce())
         {
             count = 0;
-            Utils.Untake(ref callbacks, ArrayUtils.RentArray<TCallback>(count_)); // Alternatively we could do, ListUtils.InitialArray<TCallback>();
+            Utils.Untake(ref callbacks, ArrayUtils.RentArray<TCallback>(count_)); // Alternatively we could do, ArrayUtils.InitialArray<TCallback>();
             return new(callbacks_, count_);
         }
         else
