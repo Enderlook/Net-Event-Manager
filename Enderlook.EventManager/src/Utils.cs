@@ -41,42 +41,21 @@ internal static class Utils
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ExecuteActionLike<T1>(object action, T1 t1)
     {
-#if DEBUG
-        Debug.Assert(action is not null);
-        Type type = action.GetType();
-        Debug.Assert(type.GetGenericTypeDefinition() == typeof(Action<>));
-        Type[] types = type.GetGenericArguments();
-        Debug.Assert(types[0] == typeof(T1));
-#endif
+        Debug.Assert(action.GetType() == typeof(Action<>).MakeGenericType(typeof(T1)));
         Unsafe.As<Action<T1>>(action)(t1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ExecuteActionLike<T1, T2>(object action, T1 t1, T2 t2)
     {
-#if DEBUG
-        Debug.Assert(action is not null);
-        Type type = action.GetType();
-        Debug.Assert(type.GetGenericTypeDefinition() == typeof(Action<,>));
-        Type[] types = type.GetGenericArguments();
-        Debug.Assert(types[0] == typeof(T1));
-        Debug.Assert(types[1] == typeof(T2));
-#endif
+        Debug.Assert(action.GetType() == typeof(Action<,>).MakeGenericType(typeof(T1), typeof(T2)));
         Unsafe.As<Action<T1, T2>>(action)(t1, t2);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ExecuteActionLike<T1, T2, T3>(object action, T1 t1, T2 t2, T3 t3)
     {
-#if DEBUG
-        Debug.Assert(action is not null);
-        Type type = action.GetType();
-        Debug.Assert(type.GetGenericTypeDefinition() == typeof(Action<,,>));
-        Type[] types = type.GetGenericArguments();
-        Debug.Assert(types[0] == typeof(T1));
-        Debug.Assert(types[1] == typeof(T2));
-        Debug.Assert(types[2] == typeof(T3));
-#endif
+        Debug.Assert(action.GetType() == typeof(Action<,,>).MakeGenericType(typeof(T1), typeof(T2), typeof(T3)));
         Unsafe.As<Action<T1, T2, T3>>(action)(t1, t2, t3);
     }
 
