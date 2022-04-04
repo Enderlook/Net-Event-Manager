@@ -16,6 +16,7 @@
     <LangVersion>10</LangVersion>
     <Nullable>enable</Nullable>
     <CheckForOverflowUnderflow Condition="'$(Configuration)' == 'Debug'">true</CheckForOverflowUnderflow>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

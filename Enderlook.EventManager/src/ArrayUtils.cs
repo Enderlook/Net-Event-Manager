@@ -86,6 +86,62 @@ internal static class ArrayUtils
         }
     }
 
+    public static void ConcurrentAddRange<T>(ref T[]? array, ref int count, T[]? otherArray, int otherCount)
+    {
+        T[] takenArray = Utils.Take(ref array);
+        {
+            int newCount = count + otherCount;
+            if (unchecked((uint)newCount < (uint)takenArray.Length))
+            {
+                T[] takenOtherArray = Utils.Take(ref otherArray);
+                {
+                    Array.Copy(takenOtherArray, 0, takenArray, count, otherCount);
+                }
+                Utils.Untake(ref otherArray, otherArray);
+                count = newCount;
+                Utils.Untake(ref array, takenArray);
+            }
+            else
+                AddWithResize(ref array, ref count);
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            void AddWithResize(ref T[]? array, ref int count)
+            {
+                T[] takenArray_ = takenArray;
+                int count_ = count;
+                if (count_ == 0)
+                {
+                    Debug.Assert(takenArray_.Length == 0);
+                    takenArray_ = RentArray<T>(otherCount);
+                    T[] otherArray_ = Utils.Take(ref otherArray);
+                    {
+                        Array.Copy(otherArray_, takenArray_, otherCount);
+                    }
+                    Utils.Untake(ref otherArray, otherArray_);
+                    count = otherCount;
+                    Utils.Untake(ref array, takenArray_);
+                }
+                else
+                {
+                    Debug.Assert(count_ == takenArray_.Length);
+                    int newLength = count_;
+                    while (newLength < newCount)
+                        newLength *= GROW_FACTOR;
+                    T[] newArray = RentArray<T>(newLength);
+                    Array.Copy(takenArray_, newArray, count_);
+                    T[] otherArray_ = Utils.Take(ref otherArray);
+                    {
+                        Array.Copy(otherArray_, 0, newArray, count_, otherCount);
+                    }
+                    Utils.Untake(ref otherArray, otherArray_);
+                    count = newCount;
+                    Utils.Untake(ref array, newArray);
+                    ReturnArray(takenArray_, count_);
+                }
+            }
+        }
+    }
+
     public static void ConcurrentRemove<TComparer, TElement>(ref TElement[]? array, ref int count, TComparer comparer)
         where TComparer : IPredicator<TElement>
     {
