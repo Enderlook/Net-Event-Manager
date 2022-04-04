@@ -20,19 +20,19 @@ internal class InvokersHolderManager<TEvent> : InvokersHolderManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Raise(TEvent? argument, EventManager eventManager)
     {
-        InvariantObject[] holders_ = Utils.Take(ref holders);
+        InvariantObject[] takenHolders = Utils.Take(ref holders);
         {
             int count_ = count;
 
             if (count_ == 0)
             {
-                Utils.Untake(ref holders, holders_);
+                Utils.Untake(ref holders, takenHolders);
                 return;
             }
 
             SliceOfCallbacks[] slices = ArrayUtils.RentArray<SliceOfCallbacks>(count_);
             {
-                ref InvariantObject currentHolder = ref Utils.GetArrayDataReference(holders_);
+                ref InvariantObject currentHolder = ref Utils.GetArrayDataReference(takenHolders);
                 ref InvariantObject endHolder = ref Unsafe.Add(ref currentHolder, count_);
                 ref SliceOfCallbacks sliceCurrent = ref Utils.GetArrayDataReference(slices);
 
@@ -46,7 +46,7 @@ internal class InvokersHolderManager<TEvent> : InvokersHolderManager
                     sliceCurrent = ref Unsafe.Add(ref sliceCurrent, 1);
                 }
 
-                Utils.Untake(ref holders, holders_);
+                Utils.Untake(ref holders, takenHolders);
                 eventManager.InHolderEnd();
 
                 ref SliceOfCallbacks currentSlice = ref Utils.GetArrayDataReference(slices);
