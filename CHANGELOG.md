@@ -9,15 +9,24 @@
 - Add timer to auto purger in .NET >= 5 taking into account memory pressure.
 - Improve auto purger cancellation capability.
 - Improve docummentation in `Raise<TEvent>(TEvent)` method.
-- Add the following APIs:
+- Change APIs:
 ```diff
 public sealed partial class EventManager : IDisposable
 {
 +   /// A shared default instance of the `EventManager`.
 +   public static EventManager Shared { get; }
 
-+   /// Raises event using the parameterless constructor of the event type.
-+   public void Raise<TEvent>() where TEvent : new();
+-   public static void Raise<TEvent>(TEvent argument);
++   public static void RaiseExactly<TEvent>(TEvent argument);
+
++   /// Raises event of type TEvent, all its base types and implemented interfaces.
++   public static void RaiseHierarchy<TEvent>(TEvent argument);
+
++   /// Does RaiseExactly<TEvent>(new TEvent())
++   public void RaiseExactly<TEvent>() where TEvent : new();
+
++   /// Does RaiseHierarchy<TEvent>(new TEvent())
++   public void RaiseHierarchy<TEvent>() where TEvent : new();
 
 +   /// Unsubscribes all actions.
 +   public void Reset();

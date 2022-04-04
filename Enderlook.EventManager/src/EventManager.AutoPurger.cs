@@ -11,6 +11,7 @@ public sealed partial class EventManager
     private const int PurgeAttempts = 3;
 
     private Action<int, ParallelLoopState>? autoPurgeAction;
+    private Action<InvokersHolderManager, ParallelLoopState>? autoPurgeAction2;
 
     private int millisecondsTimeStamp;
     private int purgingIndex;
@@ -135,6 +136,22 @@ public sealed partial class EventManager
                         Array.Clear(holders_, holdersCount_, holdersCountOld - holdersCount_);
                     holdersCount = holdersCount_;
                     holders = holders_;
+
+                    if ((state & IS_CANCELATION_REQUESTED) == 0)
+                    {
+                        // TODO: If cancelled, this has no way to reanude cleaning and must start from zero,
+                        // this make vulnerable to low cleaning if purging is cancelled constantly.
+                        Parallel.ForEach(managersPerType.Values, autoPurgeAction2 ??= new Action<InvokersHolderManager, ParallelLoopState>((manager, loop) =>
+                        {
+                            if (loop.ShouldExitCurrentIteration)
+                                return;
+
+                            if ((state & IS_CANCELATION_REQUESTED) != 0)
+                                loop.Stop();
+
+                            manager.RemoveRemovedDerived();
+                        }));
+                    }
                 }
 
                 purgingIndex = purgingIndex_;

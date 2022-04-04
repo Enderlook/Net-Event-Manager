@@ -5,6 +5,7 @@
 A type safe event manager library for .NET.
 Due the use of generic, this event manager doesn't suffer for boxing and unboxing of value types nor for casting errors of the consumers.
 Additionaly, closures of delegates can be stored apart in order to reuse the delegate and reduce allocations.
+Also, it support and respect inheritance of event types which can be used to categorize events by hierarchy. For example, if you raise an event of type `ConcreteEvent`, both delegates subscribed to `ConcreteEvent` **and** `BaseEvent` are run (and `IEvent` if it does implement it). For receiving **all** events, subscribe to `Object`.
 Finally, it has support for weak-refence listeners.
 
 The following example show some of the functions of the event manager:
@@ -21,17 +22,17 @@ public static class Player
 
         eventManager.Subscribe<PlayerPickedUpItemEvent>(("Excalibur", "Mimic"), OnPlayerPickedUpItem2);
 
-        eventManager.Raise(new PlayerPickedUpItemEvent("Excalibur"));
+        eventManager.RaiseExactly(new PlayerPickedUpItemEvent("Excalibur"));
 
         eventManager.SubscribeOnce<PlayerPickedUpItemEvent>(OnPlayerPickedUpItemOnce);
 
-        eventManager.Raise(new PlayerPickedUpItemEvent("Pencil"));
+        eventManager.RaiseExactly(new PlayerPickedUpItemEvent("Pencil"));
 
-        eventManager.Raise(new PlayerPickedUpItemEvent("Mimic"));
+        eventManager.RaiseExactly(new PlayerPickedUpItemEvent("Mimic"));
 
         eventManager.Unsubscribe<PlayerPickedUpItemEvent>(OnPlayerPickedUpItem2);
 
-        eventManager.Raise(new PlayerPickedUpItemEvent("Mimic"));
+        eventManager.RaiseExactly(new PlayerPickedUpItemEvent("Mimic"));
     }
 
     private static void OnPlayerHurt(string closure)
@@ -47,7 +48,7 @@ public static class Player
         else if (@event.Item == closure.Item2)
         {
             Console.WriteLine("Oh no! You picked up a mimic!");
-            eventManager.Raise(new PlayerHurtEvent());
+            eventManager.RaiseExactly(new PlayerHurtEvent());
         }
     }
     
@@ -136,13 +137,19 @@ public sealed class EventManager : IDisposable
     public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
     public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
     public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
+    
+    /// Raise the specified event to delegates of that event type.
+    public void RaiseExactly<TEvent>(TEvent eventArgument);
 
-    /// Raise the specified event.
-    public void Raise<TEvent>(TEvent eventArgument);
-	
-    /// Equivalent to Raise<TEvent>(new TEvent()).
-    public void Raise<TEvent>() where TEvent : new();
+	/// Equivalent to RaiseExactly<TEvent>(new TEvent()).
+    public void RaiseExactly<TEvent>() where TEvent : new();
 
+	/// Raise the specified event to delegates of that event type and all types assignables to it (i.e: its type hierarchy including interfaces).
+    public void RaiseHierarchy<TEvent>(TEvent eventArgument);
+
+	/// Equivalent to RaiseHierarchy<TEvent>(new TEvent()).
+    public void RaiseHierarchy<TEvent>() where TEvent : new();
+    
     /// Dispose the underlying content of this event manager.
     public void Dispose();
 }

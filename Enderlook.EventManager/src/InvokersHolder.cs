@@ -10,15 +10,19 @@ internal abstract class InvokersHolder
 
     public abstract bool RemoveIfEmpty();
 
+    public abstract bool WasRemoved();
+
+    public abstract Slice GetCallbacks();
+
     public abstract Type GetEventType();
 
     public abstract void Dispose();
+
+    public abstract void RaiseDerived<TConcreteEvent>(Slice slice, object? argument);
 }
 
 internal abstract class InvokersHolder<TEvent> : InvokersHolder
 {
-    public abstract Slice GetCallbacks();
-
     public abstract void Raise(Slice slice, TEvent argument);
 
     public override sealed Type GetEventType() => typeof(TEvent);
@@ -64,6 +68,13 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
         Utils.Null<TCallbackHelper>().Invoke(argument, callbacks_, slice.Count);
     }
 
+    public override void RaiseDerived<TConcreteEvent>(Slice slice, object? argument)
+    {
+        Utils.AssertDerived<TEvent, TConcreteEvent>(argument);
+        TCallback[] callbacks_ = Utils.ExpectExactType<TCallback[]>(slice.Array);
+        Utils.Null<TCallbackHelper>().Invoke(Utils.ExpectAssignableTypeOrNull<TEvent>(argument), callbacks_, slice.Count);
+    }
+
     public override void Purge()
     {
         TCallback[]? array = callbacks;
@@ -87,6 +98,8 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
         }
         return false;
     }
+
+    public override bool WasRemoved() => count == 0;
 
     public override void Dispose()
     {

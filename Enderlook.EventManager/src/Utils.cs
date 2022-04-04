@@ -9,6 +9,16 @@ namespace Enderlook.EventManager;
 
 internal static class Utils
 {
+    [Conditional("DEBUG")]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void AssertDerived<TBase, TDerived>(object? argument)
+    {
+        Debug.Assert(typeof(TBase).IsAssignableFrom(typeof(TDerived)));
+        // In .NET all value types inherits directly from a reference type, so the parent event can never be a value type.
+        Debug.Assert(!typeof(TBase).IsValueType);
+        Debug.Assert(argument is null || argument.GetType() == typeof(TDerived));
+    }
+
     [return: NotNull]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TTo ExpectExactType<TTo>(object obj)
@@ -27,6 +37,15 @@ internal static class Utils
         Debug.Assert(!typeof(TTo).IsValueType);
         Debug.Assert(typeof(TTo).IsAssignableFrom(obj!.GetType()));
         return Unsafe.As<object, TTo>(ref obj)!;
+    }
+
+    [return: NotNull]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static TTo ExpectAssignableTypeOrNull<TTo>(object? obj)
+    {
+        Debug.Assert(!typeof(TTo).IsValueType);
+        Debug.Assert(obj is null || typeof(TTo).IsAssignableFrom(obj.GetType()));
+        return Unsafe.As<object?, TTo>(ref obj)!;
     }
 
     [return: NotNullIfNotNull("obj")]

@@ -33,13 +33,29 @@ public sealed partial class EventManager : IDisposable
     ~EventManager() => Dispose();
 
     /// <summary>
-    /// Raises an event type <typeparamref name="TEvent"/>.<br/>
-    /// Execution order of subscribed delegates is undefined.
+    /// Raises an event type <typeparamref name="TEvent"/>, which executes all delegates subscribed to events of type <typeparamref name="TEvent"/> and to any other event type which is assignable from <typeparamref name="TEvent"/>.<br/>
+    /// For example, given:
+    /// <code>
+    /// <see langword="interface"/> IEvent { }<br/>
+    /// <see langword="class"/> BaseEvent : <see cref="object"/>, IEvent { }<br/>
+    /// <see langword="class"/> ConcreteEvent : BaseEvent { }
+    /// </code>
+    /// <c>Raise&lt;ConcreteEvent&gt;(concreteEvent)</c> would run all subscribed delegates to events of type <c>ConcreteEvent</c>, <c>BaseEvent</c>, <c>IEvent</c> and <see cref="object"/>, which is equivalent to:
+    /// <code>
+    /// // Execution order is undefined.
+    /// RaiseExactly&lt;ConcreteEvent&lt;(concreteEvent);
+    /// RaiseExactly&lt;BaseEvent&lt;(concreteEvent);
+    /// RaiseExactly&lt;IEvent&lt;(concreteEvent);
+    /// RaiseExactly&lt;<see cref="object"/>&lt;(concreteEvent);
+    /// </code>
+    /// Execution order of subscribed delegates is undefined.<br/>
+    /// If <typeparamref name="TEvent"/> is a value-type but assignable types are reference-types, the boxed instance is shared between all delegate calls (and may or may not be pooled).<br/>
+    /// By convention, value-types should be immutable, so this is not a problem. However, if you have a mutable type, be warned.
     /// </summary>
     /// <typeparam name="TEvent">Type of the event.</typeparam>
     /// <param name="argument">Arguments of this event.</param>
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
-    public void Raise<TEvent>(TEvent argument)
+    public void RaiseHierarchy<TEvent>(TEvent argument)
     {
         ReadBegin();
         {
@@ -47,7 +63,7 @@ public sealed partial class EventManager : IDisposable
             {
                 FromReadToInHolder();
                 InvokersHolderManager<TEvent> manager_ = Utils.ExpectExactType<InvokersHolderManager<TEvent>>(manager);
-                manager_.Raise(argument, this);
+                manager_.RaiseHierarchy(argument, this);
             }
             else
                 ReadEnd();
@@ -55,14 +71,44 @@ public sealed partial class EventManager : IDisposable
     }
 
     /// <summary>
-    /// Raises an event type <typeparamref name="TEvent"/> using the parameterless constructor of the type, which executes all delegates subscribed to events of type <typeparamref name="TEvent"/>.<br/>
-    /// This is equivalent to <see cref="Raise{TEvent}(TEvent)"/> passing <c>new <typeparamref name="TEvent"/>()</c> as argument.<br/>
+    /// Raises an event type <typeparamref name="TEvent"/>, which executes all delegates subscribed to events of type <typeparamref name="TEvent"/>.<br/>
     /// Execution order of subscribed delegates is undefined.
     /// </summary>
     /// <typeparam name="TEvent">Type of the event.</typeparam>
+    /// <param name="argument">Arguments of this event.</param>
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
-    public void Raise<TEvent>() where TEvent : new()
-        => Raise(new TEvent());
+    public void RaiseExactly<TEvent>(TEvent argument)
+    {
+        ReadBegin();
+        {
+            if (managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? manager))
+            {
+                FromReadToInHolder();
+                InvokersHolderManager<TEvent> manager_ = Utils.ExpectExactType<InvokersHolderManager<TEvent>>(manager);
+                manager_.RaiseExactly(argument, this);
+            }
+            else
+                ReadEnd();
+        }
+    }
+
+    /// <summary>
+    /// This is equivalent to <c><see cref="RaiseHierarchy{TEvent}(TEvent)"/></c> passing a <c><see langword="new"/> <typeparamref name="TEvent"/>()</c> instance as argument.
+    /// </summary>
+    /// <typeparam name="TEvent">Type of the event.</typeparam>
+    /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void RaiseHierarchy<TEvent>() where TEvent : new()
+        => RaiseHierarchy(new TEvent());
+
+    /// <summary>
+    /// This is equivalent to <c><see cref="RaiseExactly{TEvent}(TEvent)"/></c> passing a <c><see langword="new"/> <typeparamref name="TEvent"/>()</c> instance as argument.
+    /// </summary>
+    /// <typeparam name="TEvent">Type of the event.</typeparam>
+    /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void RaiseExactly<TEvent>() where TEvent : new()
+        => RaiseExactly(new TEvent());
 
     internal void Unsubscribe<TEvent, TCallbackHelper, TPredicator, TCallback>(TPredicator predicator)
         where TCallbackHelper : struct, ICallbackExecuter<TEvent, TCallback>
@@ -125,13 +171,18 @@ public sealed partial class EventManager : IDisposable
 
                     ArrayUtils.Add(ref holders, ref holdersCount, new(holder_));
 
-                    if (managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? packHolder))
-                        Utils.ExpectExactType<InvokersHolderManager<TEvent>>(packHolder).Add(holder_);
-                    else
+                    if (!managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? packHolder))
+                        managersPerType.Add(typeof(TEvent), packHolder = new InvokersHolderManager<TEvent>());
+
+                    InvokersHolderManager<TEvent> invokersHolderManager = Utils.ExpectExactType<InvokersHolderManager<TEvent>>(packHolder);
+                    invokersHolderManager.Add(holder_);
+
+                    foreach (KeyValuePair<Type, InvokersHolderManager> kv in managersPerType)
                     {
-                        InvokersHolderManager<TEvent> packHolder_ = new();
-                        packHolder_.Add(holder_);
-                        managersPerType.Add(typeof(TEvent), packHolder_);
+                        if (kv.Key.IsAssignableFrom(typeof(TEvent)) && kv.Key != typeof(TEvent))
+                            kv.Value.AddDerived(holder_, typeof(TEvent));
+                        else if (typeof(TEvent).IsAssignableFrom(kv.Key) && kv.Key != typeof(TEvent))
+                            invokersHolderManager.AddTo(kv.Value, kv.Key);
                     }
                 }
             }

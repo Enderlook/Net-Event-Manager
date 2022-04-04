@@ -20,4 +20,8 @@ internal readonly struct SliceOfCallbacks
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Raise<TEvent>(TEvent argument)
         => Utils.ExpectAssignableType<InvokersHolder<TEvent>>(holder).Raise(new(callbacks, count), argument);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void RaiseDerived<TConcreteEvent>(object? argument)
+        => Utils.ExpectAssignableType<InvokersHolder>(holder).RaiseDerived<TConcreteEvent>(new(callbacks, count), argument);
 }
