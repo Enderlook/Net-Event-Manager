@@ -13,12 +13,12 @@ internal static class ArrayUtils
 
     public static void ConcurrentAdd<T>(ref T[]? array, ref int count, T element)
     {
-        T[] array_ = Utils.Take(ref array);
+        T[] takenArray = Utils.Take(ref array);
         {
-            if (unchecked((uint)count < (uint)array_.Length))
+            if (unchecked((uint)count < (uint)takenArray.Length))
             {
-                array_[count++] = element;
-                Utils.Untake(ref array, array_);
+                takenArray[count++] = element;
+                Utils.Untake(ref array, takenArray);
             }
             else
                 AddWithResize(ref array, ref count);
@@ -27,25 +27,25 @@ internal static class ArrayUtils
         [MethodImpl(MethodImplOptions.NoInlining)]
         void AddWithResize(ref T[]? array, ref int count)
         {
-            T[] array__ = array_;
+            T[] takenArray_ = takenArray;
             int count_ = count;
             if (count_ == 0)
             {
-                Debug.Assert(array__.Length == 0);
-                array__ = InitialArray<T>();
-                array__[0] = element;
+                Debug.Assert(takenArray_.Length == 0);
+                takenArray_ = InitialArray<T>();
+                takenArray_[0] = element;
                 count = 1;
-                Utils.Untake(ref array, array__);
+                Utils.Untake(ref array, takenArray_);
             }
             else
             {
-                Debug.Assert(count_ == array__.Length);
+                Debug.Assert(count_ == takenArray_.Length);
                 T[] newArray = RentArray<T>(count_ * GROW_FACTOR);
-                Array.Copy(array__, newArray, count_);
+                Array.Copy(takenArray_, newArray, count_);
                 newArray[count_] = element;
                 count = count_ + 1;
                 Utils.Untake(ref array, newArray);
-                ReturnArray(array__, count_);
+                ReturnArray(takenArray_, count_);
             }
         }
     }
@@ -90,36 +90,36 @@ internal static class ArrayUtils
         where TComparer : IPredicator<TElement>
     {
         int count_ = count;
-        TElement[] array_ = Utils.Take(ref array);
+        TElement[] takenArray = Utils.Take(ref array);
         {
             if (count_ == 0)
             {
-                Utils.Untake(ref array, array_);
+                Utils.Untake(ref array, takenArray);
                 return;
             }
 
-            Debug.Assert(array_.Length > count_);
+            Debug.Assert(takenArray.Length > count_);
 
-            ref TElement current = ref Utils.GetArrayDataReference(array_);
+            ref TElement current = ref Utils.GetArrayDataReference(takenArray);
             ref TElement end = ref Unsafe.Add(ref current, count_);
             for (int i = 0; Unsafe.IsAddressLessThan(ref current, ref end); i++)
             {
                 if (comparer.DoesMatch(current))
                 {
-                    Array.Copy(array_, i + 1, array_, i, count - i);
+                    Array.Copy(takenArray, i + 1, takenArray, i, count - i);
 
 #if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
                     if (RuntimeHelpers.IsReferenceOrContainsReferences<TElement>())
 #endif
-                    array_[count] = default!;
+                    takenArray[count] = default!;
                     count = count_ - 1;
-                    Utils.Untake(ref array, array_);
+                    Utils.Untake(ref array, takenArray);
                     return;
                 }
                 current = ref Unsafe.Add(ref current, 1);
             }
 
-            Utils.Untake(ref array, array_);
+            Utils.Untake(ref array, takenArray);
         }
     }
 
