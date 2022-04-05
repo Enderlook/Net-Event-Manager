@@ -7,6 +7,7 @@
 - Improve perfomance by avoiding covariance checks in arrays and reusing pool of arrays.
 - Use `DependentHandle` instead of `GCHandle` were possible on .NET 6 builds.
 - Add timer to auto purger in .NET >= 5 taking into account memory pressure.
+- Improve auto purger cancellation capability.
 - Add the following APIs:
 ```diff
 public sealed partial class EventManager : IDisposable
