@@ -10,7 +10,7 @@ namespace Enderlook.EventManager;
 /// </summary>
 public sealed partial class EventManager : IDisposable
 {
-    // Key type is IInvoker<TEvent>.
+    // Key type is ICallbackExecuter<TEvent, TCallback>.
     // Value type is actually InvokersHolder<TEvent, TInvoke>.
     private Dictionary<Type, InvokersHolder> holdersPerType = new();
 
