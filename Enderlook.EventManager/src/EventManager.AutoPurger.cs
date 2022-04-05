@@ -74,54 +74,70 @@ public sealed partial class EventManager
                 state = IS_PURGING;
 
                 Debug.Assert(holders is not null, "Impossible state, since holders initialization happens at the same time AutoPurger is instantiated.");
-                if (holdersCount > 1)
+
+                int purgingIndex_ = purgingIndex;
+                if (purgingIndex_ >= 0)
                 {
-                    purgingIndex += (int)(Parallel.For(0, holdersCount, autoPurgeAction ??= new Action<int, ParallelLoopState>((index, loop) =>
+                    if (holdersCount > 1)
                     {
-                        if (loop.ShouldExitCurrentIteration)
-                            return;
-
-                        if ((state & IS_CANCELATION_REQUESTED) != 0)
-                            loop.Stop();
-
-                        Utils.ExpectAssignableType<InvokersHolder>(holders[(purgingIndex + index) % holdersCount]).Purge();
-                    })).LowestBreakIteration ?? 0);
-                } else if (holdersCount == 1)
-                    Utils.ExpectAssignableType<InvokersHolder>(holders[0]).Purge();
-
-                bool isCancelationRequested = (state & IS_CANCELATION_REQUESTED) != 0;
-
-                int holdersCountOld = holdersCount;
-                int holdersCount_ = holdersCountOld;
-                InvariantObject[] holders_ = holders;
-                // TODO: This loop could actually be done without locking the whole event manager,
-                // as long as the `holders` array is locked.
-                for (int i = 0; i < holdersCount_; i++)
-                {
-                    InvokersHolder holder = Utils.ExpectAssignableType<InvokersHolder>(holders_[i].Value);
-                    if (holder.RemoveIfEmpty())
-                    {
-                        holdersPerType.Remove(holder.GetType());
-                        managersPerType[holder.GetEventType()].Remove(holder);
-
-                        while (true)
+                        purgingIndex_ += (int)(Parallel.For(0, holdersCount, autoPurgeAction ??= new Action<int, ParallelLoopState>((index, loop) =>
                         {
-                            if (--holdersCount_ == i)
-                                goto end;
-                            holder = Utils.ExpectAssignableType<InvokersHolder>(holders_[holdersCount_].Value);
-                            if (!holder.RemoveIfEmpty())
-                                break;
-                            holdersPerType.Remove(holder.GetType());
-                            managersPerType[holder.GetEventType()].Remove(holder);
-                        }
-                        holders_[i] = holders_[i + 1];
+                            if (loop.ShouldExitCurrentIteration)
+                                return;
+
+                            if ((state & IS_CANCELATION_REQUESTED) != 0)
+                                loop.Stop();
+
+                            Utils.ExpectAssignableType<InvokersHolder>(holders[(purgingIndex + index) % holdersCount]).Purge();
+                        })).LowestBreakIteration ?? -1);
+                    }
+                    else if (holdersCount == 1)
+                    {
+                        Utils.ExpectAssignableType<InvokersHolder>(holders[0]).Purge();
+                        purgingIndex_ = -1;
                     }
                 }
-                end:
-                if (!ArrayUtils.TryShrink(ref holders_, holdersCount_) && holdersCount_ != holdersCountOld)
-                    Array.Clear(holders_, holdersCount_, holdersCountOld - holdersCount_);
-                holders = holders_;
-                holdersCount = holdersCount_;
+
+                if ((state & IS_CANCELATION_REQUESTED) == 0)
+                {
+                    purgingIndex_ = -(purgingIndex_ + 1);
+
+                    int holdersCountOld = holdersCount;
+                    int holdersCount_ = holdersCountOld;
+                    InvariantObject[] holders_ = holders;
+                    // TODO: This loop could actually be done without locking the whole event manager,
+                    // as long as the `holders` array is locked.
+
+                    int i = purgingIndex_ % holdersCount_;
+                    while (i < holdersCount_)
+                    {
+                        if ((state & IS_CANCELATION_REQUESTED) != 0)
+                        {
+                            purgingIndex = -(i + 1);
+                            break;
+                        }
+
+                        InvokersHolder holder = Utils.ExpectAssignableType<InvokersHolder>(holders_[i].Value);
+                        if (holder.RemoveIfEmpty())
+                        {
+                            holdersPerType.Remove(holder.GetType());
+                            managersPerType[holder.GetEventType()].Remove(holder);
+
+                            holders_[i] = holders_[--holdersCount_];
+                        }
+                        else
+                            i++;
+                    }
+
+                    purgingIndex_ = 0;
+
+                    if (holdersCount_ != holdersCountOld && !ArrayUtils.TryShrink(ref holders_, holdersCount_))
+                        Array.Clear(holders_, holdersCount_, holdersCountOld - holdersCount_);
+                    holdersCount = holdersCount_;
+                    holders = holders_;
+                }
+
+                purgingIndex = purgingIndex_;
 
                 Lock(ref stateLock);
                 {
@@ -131,7 +147,7 @@ public sealed partial class EventManager
 
                 WriteEnd();
 
-                if (isCancelationRequested && Thread.Yield())
+                if ((state & IS_CANCELATION_REQUESTED) != 0 && Thread.Yield())
                     continue;
 
                 return true;
