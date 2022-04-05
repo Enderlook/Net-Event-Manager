@@ -11,7 +11,6 @@ public sealed partial class EventManager
     private const int PurgeAttempts = 3;
 
     private Action<int, ParallelLoopState>? autoPurgeAction;
-    private ParallelOptions? options;
 
     private int millisecondsTimeStamp;
     private int purgingIndex;
@@ -77,7 +76,7 @@ public sealed partial class EventManager
                 Debug.Assert(holders is not null, "Impossible state, since holders initialization happens at the same time AutoPurger is instantiated.");
                 if (holdersCount > 1)
                 {
-                    purgingIndex += (int)(Parallel.For(0, holdersCount, options ??= new(), autoPurgeAction ??= new Action<int, ParallelLoopState>((index, loop) =>
+                    purgingIndex += (int)(Parallel.For(0, holdersCount, autoPurgeAction ??= new Action<int, ParallelLoopState>((index, loop) =>
                     {
                         if (loop.ShouldExitCurrentIteration)
                             return;

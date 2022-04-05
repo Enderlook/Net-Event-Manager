@@ -30,7 +30,6 @@ public sealed partial class EventManager : IDisposable
             holdersPerType = null!;
             managersPerType = null!;
             autoPurgeAction = null;
-            options = null;
             if (holders is not null)
             {
                 if (holdersCount != 0)
