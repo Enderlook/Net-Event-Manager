@@ -33,7 +33,8 @@ public sealed partial class EventManager : IDisposable
     ~EventManager() => Dispose();
 
     /// <summary>
-    /// Raises an event type <typeparamref name="TEvent"/>.
+    /// Raises an event type <typeparamref name="TEvent"/>.<br/>
+    /// Execution order of subscribed delegates is undefined.
     /// </summary>
     /// <typeparam name="TEvent">Type of the event.</typeparam>
     /// <param name="argument">Arguments of this event.</param>
@@ -54,7 +55,9 @@ public sealed partial class EventManager : IDisposable
     }
 
     /// <summary>
-    /// Raises an event type <typeparamref name="TEvent"/> using the parameterless constructor of the type.
+    /// Raises an event type <typeparamref name="TEvent"/> using the parameterless constructor of the type, which executes all delegates subscribed to events of type <typeparamref name="TEvent"/>.<br/>
+    /// This is equivalent to <see cref="Raise{TEvent}(TEvent)"/> passing <c>new <typeparamref name="TEvent"/>()</c> as argument.<br/>
+    /// Execution order of subscribed delegates is undefined.
     /// </summary>
     /// <typeparam name="TEvent">Type of the event.</typeparam>
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
