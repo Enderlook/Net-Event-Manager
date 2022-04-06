@@ -62,7 +62,6 @@ internal class InvokersHolderManager<TEvent> : InvokersHolderManager
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override void Remove(InvokersHolder holder)
     {
         InvariantObject[]? holders_ = holders;
