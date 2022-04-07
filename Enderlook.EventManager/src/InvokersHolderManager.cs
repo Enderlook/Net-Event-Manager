@@ -14,40 +14,84 @@ internal abstract class InvokersHolderManager
     internal InvariantObject[]? derivedHolders = ArrayUtils.EmptyArray<InvariantObject>();
     internal int derivedHoldersCount;
 
-    public abstract void Remove(InvokersHolder holder);
-
-    public abstract void RemoveRemovedDerived();
-
-    public abstract void AddDerived(InvokersHolder holder, Type type);
-
-    public abstract void AddTo(InvokersHolderManager holderManager, Type key);
-}
-
-internal class InvokersHolderManager<TEvent> : InvokersHolderManager
-{
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Add(InvokersHolder holder)
     {
-        Debug.Assert(typeof(TEvent) == holder.GetType().GenericTypeArguments[0]);
+        Debug.Assert(GetType().GenericTypeArguments[0] == holder.GetType().GenericTypeArguments[0]);
         ArrayUtils.ConcurrentAdd(ref holders, ref holdersCount, new(holder));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public sealed override void AddDerived(InvokersHolder holder, Type concreteEventType)
+    public void AddDerived(InvokersHolder holder, Type concreteEventType)
     {
-        Debug.Assert(typeof(TEvent).IsAssignableFrom(concreteEventType));
+        Debug.Assert(GetType().GenericTypeArguments[0].IsAssignableFrom(concreteEventType));
         Debug.Assert(holder.GetType().GenericTypeArguments[0] == concreteEventType);
         ArrayUtils.ConcurrentAdd(ref derivedHolders, ref derivedHoldersCount, new(holder));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public sealed override void AddTo(InvokersHolderManager holderManager, Type concreteEventType)
+    public void AddTo(InvokersHolderManager holderManager, Type concreteEventType)
     {
         Debug.Assert(holderManager.GetType().GenericTypeArguments[0] == concreteEventType);
-        Debug.Assert(typeof(TEvent).IsAssignableFrom(holderManager.GetType().GenericTypeArguments[0]));
+        Debug.Assert(GetType().GenericTypeArguments[0].IsAssignableFrom(holderManager.GetType().GenericTypeArguments[0]));
         ArrayUtils.ConcurrentAddRange(ref holderManager.derivedHolders, ref holderManager.derivedHoldersCount, holders, holdersCount);
     }
 
+    public void Remove(InvokersHolder holder)
+    {
+        InvariantObject[]? holders_ = holders;
+        Debug.Assert(holders_ is not null);
+        int holdersCount_ = holdersCount;
+        ref InvariantObject start = ref Utils.GetArrayDataReference(holders_);
+        ref InvariantObject current = ref start;
+        ref InvariantObject end = ref Unsafe.Add(ref current, holdersCount_);
+        while (Unsafe.IsAddressLessThan(ref current, ref end))
+        {
+            if (ReferenceEquals(current.Value, holder))
+            {
+                end = ref Unsafe.Subtract(ref end, 1);
+                current = end;
+                end = new(null!);
+                holdersCount = holdersCount_ - 1;
+                break;
+            }
+            current = ref Unsafe.Add(ref current, 1);
+        }
+    }
+
+    public void RemoveRemovedDerived()
+    {
+        InvariantObject[]? derivedHolders_ = derivedHolders;
+        Debug.Assert(derivedHolders_ is not null);
+        int derivedHoldersCount_ = derivedHoldersCount;
+        ref InvariantObject start = ref Utils.GetArrayDataReference(derivedHolders_);
+        ref InvariantObject current = ref start;
+        ref InvariantObject end = ref Unsafe.Add(ref current, derivedHoldersCount_);
+        while (Unsafe.IsAddressLessThan(ref current, ref end))
+        {
+            if (Utils.ExpectAssignableType<InvokersHolder>(current.Value).WasRemoved())
+            {
+                end = ref Unsafe.Subtract(ref end, 1);
+                current = end;
+                end = new(null!);
+#if DEBUG
+                derivedHoldersCount_--;
+#endif
+            }
+            current = ref Unsafe.Add(ref current, 1);
+        }
+        unsafe
+        {
+            derivedHoldersCount = (int)((new IntPtr(Unsafe.AsPointer(ref end)).ToInt64() - new IntPtr(Unsafe.AsPointer(ref start)).ToInt64()) / Unsafe.SizeOf<InvariantObject>());
+#if DEBUG
+            Debug.Assert(derivedHoldersCount == derivedHoldersCount_);
+#endif
+        }
+    }
+}
+
+internal class InvokersHolderManager<TEvent> : InvokersHolderManager
+{
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RaiseHierarchy(TEvent? argument, EventManager eventManager)
     {
@@ -181,58 +225,6 @@ internal class InvokersHolderManager<TEvent> : InvokersHolderManager
                 }
                 ArrayUtils.ReturnArray(slices, holdersCount_);
             }
-        }
-    }
-
-    public override void Remove(InvokersHolder holder)
-    {
-        InvariantObject[]? holders_ = holders;
-        Debug.Assert(holders_ is not null);
-        int holdersCount_ = holdersCount;
-        ref InvariantObject start = ref Utils.GetArrayDataReference(holders_);
-        ref InvariantObject current = ref start;
-        ref InvariantObject end = ref Unsafe.Add(ref current, holdersCount_);
-        while (Unsafe.IsAddressLessThan(ref current, ref end))
-        {
-            if (ReferenceEquals(current.Value, holder))
-            {
-                end = ref Unsafe.Subtract(ref end, 1);
-                current = end;
-                end = new(null!);
-                holdersCount = holdersCount_ - 1;
-                break;
-            }
-            current = ref Unsafe.Add(ref current, 1);
-        }
-    }
-
-    public override void RemoveRemovedDerived()
-    {
-        InvariantObject[]? derivedHolders_ = derivedHolders;
-        Debug.Assert(derivedHolders_ is not null);
-        int derivedHoldersCount_ = derivedHoldersCount;
-        ref InvariantObject start = ref Utils.GetArrayDataReference(derivedHolders_);
-        ref InvariantObject current = ref start;
-        ref InvariantObject end = ref Unsafe.Add(ref current, derivedHoldersCount_);
-        while (Unsafe.IsAddressLessThan(ref current, ref end))
-        {
-            if (Utils.ExpectAssignableType<InvokersHolder>(current.Value).WasRemoved())
-            {
-                end = ref Unsafe.Subtract(ref end, 1);
-                current = end;
-                end = new(null!);
-#if DEBUG
-                derivedHoldersCount_--;
-#endif
-            }
-            current = ref Unsafe.Add(ref current, 1);
-        }
-        unsafe
-        {
-            derivedHoldersCount = (int)((new IntPtr(Unsafe.AsPointer(ref end)).ToInt64() - new IntPtr(Unsafe.AsPointer(ref start)).ToInt64()) / Unsafe.SizeOf<InvariantObject>());
-#if DEBUG
-            Debug.Assert(derivedHoldersCount == derivedHoldersCount_);
-#endif
         }
     }
 }

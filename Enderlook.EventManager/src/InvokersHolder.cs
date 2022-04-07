@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager;
@@ -8,13 +9,11 @@ internal abstract class InvokersHolder
 {
     public abstract void Purge();
 
-    public abstract bool RemoveIfEmpty();
+    public abstract bool RemoveIfEmpty([NotNullWhen(true)] out Type? eventType, [NotNullWhen(true)] out Type? holderType);
 
     public abstract bool WasRemoved();
 
     public abstract Slice GetCallbacks();
-
-    public abstract Type GetEventType();
 
     public abstract void Dispose();
 
@@ -24,8 +23,6 @@ internal abstract class InvokersHolder
 internal abstract class InvokersHolder<TEvent> : InvokersHolder
 {
     public abstract void Raise(Slice slice, TEvent argument);
-
-    public override sealed Type GetEventType() => typeof(TEvent);
 }
 
 internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : InvokersHolder<TEvent>
@@ -87,15 +84,23 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
         callbacks = array;
     }
 
-    public override bool RemoveIfEmpty()
+    public override bool RemoveIfEmpty([NotNullWhen(true)] out Type? eventType, [NotNullWhen(true)] out Type? holderType)
     {
         if (count == 0)
         {
             TCallback[]? array = callbacks;
             Debug.Assert(array is not null);
             ArrayUtils.ReturnArray(array);
+            eventType = typeof(TEvent);
+            holderType = typeof(InvokersHolder<TEvent, TCallbackHelper, TCallback>);
             return true;
         }
+#if NET5_0_OR_GREATER
+        Unsafe.SkipInit(out eventType);
+        Unsafe.SkipInit(out holderType);
+#else
+        eventType = holderType = null;
+#endif
         return false;
     }
 
