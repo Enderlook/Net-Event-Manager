@@ -5,6 +5,7 @@
 - Increase perfomance on weak handles.
 - Increase constant propagation of certain branches.
 - Improve perfomance by avoiding covariance checks in arrays and reusing pool of arrays.
+- Improve perfomance by replacing some virtual calls with direct calls or merging multiple virtual calls into a single one.
 - Use `DependentHandle` instead of `GCHandle` were possible on .NET 6 builds.
 - Add timer to auto purger in .NET >= 5 taking into account memory pressure.
 - Improve auto purger cancellation capability.
