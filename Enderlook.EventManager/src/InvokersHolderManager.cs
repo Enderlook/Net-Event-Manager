@@ -4,27 +4,39 @@ using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager;
 
-internal abstract class InvokersHolderManager
+internal sealed class InvokersHolderManager
 {
+#if DEBUG
+    private readonly Type eventType;
+#endif
+
     // Element types are InvokersHolder<TEvent>.
-    protected InvariantObject[]? holders = ArrayUtils.InitialArray<InvariantObject>();
-    protected int holdersCount;
+    private InvariantObject[]? holders = ArrayUtils.InitialArray<InvariantObject>();
+    private int holdersCount;
 
     // Element types are InvokersHolder<T> where typeof(T).IsAssignableFrom(TEvent)
-    internal InvariantObject[]? derivedHolders = ArrayUtils.EmptyArray<InvariantObject>();
-    internal int derivedHoldersCount;
+    private InvariantObject[]? derivedHolders = ArrayUtils.EmptyArray<InvariantObject>();
+    private int derivedHoldersCount;
+
+#if DEBUG
+    public InvokersHolderManager(Type eventType) => this.eventType = eventType;
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Add(InvokersHolder holder)
     {
-        Debug.Assert(GetType().GenericTypeArguments[0] == holder.GetType().GenericTypeArguments[0]);
+#if DEBUG
+        Debug.Assert(eventType == holder.GetType().GenericTypeArguments[0]);
+#endif
         ArrayUtils.ConcurrentAdd(ref holders, ref holdersCount, new(holder));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddDerived(InvokersHolder holder, Type concreteEventType)
     {
-        Debug.Assert(GetType().GenericTypeArguments[0].IsAssignableFrom(concreteEventType));
+#if DEBUG
+        Debug.Assert(eventType.IsAssignableFrom(concreteEventType));
+#endif
         Debug.Assert(holder.GetType().GenericTypeArguments[0] == concreteEventType);
         ArrayUtils.ConcurrentAdd(ref derivedHolders, ref derivedHoldersCount, new(holder));
     }
@@ -33,7 +45,9 @@ internal abstract class InvokersHolderManager
     public void AddTo(InvokersHolderManager holderManager, Type concreteEventType)
     {
         Debug.Assert(holderManager.GetType().GenericTypeArguments[0] == concreteEventType);
-        Debug.Assert(GetType().GenericTypeArguments[0].IsAssignableFrom(holderManager.GetType().GenericTypeArguments[0]));
+#if DEBUG
+        Debug.Assert(eventType.IsAssignableFrom(holderManager.GetType().GenericTypeArguments[0]));
+#endif
         ArrayUtils.ConcurrentAddRange(ref holderManager.derivedHolders, ref holderManager.derivedHoldersCount, holders, holdersCount);
     }
 
@@ -88,78 +102,26 @@ internal abstract class InvokersHolderManager
 #endif
         }
     }
-}
 
-internal class InvokersHolderManager<TEvent> : InvokersHolderManager
-{
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void RaiseHierarchy(TEvent? argument, EventManager eventManager)
+    public void RaiseHierarchy<TEvent>(TEvent? argument, EventManager eventManager)
     {
+#if DEBUG
+        Debug.Assert(typeof(TEvent) == eventType);
+#endif
         InvariantObject[] takenHolders = Utils.Take(ref holders);
         InvariantObject[] takenDerivedHolders = Utils.Take(ref derivedHolders);
         {
             int holdersCount_ = holdersCount;
             int derivedHoldersCount_ = derivedHoldersCount;
 
-            SliceOfCallbacks[]? slices;
-            if (holdersCount_ > 0)
-            {
-                slices = ArrayUtils.RentArray<SliceOfCallbacks>(holdersCount_);
-                ref InvariantObject currentHolder = ref Utils.GetArrayDataReference(takenHolders);
-                ref InvariantObject endHolder = ref Unsafe.Add(ref currentHolder, holdersCount_);
-                ref SliceOfCallbacks sliceCurrent = ref Utils.GetArrayDataReference(slices);
-
-                while (Unsafe.IsAddressLessThan(ref currentHolder, ref endHolder))
-                {
-                    InvokersHolder? holder = Utils.ExpectAssignableType<InvokersHolder>(currentHolder.Value);
-                    Slice callbacks = holder.GetCallbacks();
-                    sliceCurrent = new(holder, callbacks);
-
-                    currentHolder = ref Unsafe.Add(ref currentHolder, 1);
-                    sliceCurrent = ref Unsafe.Add(ref sliceCurrent, 1);
-                }
-            }
-            else
-                slices = null;
-            Utils.Untake(ref holders, takenHolders);
-
-            SliceOfCallbacks[]? derivedSlicers;
-            if (derivedHoldersCount_ > 0)
-            {
-                derivedSlicers = ArrayUtils.RentArray<SliceOfCallbacks>(derivedHoldersCount_);
-                ref InvariantObject currentHolder = ref Utils.GetArrayDataReference(takenDerivedHolders);
-                ref InvariantObject endHolder = ref Unsafe.Add(ref currentHolder, holdersCount_);
-                ref SliceOfCallbacks sliceCurrent = ref Utils.GetArrayDataReference(derivedSlicers);
-
-                while (Unsafe.IsAddressLessThan(ref currentHolder, ref endHolder))
-                {
-                    InvokersHolder? holder = Utils.ExpectAssignableType<InvokersHolder>(currentHolder.Value);
-                    Slice callbacks = holder.GetCallbacks();
-                    sliceCurrent = new(holder, callbacks);
-
-                    currentHolder = ref Unsafe.Add(ref currentHolder, 1);
-                    sliceCurrent = ref Unsafe.Add(ref sliceCurrent, 1);
-                }
-            }
-            else
-                derivedSlicers = null;
-            Utils.Untake(ref derivedHolders, takenDerivedHolders);
+            SliceOfCallbacks[]? slices = GetSlice(takenHolders, holdersCount_, ref holders);
+            SliceOfCallbacks[]? derivedSlicers = GetSlice(takenDerivedHolders, derivedHoldersCount_, ref derivedHolders);
 
             eventManager.InHolderEnd();
 
-            if (holdersCount_ > 0)
-            {
-                Debug.Assert(slices is not null);
-                ref SliceOfCallbacks currentSlice = ref Utils.GetArrayDataReference(slices);
-                ref SliceOfCallbacks endSlice = ref Unsafe.Add(ref currentSlice, holdersCount_);
-
-                while (Unsafe.IsAddressLessThan(ref currentSlice, ref endSlice))
-                {
-                    currentSlice.Raise(argument);
-                    currentSlice = ref Unsafe.Add(ref currentSlice, 1);
-                }
-                ArrayUtils.ReturnArray(slices, holdersCount_);
-            }
+            RunExactSlice(argument, holdersCount_, slices);
 
             if (derivedHoldersCount_ > 0)
             {
@@ -182,49 +144,72 @@ internal class InvokersHolderManager<TEvent> : InvokersHolderManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void RaiseExactly(TEvent? argument, EventManager eventManager)
+    public void RaiseExactly<TEvent>(TEvent? argument, EventManager eventManager)
     {
+#if DEBUG
+        Debug.Assert(typeof(TEvent) == eventType);
+#endif
         InvariantObject[] takenHolders = Utils.Take(ref holders);
         {
             int holdersCount_ = holdersCount;
 
-            SliceOfCallbacks[]? slices;
-            if (holdersCount_ > 0)
-            {
-                slices = ArrayUtils.RentArray<SliceOfCallbacks>(holdersCount_);
-                ref InvariantObject currentHolder = ref Utils.GetArrayDataReference(takenHolders);
-                ref InvariantObject endHolder = ref Unsafe.Add(ref currentHolder, holdersCount_);
-                ref SliceOfCallbacks sliceCurrent = ref Utils.GetArrayDataReference(slices);
-
-                while (Unsafe.IsAddressLessThan(ref currentHolder, ref endHolder))
-                {
-                    InvokersHolder? holder = Utils.ExpectAssignableType<InvokersHolder>(currentHolder.Value);
-                    Slice callbacks = holder.GetCallbacks();
-                    sliceCurrent = new(holder, callbacks);
-
-                    currentHolder = ref Unsafe.Add(ref currentHolder, 1);
-                    sliceCurrent = ref Unsafe.Add(ref sliceCurrent, 1);
-                }
-            }
-            else
-                slices = null;
-            Utils.Untake(ref holders, takenHolders);
+            SliceOfCallbacks[]? slices = GetSlice(takenHolders, holdersCount_, ref holders);
 
             eventManager.InHolderEnd();
 
-            if (holdersCount_ > 0)
-            {
-                Debug.Assert(slices is not null);
-                ref SliceOfCallbacks currentSlice = ref Utils.GetArrayDataReference(slices);
-                ref SliceOfCallbacks endSlice = ref Unsafe.Add(ref currentSlice, holdersCount_);
+            RunExactSlice(argument, holdersCount_, slices);
+        }
+    }
 
-                while (Unsafe.IsAddressLessThan(ref currentSlice, ref endSlice))
-                {
-                    currentSlice.Raise(argument);
-                    currentSlice = ref Unsafe.Add(ref currentSlice, 1);
-                }
-                ArrayUtils.ReturnArray(slices, holdersCount_);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private
+#if !DEBUG
+        static
+#endif
+        void RunExactSlice<TEvent>(TEvent? argument, int count, SliceOfCallbacks[]? slices)
+    {
+#if DEBUG
+        Debug.Assert(typeof(TEvent) == eventType);
+#endif
+        if (count > 0)
+        {
+            Debug.Assert(slices is not null);
+            ref SliceOfCallbacks currentSlice = ref Utils.GetArrayDataReference(slices);
+            ref SliceOfCallbacks endSlice = ref Unsafe.Add(ref currentSlice, count);
+
+            while (Unsafe.IsAddressLessThan(ref currentSlice, ref endSlice))
+            {
+                currentSlice.Raise(argument);
+                currentSlice = ref Unsafe.Add(ref currentSlice, 1);
+            }
+            ArrayUtils.ReturnArray(slices, count);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static SliceOfCallbacks[]? GetSlice(InvariantObject[] takenHolders, int count, ref InvariantObject[]? holders)
+    {
+        SliceOfCallbacks[]? slices;
+        if (count > 0)
+        {
+            slices = ArrayUtils.RentArray<SliceOfCallbacks>(count);
+            ref InvariantObject currentHolder = ref Utils.GetArrayDataReference(takenHolders);
+            ref InvariantObject endHolder = ref Unsafe.Add(ref currentHolder, count);
+            ref SliceOfCallbacks sliceCurrent = ref Utils.GetArrayDataReference(slices);
+
+            while (Unsafe.IsAddressLessThan(ref currentHolder, ref endHolder))
+            {
+                InvokersHolder? holder = Utils.ExpectAssignableType<InvokersHolder>(currentHolder.Value);
+                Slice callbacks = holder.GetCallbacks();
+                sliceCurrent = new(holder, callbacks);
+
+                currentHolder = ref Unsafe.Add(ref currentHolder, 1);
+                sliceCurrent = ref Unsafe.Add(ref sliceCurrent, 1);
             }
         }
+        else
+            slices = null;
+        Utils.Untake(ref holders, takenHolders);
+        return slices;
     }
 }

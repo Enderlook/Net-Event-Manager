@@ -62,8 +62,7 @@ public sealed partial class EventManager : IDisposable
             if (managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? manager))
             {
                 FromReadToInHolder();
-                InvokersHolderManager<TEvent> manager_ = Utils.ExpectExactType<InvokersHolderManager<TEvent>>(manager);
-                manager_.RaiseHierarchy(argument, this);
+                manager.RaiseHierarchy(argument, this);
             }
             else
                 ReadEnd();
@@ -84,8 +83,7 @@ public sealed partial class EventManager : IDisposable
             if (managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? manager))
             {
                 FromReadToInHolder();
-                InvokersHolderManager<TEvent> manager_ = Utils.ExpectExactType<InvokersHolderManager<TEvent>>(manager);
-                manager_.RaiseExactly(argument, this);
+                manager.RaiseExactly(argument, this);
             }
             else
                 ReadEnd();
@@ -172,17 +170,20 @@ public sealed partial class EventManager : IDisposable
                     ArrayUtils.Add(ref holders, ref holdersCount, new(holder_));
 
                     if (!managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? packHolder))
-                        managersPerType.Add(typeof(TEvent), packHolder = new InvokersHolderManager<TEvent>());
+                        managersPerType.Add(typeof(TEvent), packHolder = new InvokersHolderManager(
+#if DEBUG
+                            typeof(TEvent)
+#endif
+                            ));
 
-                    InvokersHolderManager<TEvent> invokersHolderManager = Utils.ExpectExactType<InvokersHolderManager<TEvent>>(packHolder);
-                    invokersHolderManager.Add(holder_);
+                    packHolder.Add(holder_);
 
                     foreach (KeyValuePair<Type, InvokersHolderManager> kv in managersPerType)
                     {
                         if (kv.Key.IsAssignableFrom(typeof(TEvent)) && kv.Key != typeof(TEvent))
                             kv.Value.AddDerived(holder_, typeof(TEvent));
                         else if (typeof(TEvent).IsAssignableFrom(kv.Key) && kv.Key != typeof(TEvent))
-                            invokersHolderManager.AddTo(kv.Value, kv.Key);
+                            packHolder.AddTo(kv.Value, kv.Key);
                     }
                 }
             }
