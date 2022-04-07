@@ -11,7 +11,7 @@ internal abstract class InvokersHolderManager
     protected int holdersCount;
 
     // Element types are InvokersHolder<T> where typeof(T).IsAssignableFrom(TEvent).
-    internal InvariantObject[]? derivedHolders = ArrayUtils.EmptyArray<InvariantObject>();
+    internal InvariantObject[] derivedHolders = ArrayUtils.EmptyArray<InvariantObject>();
     internal int derivedHoldersCount;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -26,7 +26,12 @@ internal abstract class InvokersHolderManager
     {
         Debug.Assert(GetType().GenericTypeArguments[0].IsAssignableFrom(concreteEventType));
         Debug.Assert(holder.GetType().GenericTypeArguments[0] == concreteEventType);
-        ArrayUtils.ConcurrentAdd(ref derivedHolders, ref derivedHoldersCount, new(holder));
+        // This lock is required to prevent a data invalidation in the Raise methods.
+        InvariantObject[] @lock = Utils.Take(ref holders);
+        {
+            ArrayUtils.Add(ref derivedHolders, ref derivedHoldersCount, new(holder));
+        }
+        Utils.Untake(ref holders, @lock);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -34,7 +39,16 @@ internal abstract class InvokersHolderManager
     {
         Debug.Assert(holderManager.GetType().GenericTypeArguments[0] == concreteEventType);
         Debug.Assert(GetType().GenericTypeArguments[0].IsAssignableFrom(holderManager.GetType().GenericTypeArguments[0]));
-        ArrayUtils.ConcurrentAddRange(ref holderManager.derivedHolders, ref holderManager.derivedHoldersCount, holders, holdersCount);
+        // This lock is required to prevent a data invalidation in the Raise methods.
+        InvariantObject[] holders_ = Utils.Take(ref holders);
+        {
+            InvariantObject[] @lock = Utils.Take(ref holderManager.holders);
+            {
+                ArrayUtils.AddRange(ref holderManager.derivedHolders, ref holderManager.derivedHoldersCount, holders_, holdersCount);
+            }
+            Utils.Untake(ref holderManager.holders, @lock);
+        }
+        Utils.Untake(ref holders, holders_);
     }
 
     public abstract void DynamicRaiseExactly<TBaseEvent>(TBaseEvent? argument, EventManager eventManager);
@@ -94,13 +108,13 @@ internal abstract class InvokersHolderManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static SliceOfCallbacks[]? GetSlices(InvariantObject[] takenHolders, int count, ref InvariantObject[]? holders)
+    protected static SliceOfCallbacks[]? GetSlices(InvariantObject[] holders, int count)
     {
         SliceOfCallbacks[]? slices;
         if (count > 0)
         {
             slices = ArrayUtils.RentArray<SliceOfCallbacks>(count);
-            ref InvariantObject currentHolder = ref Utils.GetArrayDataReference(takenHolders);
+            ref InvariantObject currentHolder = ref Utils.GetArrayDataReference(holders);
             ref InvariantObject endHolder = ref Unsafe.Add(ref currentHolder, count);
             ref SliceOfCallbacks sliceCurrent = ref Utils.GetArrayDataReference(slices);
 
@@ -116,7 +130,6 @@ internal abstract class InvokersHolderManager
         }
         else
             slices = null;
-        Utils.Untake(ref holders, takenHolders);
         return slices;
     }
 }
@@ -132,7 +145,8 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
         {
             int holdersCount_ = holdersCount;
 
-            SliceOfCallbacks[]? slices = GetSlices(takenHolders, holdersCount_, ref holders);
+            SliceOfCallbacks[]? slices = GetSlices(takenHolders, holdersCount_);
+            Utils.Untake(ref holders, takenHolders);
 
             eventManager.InHolderEnd();
 
@@ -158,13 +172,13 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
         Debug.Assert(typeof(TEvent) == (argument?.GetType() ?? typeof(TBaseEvent)));
 
         InvariantObject[] takenHolders = Utils.Take(ref holders);
-        InvariantObject[] takenDerivedHolders = Utils.Take(ref derivedHolders);
         {
             int holdersCount_ = holdersCount;
             int derivedHoldersCount_ = derivedHoldersCount;
 
-            SliceOfCallbacks[]? slices = GetSlices(takenHolders, holdersCount_, ref holders);
-            SliceOfCallbacks[]? derivedSlicers = GetSlices(takenDerivedHolders, derivedHoldersCount_, ref derivedHolders);
+            SliceOfCallbacks[]? derivedSlicers = GetSlices(derivedHolders, derivedHoldersCount_);
+            SliceOfCallbacks[]? slices = GetSlices(takenHolders, holdersCount_);
+            Utils.Untake(ref holders, takenHolders);
 
             eventManager.InHolderEnd();
 
@@ -199,7 +213,8 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
         {
             int holdersCount_ = holdersCount;
 
-            SliceOfCallbacks[]? slices = GetSlices(takenHolders, holdersCount_, ref holders);
+            SliceOfCallbacks[]? slices = GetSlices(takenHolders, holdersCount_);
+            Utils.Untake(ref holders, takenHolders);
 
             eventManager.InHolderEnd();
 
@@ -212,13 +227,13 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
     public void StaticRaiseHierarchy(TEvent? argument, EventManager eventManager)
     {
         InvariantObject[] takenHolders = Utils.Take(ref holders);
-        InvariantObject[] takenDerivedHolders = Utils.Take(ref derivedHolders);
         {
             int holdersCount_ = holdersCount;
             int derivedHoldersCount_ = derivedHoldersCount;
 
-            SliceOfCallbacks[]? slices = GetSlices(takenHolders, holdersCount_, ref holders);
-            SliceOfCallbacks[]? derivedSlicers = GetSlices(takenDerivedHolders, derivedHoldersCount_, ref derivedHolders);
+            SliceOfCallbacks[]? derivedSlicers = GetSlices(derivedHolders, derivedHoldersCount_);
+            SliceOfCallbacks[]? slices = GetSlices(takenHolders, holdersCount_);
+            Utils.Untake(ref holders, takenHolders);
 
             eventManager.InHolderEnd();
 
