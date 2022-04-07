@@ -20,13 +20,19 @@ public sealed partial class EventManager : IDisposable
 -   public static void Raise<TEvent>(TEvent argument);
 +   public static void RaiseExactly<TEvent>(TEvent argument);
 
-+   /// Raises event of type TEvent, all its base types and implemented interfaces.
++   /// Raises event of type `typeof(TEvent)`, all its base types and implemented interfaces.
 +   public static void RaiseHierarchy<TEvent>(TEvent argument);
 
-+   /// Does RaiseExactly<TEvent>(new TEvent())
++   /// Raises event of type `argument.GetType()`, or `typeof(TEvent)` if `argument is null`.
++   public static void DynamicRaiseExactly<TEvent>(TEvent argument);
+
++   /// Raises event of type `typeof(TEvent)`, all its base types and implemented interfaces.
++   public static void DynamicRaiseHierarchy<TEvent>(TEvent argument);
+
++   /// Does `RaiseExactly<TEvent>(new TEvent())`
 +   public void RaiseExactly<TEvent>() where TEvent : new();
 
-+   /// Does RaiseHierarchy<TEvent>(new TEvent())
++   /// Does `RaiseHierarchy<TEvent>(new TEvent())`
 +   public void RaiseHierarchy<TEvent>() where TEvent : new();
 
 +   /// Unsubscribes all actions.

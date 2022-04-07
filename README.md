@@ -6,6 +6,7 @@ A type safe event manager library for .NET.
 Due the use of generic, this event manager doesn't suffer for boxing and unboxing of value types nor for casting errors of the consumers.
 Additionaly, closures of delegates can be stored apart in order to reuse the delegate and reduce allocations.
 Also, it support and respect inheritance of event types which can be used to categorize events by hierarchy. For example, if you raise an event of type `ConcreteEvent`, both delegates subscribed to `ConcreteEvent` **and** `BaseEvent` are run (and `IEvent` if it does implement it). For receiving **all** events, subscribe to `Object`.
+Even more, it support raising event dynamically when the type is not know at compile-time.
 Finally, it has support for weak-refence listeners.
 
 The following example show some of the functions of the event manager:
@@ -138,17 +139,23 @@ public sealed class EventManager : IDisposable
     public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
     public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
     
-    /// Raise the specified event to delegates of that event type.
+    /// Raise the specified event to delegates of the event type `typeof(TEvent)`.
     public void RaiseExactly<TEvent>(TEvent eventArgument);
 
-	/// Equivalent to RaiseExactly<TEvent>(new TEvent()).
+	/// Equivalent to `RaiseExactly<TEvent>(new TEvent())`.
     public void RaiseExactly<TEvent>() where TEvent : new();
 
-	/// Raise the specified event to delegates of that event type and all types assignables to it (i.e: its type hierarchy including interfaces).
+	/// Raise the specified event to delegates of the event type `typeof(TEvent)` and all types assignables to it (i.e: its type hierarchy including interfaces).
     public void RaiseHierarchy<TEvent>(TEvent eventArgument);
 
-	/// Equivalent to RaiseHierarchy<TEvent>(new TEvent()).
+	/// Equivalent to `RaiseHierarchy<TEvent>(new TEvent())`.
     public void RaiseHierarchy<TEvent>() where TEvent : new();
+
+	/// Raise the specified event to delegates of event type `eventArgument.GetType()` or `typeof(TEvent)` if `eventArgument is null`.
+    public void DynamicRaiseExactly<TEvent>(TEvent eventArgument);
+	
+	/// Raise the specified event to delegates of the event type `eventArgument.GetType()` or `typeof(TEvent)` if `eventARgument is null` and all types assignables to it (i.e: its type hierarchy including interfaces).
+    public void DynamicRaiseHierarchy<TEvent>(TEvent eventArgument);
     
     /// Dispose the underlying content of this event manager.
     public void Dispose();
