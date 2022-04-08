@@ -24,7 +24,7 @@ internal abstract class InvokersHolderManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddDerived(InvokersHolder holder, Type concreteEventType)
     {
-        Debug.Assert(GetType().GenericTypeArguments[0].IsAssignableFrom(concreteEventType));
+        Debug.Assert(concreteEventType.IsAssignableFrom(GetType().GenericTypeArguments[0]));
         Debug.Assert(holder.GetType().GenericTypeArguments[0] == concreteEventType);
         // This lock is required to prevent a data invalidation in the Raise methods.
         InvariantObject[] @lock = Utils.Take(ref holders);
