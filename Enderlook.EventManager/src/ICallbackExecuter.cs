@@ -162,13 +162,12 @@ internal static class CallbackExecuterHelper
         {
             if (callbacks_[i].FreeIfIsCollected())
             {
-                while (true)
+                do
                 {
                     if (--count_ == i)
                         goto end;
-                    if (!callbacks_[count_].FreeIfIsCollected())
-                        break;
                 }
+                while (callbacks_[count_].FreeIfIsCollected());
                 callbacks_[i] = callbacks_[count_ + 1];
             }
         }
