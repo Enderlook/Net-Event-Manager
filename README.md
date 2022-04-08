@@ -142,13 +142,13 @@ public sealed class EventManager : IDisposable
     /// Raise the specified event to delegates of the event type `typeof(TEvent)`.
     public void RaiseExactly<TEvent>(TEvent eventArgument);
 
-	/// Equivalent to `RaiseExactly<TEvent>(new TEvent())`.
+	/// Raises event of type `typeof(TEvent)` with a new instance of `TEvent` using its parameterless constructor.
     public void RaiseExactly<TEvent>() where TEvent : new();
 
 	/// Raise the specified event to delegates of the event type `typeof(TEvent)` and all types assignables to it (i.e: its type hierarchy including interfaces).
     public void RaiseHierarchy<TEvent>(TEvent eventArgument);
 
-	/// Equivalent to `RaiseHierarchy<TEvent>(new TEvent())`.
+	/// Raises event of type `typeof(TEvent)`, all its base types and implemented interfaces with a new instance of `TEvent` using its parameterless constructor.
     public void RaiseHierarchy<TEvent>() where TEvent : new();
 
 	/// Raise the specified event to delegates of event type `eventArgument.GetType()` or `typeof(TEvent)` if `eventArgument is null`.

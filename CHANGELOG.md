@@ -29,10 +29,10 @@ public sealed partial class EventManager : IDisposable
 +   /// Raises event of type `typeof(TEvent)`, all its base types and implemented interfaces.
 +   public static void DynamicRaiseHierarchy<TEvent>(TEvent argument);
 
-+   /// Does `RaiseExactly<TEvent>(new TEvent())`
++   /// Raises event of type `typeof(TEvent)` with a new instance of `TEvent` using its parameterless constructor.
 +   public void RaiseExactly<TEvent>() where TEvent : new();
 
-+   /// Does `RaiseHierarchy<TEvent>(new TEvent())`
++   /// Raises event of type `typeof(TEvent)`, all its base types and implemented interfaces with a new instance of `TEvent` using its parameterless constructor.
 +   public void RaiseHierarchy<TEvent>() where TEvent : new();
 
 +   /// Unsubscribes all actions.

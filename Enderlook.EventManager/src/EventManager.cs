@@ -155,22 +155,48 @@ public sealed partial class EventManager : IDisposable
     }
 
     /// <summary>
-    /// This is equivalent to <c><see cref="RaiseExactly{TEvent}(TEvent)"/></c> passing a <c><see langword="new"/> <typeparamref name="TEvent"/>()</c> instance as argument.
+    /// This is equivalent to <c><see cref="RaiseExactly{TEvent}(TEvent)"/></c> passing a <c><see langword="new"/> <typeparamref name="TEvent"/>()</c> instance as argument.<br/>
+    /// Although, argument is only instantiated if there are subscribed delegates for that type.
     /// </summary>
     /// <typeparam name="TEvent">Type of the event.</typeparam>
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RaiseExactly<TEvent>() where TEvent : new()
-        => RaiseExactly(new TEvent());
+    {
+        ReadBegin();
+        {
+            if (managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? manager))
+            {
+                FromReadToInHolder();
+                InvokersHolderManager<TEvent> manager_ = Utils.ExpectExactType<InvokersHolderManager<TEvent>>(manager);
+                manager_.StaticRaiseExactly(new TEvent(), this);
+            }
+            else
+                ReadEnd();
+        }
+    }
 
     /// <summary>
-    /// This is equivalent to <c><see cref="RaiseHierarchy{TEvent}(TEvent)"/></c> passing a <c><see langword="new"/> <typeparamref name="TEvent"/>()</c> instance as argument.
+    /// This is equivalent to <c><see cref="RaiseHierarchy{TEvent}(TEvent)"/></c> passing a <c><see langword="new"/> <typeparamref name="TEvent"/>()</c> instance as argument.<br/>
+    /// Although, argument is only instantiated if there are subscribed delegates for that type.
     /// </summary>
     /// <typeparam name="TEvent">Type of the event.</typeparam>
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RaiseHierarchy<TEvent>() where TEvent : new()
-        => RaiseHierarchy(new TEvent());
+    {
+        ReadBegin();
+        {
+            if (managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? manager))
+            {
+                FromReadToInHolder();
+                InvokersHolderManager<TEvent> manager_ = Utils.ExpectExactType<InvokersHolderManager<TEvent>>(manager);
+                manager_.StaticRaiseHierarchy(new TEvent(), this);
+            }
+            else
+                ReadEnd();
+        }
+    }
 
     internal void Unsubscribe<TEvent, TCallbackHelper, TPredicator, TCallback>(TPredicator predicator)
         where TCallbackHelper : struct, ICallbackExecuter<TEvent, TCallback>
