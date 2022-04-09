@@ -6,8 +6,6 @@ namespace Enderlook.EventManager;
 
 public sealed partial class EventManager
 {
-    private Action<int>? resetAction;
-
     /// <summary>
     /// Unsubscribe all listeners.
     /// </summary>
@@ -21,31 +19,17 @@ public sealed partial class EventManager
             if (state == IS_DISPOSED_OR_DISPOSING)
                 ThrowObjectDisposedException();
 
-            int holdersCount = this.holdersCount;
-            if (holdersCount != 0)
+            Dictionary2<InvokersHolderTypeKey, InvokersHolder> holdersPerType_ = holdersPerType;
+            for (int i = 0; i < holdersPerType_.EndIndex; i++)
             {
-                InvariantObject[]? holders = this.holders;
-                Debug.Assert(holders is not null);
-
-                holdersPerType.Clear();
-                managersPerType.Clear();
-                purgingIndex = 0;
-                millisecondsTimeStamp = 0;
-
-                if (holdersCount == 1)
-                    Utils.ExpectAssignableType<InvokersHolder>(holders[0].Value).Dispose();
-                else
-                {
-                    Parallel.For(0, holdersCount, resetAction ??= i =>
-                    {
-                        InvariantObject[]? holders = this.holders;
-                        Debug.Assert(holders is not null);
-                        Utils.ExpectAssignableType<InvokersHolder>(holders[i].Value).Dispose();
-                    });
-                }
-
-                Array.Clear(holders, 0, holdersCount);
+                if (holdersPerType_.TryGetFromIndex(i, out InvokersHolder holder))
+                    holder.Dispose();
             }
+
+            purgePhase = PurgePhase_PurgeInvokersHolder;
+            purgeIndex = 0;
+            managersPerType.Dispose();
+            holdersPerType.Dispose();
         }
         WriteEnd();
     }

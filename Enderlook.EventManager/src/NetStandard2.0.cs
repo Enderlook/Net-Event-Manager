@@ -22,4 +22,12 @@ internal sealed class NotNullIfNotNullAttribute : Attribute
 
     public string ParameterName { get; }
 }
+
+[AttributeUsage(AttributeTargets.Parameter, Inherited = false)]
+internal sealed class MaybeNullWhenAttribute : Attribute
+{
+    public MaybeNullWhenAttribute(bool returnValue) => ReturnValue = returnValue;
+
+    public bool ReturnValue { get; }
+}
 #endif

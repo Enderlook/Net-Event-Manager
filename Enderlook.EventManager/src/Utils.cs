@@ -9,14 +9,24 @@ namespace Enderlook.EventManager;
 
 internal static class Utils
 {
-    [Conditional("DEBUG")]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void AssertDerived<TBase, TDerived>(object? argument)
+    public static MemoryPressure GetMemoryPressure()
     {
-        Debug.Assert(typeof(TBase).IsAssignableFrom(typeof(TDerived)));
-        // In .NET all value types inherits directly from a reference type, so the parent event can never be a value type.
-        Debug.Assert(!typeof(TBase).IsValueType);
-        Debug.Assert(argument is null || argument.GetType() == typeof(TDerived));
+#if NET5_0_OR_GREATER
+        const double HighPressureThreshold = .90; // Percent of GC memory pressure threshold we consider "high".
+        const double MediumPressureThreshold = .70; // Percent of GC memory pressure threshold we consider "medium".
+
+        GCMemoryInfo memoryInfo = GC.GetGCMemoryInfo();
+
+        if (memoryInfo.MemoryLoadBytes >= memoryInfo.HighMemoryLoadThresholdBytes * HighPressureThreshold)
+            return MemoryPressure.High;
+
+        if (memoryInfo.MemoryLoadBytes >= memoryInfo.HighMemoryLoadThresholdBytes * MediumPressureThreshold)
+            return MemoryPressure.Medium;
+
+        return MemoryPressure.Low;
+#else
+        return MemoryPressure.High;
+#endif
     }
 
     [return: NotNull]
@@ -155,5 +165,21 @@ internal static class Utils
 #else
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Null<T>() where T : struct => new();
+#endif
+
+#if NET5_0_OR_GREATER
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe static ref T NullRef<T>() => ref Unsafe.NullRef<T>();
+#else
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe static ref T NullRef<T>() => ref Unsafe.AsRef<T>(null);
+#endif
+
+#if NET5_0_OR_GREATER
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsNullRef<T>(ref T value) => Unsafe.IsNullRef(ref value);
+#else
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsNullRef<T>(ref T value) => Unsafe.AreSame(ref Utils.NullRef<T>(), ref value);
 #endif
 }

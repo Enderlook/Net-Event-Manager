@@ -10,7 +10,7 @@ internal interface ICallbackExecuter<TEvent, TCallback>
 
     bool IsOnce();
 
-    void Purge(ref TCallback[] callbacks, ref int count);
+    void Purge(TCallback[] callbacks, ref int count);
 
     void Dispose(TCallback[] callbacks, int count);
 }
@@ -50,8 +50,7 @@ internal struct StrongMultipleCallbackExecuter<TEvent, TCallback, TCallbackExecu
     public bool IsOnce() => false;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Purge(ref TCallback[] callbacks, ref int count)
-        => ArrayUtils.TryShrink(ref callbacks, count);
+    public void Purge(TCallback[] callbacks, ref int count) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose(TCallback[] callbacks, int count) { }
@@ -74,8 +73,8 @@ internal struct WeakMultipleCallbackExecuter<TEvent, TCallback, TCallbackExecute
     public bool IsOnce() => false;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Purge(ref TCallback[] callbacks, ref int count)
-        => CallbackExecuterHelper.Purge(ref callbacks, ref count);
+    public void Purge(TCallback[] callbacks, ref int count)
+        => CallbackExecuterHelper.Purge(callbacks, ref count);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose(TCallback[] callbacks, int count)
@@ -99,8 +98,7 @@ internal struct StrongOnceCallbackExecuter<TEvent, TCallback, TCallbackExecuter>
     public bool IsOnce() => true;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Purge(ref TCallback[] callbacks, ref int count)
-        => ArrayUtils.TryShrink(ref callbacks, count);
+    public void Purge(TCallback[] callbacks, ref int count) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose(TCallback[] callbacks, int count) { }
@@ -124,8 +122,8 @@ internal struct WeakOnceCallbackExecuter<TEvent, TCallback, TCallbackExecuter> :
     public bool IsOnce() => true;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Purge(ref TCallback[] callbacks, ref int count)
-        => CallbackExecuterHelper.Purge(ref callbacks, ref count);
+    public void Purge(TCallback[] callbacks, ref int count)
+        => CallbackExecuterHelper.Purge(callbacks, ref count);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose(TCallback[] callbacks, int count)
@@ -152,12 +150,11 @@ internal static class CallbackExecuterHelper
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool Purge<TCallback>(ref TCallback[] callbacks, ref int count)
+    public static void Purge<TCallback>(TCallback[] callbacks, ref int count)
         where TCallback : IWeak
     {
         TCallback[] callbacks_ = callbacks;
         int count_ = count;
-        int oldCount = count_;
         for (int i = 0; i < count_; i++)
         {
             if (callbacks_[i].FreeIfIsCollected())
@@ -173,19 +170,6 @@ internal static class CallbackExecuterHelper
         }
         end:
         count = count_;
-        if (count_ == 0)
-        {
-            ArrayUtils.ReturnArray(callbacks_, oldCount);
-            callbacks = ArrayUtils.EmptyArray<TCallback>();
-            return true;
-        }
-        else
-        {
-            if (!ArrayUtils.TryShrink(ref callbacks_, count_) && count_ != oldCount)
-                Array.Clear(callbacks_, count_, oldCount - count_);
-            callbacks = callbacks_;
-            return false;
-        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

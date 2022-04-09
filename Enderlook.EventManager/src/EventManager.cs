@@ -20,15 +20,11 @@ public sealed partial class EventManager : IDisposable
     private static Type[]? one;
 
     // Value type is actually InvokersHolder<TEvent, TInvoke>.
-    private Dictionary<InvokersHolderTypeKey, InvokersHolder> holdersPerType = new();
+    private Dictionary2<InvokersHolderTypeKey, InvokersHolder> holdersPerType = new();
 
     // Key type is TEvent.
     // Value type is InvokersHolderManager<TEvent>.
-    private Dictionary<Type, InvokersHolderManager> managersPerType = new();
-
-    // Elements type derives from InvokersHolder.
-    private InvariantObject[]? holders;
-    private int holdersCount;
+    private Dictionary2<Type, InvokersHolderManager> managersPerType = new();
 
     /// <summary>
     /// A shared instance of the event manager.
@@ -158,33 +154,36 @@ public sealed partial class EventManager : IDisposable
             InvokersHolder<TEvent, TCallbackHelper, TCallback> holder_;
             FromReadToWrite();
             {
-                if (holdersPerType.TryGetValue(new(typeof(TCallbackHelper), listenToAssignableEvents), out InvokersHolder? holder))
+                ref InvokersHolder holderSlot = ref holdersPerType.GetOrCreateValueSlot(new(typeof(TCallbackHelper), listenToAssignableEvents), out bool found);
+                if (found)
                 {
-                    holder_ = Utils.ExpectExactType<InvokersHolder<TEvent, TCallbackHelper, TCallback>>(holder);
+                    holder_ = Utils.ExpectExactType<InvokersHolder<TEvent, TCallbackHelper, TCallback>>(holderSlot);
                     goto exit;
                 }
                 else
                 {
                     holder_ = new(listenToAssignableEvents);
-                    holdersPerType.Add(new(typeof(TCallbackHelper), listenToAssignableEvents), holder_);
+                    holderSlot = holder_;
 
-                    if (holders is null)
+                    if (purgePhase == PurgePhase_FinalizerNotConfigured)
                     {
-                        holders = ArrayUtils.RentArray<InvariantObject>(1);
+                        purgePhase = PurgePhase_PurgeInvokersHolder;
                         AutoPurger _ = new(this);
                     }
-
-                    ArrayUtils.Add(ref holders, ref holdersCount, new(holder_));
 
                     if (!managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? manager))
                     {
                         manager = new InvokersHolderManager<TEvent>();
-                        foreach (KeyValuePair<Type, InvokersHolderManager> kv in managersPerType)
+                        if (managersPerType.Count > 0)
                         {
-                            if (kv.Key.IsAssignableFrom(typeof(TEvent)))
+                            int index = 0;
+                            while (managersPerType.MoveNext(ref index, out KeyValuePair<Type, InvokersHolderManager> kv))
                             {
-                                Debug.Assert(kv.Key != typeof(TEvent));
-                                kv.Value.AddTo(manager, typeof(TEvent));
+                                if (kv.Key.IsAssignableFrom(typeof(TEvent)))
+                                {
+                                    Debug.Assert(kv.Key != typeof(TEvent));
+                                    kv.Value.AddTo(manager, typeof(TEvent));
+                                }
                             }
                         }
                         managersPerType.Add(typeof(TEvent), manager);
@@ -192,9 +191,10 @@ public sealed partial class EventManager : IDisposable
 
                     manager.Add(holder_);
 
-                    if (listenToAssignableEvents)
+                    if (listenToAssignableEvents && managersPerType.Count > 0)
                     {
-                        foreach (KeyValuePair<Type, InvokersHolderManager> kv in managersPerType)
+                        int index = 0;
+                        while (managersPerType.MoveNext(ref index, out KeyValuePair<Type, InvokersHolderManager> kv))
                         {
                             if (typeof(TEvent).IsAssignableFrom(kv.Key) && kv.Key != typeof(TEvent))
                                 kv.Value.AddDerived(holder_, typeof(TEvent));
@@ -259,20 +259,27 @@ public sealed partial class EventManager : IDisposable
         InvokersHolderManager? manager;
         FromReadToWrite();
         {
-            if (!managersPerType.TryGetValue(typeof(TEvent), out manager))
+            ref InvokersHolderManager slot = ref managersPerType.GetOrCreateValueSlot(typeof(TEvent), out bool found);
+            if (found)
+                manager = slot;
+            else
             {
                 manager = new InvokersHolderManager<TEvent>();
 
-                foreach (KeyValuePair<Type, InvokersHolderManager> kv in managersPerType)
+                if (managersPerType.Count > 0)
                 {
-                    if (kv.Key.IsAssignableFrom(typeof(TEvent)))
+                    int index = 0;
+                    while (managersPerType.MoveNext(ref index, out KeyValuePair<Type, InvokersHolderManager> kv))
                     {
-                        Debug.Assert(kv.Key != typeof(TEvent));
-                        kv.Value.AddTo(manager, typeof(TEvent));
+                        if (kv.Key.IsAssignableFrom(typeof(TEvent)))
+                        {
+                            Debug.Assert(kv.Key != typeof(TEvent));
+                            kv.Value.AddTo(manager, typeof(TEvent));
+                        }
                     }
                 }
 
-                managersPerType.Add(typeof(TEvent), manager);
+                slot = manager;
             }
         }
         FromWriteToInHolder();

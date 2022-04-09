@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager;
@@ -13,6 +14,12 @@ internal abstract class InvokersHolderManager
     // Element types are InvokersHolder<T> where typeof(T).IsAssignableFrom(TEvent).
     internal InvariantObject[] derivedHolders = ArrayUtils.EmptyArray<InvariantObject>();
     internal int derivedHoldersCount;
+
+    private int millisecondsTimestamp;
+    private bool wasRaisedDuringLastPurge;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected void SetAsRaised() => wasRaisedDuringLastPurge = true;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Add(InvokersHolder holder)
@@ -62,58 +69,88 @@ internal abstract class InvokersHolderManager
         Utils.Untake(ref holders, takenHolders);
     }
 
+    protected abstract Type GetEventType();
+
     public abstract void DynamicRaise<TBaseEvent>(TBaseEvent? argument, EventManager eventManager);
 
-    public void Remove(InvokersHolder holder)
+    public bool Purge([NotNullWhen(true)] out Type eventType, int currentMilliseconds, int trimMilliseconds, bool hasHighMemoryPressure)
     {
-        InvariantObject[]? holders_ = holders;
-        Debug.Assert(holders_ is not null);
+        int millisecondsTimestamp_ = millisecondsTimestamp;
+
+        if ((currentMilliseconds - millisecondsTimestamp_) <= trimMilliseconds)
+            goto notRemove;
+
+        millisecondsTimestamp = currentMilliseconds;
+
+        Debug.Assert(holders is not null);
         int holdersCount_ = holdersCount;
-        ref InvariantObject start = ref Utils.GetArrayDataReference(holders_);
-        ref InvariantObject current = ref start;
-        ref InvariantObject end = ref Unsafe.Add(ref current, holdersCount_);
-        while (Unsafe.IsAddressLessThan(ref current, ref end))
+        Purge(ref holders, ref holdersCount_);
+        holdersCount = holdersCount_;
+        Purge(ref derivedHolders, ref derivedHoldersCount);
+
+        if (holdersCount_ == 0)
         {
-            if (ReferenceEquals(current.Value, holder))
+            if (hasHighMemoryPressure || !wasRaisedDuringLastPurge)
+                goto remove;
+            wasRaisedDuringLastPurge = false;
+        }
+
+    notRemove:
+#if NET5_0_OR_GREATER
+        Unsafe.SkipInit(out eventType);
+#else
+        eventType = default;
+#endif
+        return false;
+
+    remove:
+        eventType = GetEventType();
+        return true;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void Purge(ref InvariantObject[] array, ref int count)
+        {
+            InvariantObject[] array_ = array;
+            int count_ = count;
             {
-                end = ref Unsafe.Subtract(ref end, 1);
-                current = end;
-                end = new(null!);
-                holdersCount = holdersCount_ - 1;
-                break;
+                if (count_ != 0)
+                {
+                    ref InvariantObject start = ref Utils.GetArrayDataReference(array_);
+                    ref InvariantObject current = ref start;
+                    ref InvariantObject end = ref Unsafe.Add(ref current, count_);
+                    while (Unsafe.IsAddressLessThan(ref current, ref end))
+                    {
+                        if (Utils.ExpectAssignableType<InvokersHolder>(current.Value).WasPurged())
+                        {
+                            end = ref Unsafe.Subtract(ref end, 1);
+                            current = end;
+                            end = new(null!);
+#if DEBUG
+                            count_--;
+#endif
+                        }
+                        current = ref Unsafe.Add(ref current, 1);
+                    }
+                    unsafe
+                    {
+                        count = (int)((new IntPtr(Unsafe.AsPointer(ref end)).ToInt64() - new IntPtr(Unsafe.AsPointer(ref start)).ToInt64()) / Unsafe.SizeOf<InvariantObject>());
+#if DEBUG
+                        Debug.Assert(count == count_);
+#endif
+                    }
+                }
+                ArrayUtils.TryShrink(ref array_, count);
             }
-            current = ref Unsafe.Add(ref current, 1);
+            array = array_;
         }
     }
 
-    public void RemoveRemovedDerived()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Dispose()
     {
-        InvariantObject[]? derivedHolders_ = derivedHolders;
-        Debug.Assert(derivedHolders_ is not null);
-        int derivedHoldersCount_ = derivedHoldersCount;
-        ref InvariantObject start = ref Utils.GetArrayDataReference(derivedHolders_);
-        ref InvariantObject current = ref start;
-        ref InvariantObject end = ref Unsafe.Add(ref current, derivedHoldersCount_);
-        while (Unsafe.IsAddressLessThan(ref current, ref end))
-        {
-            if (Utils.ExpectAssignableType<InvokersHolder>(current.Value).WasRemoved())
-            {
-                end = ref Unsafe.Subtract(ref end, 1);
-                current = end;
-                end = new(null!);
-#if DEBUG
-                derivedHoldersCount_--;
-#endif
-            }
-            current = ref Unsafe.Add(ref current, 1);
-        }
-        unsafe
-        {
-            derivedHoldersCount = (int)((new IntPtr(Unsafe.AsPointer(ref end)).ToInt64() - new IntPtr(Unsafe.AsPointer(ref start)).ToInt64()) / Unsafe.SizeOf<InvariantObject>());
-#if DEBUG
-            Debug.Assert(derivedHoldersCount == derivedHoldersCount_);
-#endif
-        }
+        Debug.Assert(holders is not null);
+        ArrayUtils.ReturnArray(holders, holdersCount);
+        ArrayUtils.ReturnArray(derivedHolders, derivedHoldersCount);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -145,10 +182,14 @@ internal abstract class InvokersHolderManager
 
 internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
 {
+    protected override Type GetEventType() => typeof(TEvent);
+
     public override void DynamicRaise<TBaseEvent>(TBaseEvent? argument, EventManager eventManager)
         where TBaseEvent : default
     {
         Debug.Assert(typeof(TEvent) == (argument?.GetType() ?? typeof(TBaseEvent)));
+
+        SetAsRaised();
 
         InvariantObject[] takenHolders = Utils.Take(ref holders);
         {
@@ -188,6 +229,8 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StaticRaise(TEvent? argument, EventManager eventManager)
     {
+        SetAsRaised();
+
         InvariantObject[] takenHolders = Utils.Take(ref holders);
         {
             int holdersCount_ = holdersCount;

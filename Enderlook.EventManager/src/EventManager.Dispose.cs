@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 
 namespace Enderlook.EventManager;
 
@@ -27,20 +26,19 @@ public sealed partial class EventManager : IDisposable
             }
             Unlock(ref stateLock);
 
-            holdersPerType = null!;
-            managersPerType = null!;
-            autoPurgeAction = null;
-            if (holders is not null)
-            {
-                if (holdersCount != 0)
-                {
-                    if (holdersCount == 1)
-                        Utils.ExpectAssignableType<InvokersHolder>(holders[0]).Dispose();
-                    else
-                        Parallel.For(0, holdersCount, i => Utils.ExpectAssignableType<InvokersHolder>(holders[i]).Dispose());
-                }
-                holders = null!;
-            }
+            Dictionary2<InvokersHolderTypeKey, InvokersHolder> holdersPerType_ = holdersPerType;
+            Dictionary2<Type, InvokersHolderManager> managersPerType_ = managersPerType;
+
+            holdersPerType = new();
+            managersPerType = new();
+
+            int i = 0;
+            while (holdersPerType_.MoveNext(ref i, out InvokersHolder? holder))
+                holder.Dispose();
+
+            i = 0;
+            while (managersPerType_.MoveNext(ref i, out InvokersHolderManager? holder))
+                holder.Dispose();
         }
         WriteEnd();
     }

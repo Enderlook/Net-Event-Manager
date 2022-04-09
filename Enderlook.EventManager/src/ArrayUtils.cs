@@ -7,9 +7,9 @@ namespace Enderlook.EventManager;
 
 internal static class ArrayUtils
 {
-    private const int INITIAL_CAPACITY = 16;
+    public const int INITIAL_CAPACITY = 16;
     private const int GROW_FACTOR = 2;
-    private const float SHRINK_FACTOR_THRESHOLD = .25f;
+    public const float SHRINK_FACTOR_THRESHOLD = .25f;
 
     public static void ConcurrentAdd<T>(ref T[]? array, ref int count, T element)
     {

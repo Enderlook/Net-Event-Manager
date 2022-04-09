@@ -1,19 +1,32 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager;
 
 internal abstract class InvokersHolder
 {
-    public abstract bool ListenToAssignableEvents { get; }
+    private const int ModeExactEvents = 0;
+    private const int ModeAssignableEvents = 1;
+    private const int ModePurged = 2;
 
-    public abstract void Purge();
+    private int mode;
 
-    public abstract bool RemoveIfEmpty([NotNullWhen(true)] out Type? eventType, out InvokersHolderTypeKey holderType);
+    public bool ListenToAssignableEvents
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => mode == ModeAssignableEvents;
+    }
 
-    public abstract bool WasRemoved();
+    protected InvokersHolder(bool listenAssignableEvents) => mode = listenAssignableEvents ? ModeAssignableEvents : ModeExactEvents;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected void SetAsPurged() => mode = ModePurged;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool WasPurged() => mode == ModePurged;
+
+    public abstract bool Purge(out InvokersHolderTypeKey holderType, int currentMilliseconds, int purgeMilliseconds, bool hasHightMemoryPressure);
 
     public abstract Slice GetCallbacks();
 
@@ -24,6 +37,8 @@ internal abstract class InvokersHolder
 
 internal abstract class InvokersHolder<TEvent> : InvokersHolder
 {
+    protected InvokersHolder(bool listenAssignableEvents) : base(listenAssignableEvents) { }
+
     public abstract void Raise(Slice slice, TEvent argument);
 }
 
@@ -32,19 +47,28 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
 {
     private TCallback[]? callbacks = ArrayUtils.InitialArray<TCallback>();
     private int count;
+    private int millisecondsTimestamp = Environment.TickCount;
+    private bool wasCountZeroDuringLastPurge;
 
-    public override bool ListenToAssignableEvents { get; }
-
-    public InvokersHolder(bool listenAssignableEvents) => ListenToAssignableEvents = listenAssignableEvents;
+    public InvokersHolder(bool listenAssignableEvents) : base(listenAssignableEvents) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Subscribe(TCallback callback)
-        => ArrayUtils.ConcurrentAdd(ref callbacks, ref count, callback);
+    {
+        Debug.Assert(!WasPurged());
+        ArrayUtils.ConcurrentAdd(ref callbacks, ref count, callback);
+        if (count == 1)
+            // Set the flag because we are transitioning from empty to non-empty.
+            wasCountZeroDuringLastPurge = false;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Unsubscribe<TPredicator>(TPredicator predicator)
         where TPredicator : IPredicator<TCallback>
-        => ArrayUtils.ConcurrentRemove(ref callbacks, ref count, predicator);
+    {
+        Debug.Assert(!WasPurged());
+        ArrayUtils.ConcurrentRemove(ref callbacks, ref count, predicator);
+    }
 
     public override Slice GetCallbacks()
     {
@@ -73,45 +97,55 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
 
     public override void RaiseDerived<TConcreteEvent>(Slice slice, object? argument)
     {
-        Utils.AssertDerived<TEvent, TConcreteEvent>(argument);
+        Debug.Assert(typeof(TEvent).IsAssignableFrom(typeof(TConcreteEvent)));
+        // In .NET all value types inherits directly from a reference type, so the parent event can never be a value type.
+        Debug.Assert(!typeof(TEvent).IsValueType);
+        Debug.Assert(argument is null || argument.GetType() == typeof(TConcreteEvent));
+
         TCallback[] callbacks_ = Utils.ExpectExactType<TCallback[]>(slice.Array);
         Utils.Null<TCallbackHelper>().Invoke(Utils.ExpectAssignableTypeOrNull<TEvent>(argument), callbacks_, slice.Count);
     }
 
-    public override void Purge()
+    public override bool Purge(out InvokersHolderTypeKey holderType, int currentMilliseconds, int trimMilliseconds, bool hasHighMemoryPressure)
     {
+        int millisecondsTimestamp_ = millisecondsTimestamp;
+
+        if ((currentMilliseconds - millisecondsTimestamp_) <= trimMilliseconds)
+            goto notRemove;
+
+        millisecondsTimestamp = currentMilliseconds;
+
         TCallback[]? array = callbacks;
         Debug.Assert(array is not null);
+        int count_ = count;
         {
-            int count_ = count;
-            Utils.Null<TCallbackHelper>().Purge(ref array, ref count_);
-            count = count_;
+            Utils.Null<TCallbackHelper>().Purge(array, ref count_);
+            ArrayUtils.TryShrink(ref array, count_);
         }
+        count = count_;
         callbacks = array;
-    }
 
-    public override bool RemoveIfEmpty([NotNullWhen(true)] out Type? eventType, out InvokersHolderTypeKey holderType)
-    {
         if (count == 0)
         {
-            TCallback[]? array = callbacks;
-            Debug.Assert(array is not null);
-            ArrayUtils.ReturnArray(array);
-            eventType = typeof(TEvent);
-            holderType = new(typeof(InvokersHolder<TEvent, TCallbackHelper, TCallback>), ListenToAssignableEvents);
-            return true;
+            if (wasCountZeroDuringLastPurge || hasHighMemoryPressure)
+                // Instance is only removed during hight memory pressure or if the instance is empty during two consecutive purges.
+                goto remove;
+
+            wasCountZeroDuringLastPurge = true;
         }
+
+    notRemove:
 #if NET5_0_OR_GREATER
-        Unsafe.SkipInit(out eventType);
         Unsafe.SkipInit(out holderType);
 #else
-        eventType = default;
         holderType = default;
 #endif
         return false;
-    }
 
-    public override bool WasRemoved() => count == 0;
+    remove:
+        holderType = new(typeof(InvokersHolder<TEvent, TCallbackHelper, TCallback>), ListenToAssignableEvents);
+        return true;
+    }
 
     public override void Dispose()
     {
