@@ -40,7 +40,7 @@ internal abstract class InvokersHolderManager
         Debug.Assert(holderManager.GetType().GenericTypeArguments[0] == concreteEventType);
         Debug.Assert(GetType().GenericTypeArguments[0].IsAssignableFrom(holderManager.GetType().GenericTypeArguments[0]));
         // This lock is required to prevent a data invalidation in the Raise methods.
-        InvariantObject[] holders_ = Utils.Take(ref holders);
+        InvariantObject[] takenHolders = Utils.Take(ref holders);
         {
             InvariantObject[] @lock = Utils.Take(ref holderManager.holders);
             {
@@ -49,7 +49,7 @@ internal abstract class InvokersHolderManager
                 {
                     for (int i = 0; i < holdersCount; i++)
                     {
-                        InvariantObject holder = holders_[i];
+                        InvariantObject holder = takenHolders[i];
                         if (Utils.ExpectAssignableType<InvokersHolder>(holder.Value).ListenToAssignableEvents)
                             ArrayUtils.Add(ref derivedHolders, ref derivedHoldersCount, holder);
                     }
@@ -59,7 +59,7 @@ internal abstract class InvokersHolderManager
             }
             Utils.Untake(ref holderManager.holders, @lock);
         }
-        Utils.Untake(ref holders, holders_);
+        Utils.Untake(ref holders, takenHolders);
     }
 
     public abstract void DynamicRaise<TBaseEvent>(TBaseEvent? argument, EventManager eventManager);
