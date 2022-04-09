@@ -44,16 +44,25 @@ internal abstract class InvokersHolderManager
         {
             InvariantObject[] @lock = Utils.Take(ref holderManager.holders);
             {
-                ArrayUtils.AddRange(ref holderManager.derivedHolders, ref holderManager.derivedHoldersCount, holders_, holdersCount);
+                InvariantObject[]? derivedHolders = holderManager.derivedHolders;
+                int derivedHoldersCount = holderManager.derivedHoldersCount;
+                {
+                    for (int i = 0; i < holdersCount; i++)
+                    {
+                        InvariantObject holder = holders_[i];
+                        if (Utils.ExpectAssignableType<InvokersHolder>(holder.Value).ListenToAssignableEvents)
+                            ArrayUtils.Add(ref derivedHolders, ref derivedHoldersCount, holder);
+                    }
+                }
+                holderManager.derivedHolders = derivedHolders;
+                holderManager.derivedHoldersCount = derivedHoldersCount;
             }
             Utils.Untake(ref holderManager.holders, @lock);
         }
         Utils.Untake(ref holders, holders_);
     }
 
-    public abstract void DynamicRaiseExactly<TBaseEvent>(TBaseEvent? argument, EventManager eventManager);
-
-    public abstract void DynamicRaiseHierarchy<TBaseEvent>(TBaseEvent? argument, EventManager eventManager);
+    public abstract void DynamicRaise<TBaseEvent>(TBaseEvent? argument, EventManager eventManager);
 
     public void Remove(InvokersHolder holder)
     {
@@ -136,37 +145,7 @@ internal abstract class InvokersHolderManager
 
 internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
 {
-    public override void DynamicRaiseExactly<TBaseEvent>(TBaseEvent? argument, EventManager eventManager)
-        where TBaseEvent : default
-    {
-        Debug.Assert(typeof(TEvent) == (argument?.GetType() ?? typeof(TBaseEvent)));
-
-        InvariantObject[] takenHolders = Utils.Take(ref holders);
-        {
-            int holdersCount_ = holdersCount;
-
-            SliceOfCallbacks[]? slices = GetSlices(takenHolders, holdersCount_);
-            Utils.Untake(ref holders, takenHolders);
-
-            eventManager.InHolderEnd();
-
-            if (holdersCount_ > 0)
-            {
-                TEvent? argument_;
-                if (typeof(TEvent).IsValueType)
-                {
-                    Debug.Assert(argument is not null);
-                    argument_ = (TEvent)(object)argument;
-                }
-                else
-                    argument_ = Utils.ExpectExactTypeOrNull<TEvent>(argument);
-
-                RaiseSlice(argument_, slices, holdersCount_);
-            }
-        }
-    }
-
-    public override void DynamicRaiseHierarchy<TBaseEvent>(TBaseEvent? argument, EventManager eventManager)
+    public override void DynamicRaise<TBaseEvent>(TBaseEvent? argument, EventManager eventManager)
         where TBaseEvent : default
     {
         Debug.Assert(typeof(TEvent) == (argument?.GetType() ?? typeof(TBaseEvent)));
@@ -207,24 +186,7 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void StaticRaiseExactly(TEvent? argument, EventManager eventManager)
-    {
-        InvariantObject[] takenHolders = Utils.Take(ref holders);
-        {
-            int holdersCount_ = holdersCount;
-
-            SliceOfCallbacks[]? slices = GetSlices(takenHolders, holdersCount_);
-            Utils.Untake(ref holders, takenHolders);
-
-            eventManager.InHolderEnd();
-
-            if (holdersCount_ > 0)
-                RaiseSlice(argument, slices, holdersCount_);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void StaticRaiseHierarchy(TEvent? argument, EventManager eventManager)
+    public void StaticRaise(TEvent? argument, EventManager eventManager)
     {
         InvariantObject[] takenHolders = Utils.Take(ref holders);
         {

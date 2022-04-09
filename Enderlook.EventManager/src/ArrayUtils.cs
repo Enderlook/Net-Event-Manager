@@ -86,44 +86,6 @@ internal static class ArrayUtils
         }
     }
 
-    public static void AddRange<T>(ref T[] array, ref int count, T[] otherArray, int otherCount)
-    {
-        int newCount = count + otherCount;
-        if (unchecked((uint)newCount < (uint)array.Length))
-        {
-            Array.Copy(otherArray, 0, array, count, otherCount);
-            count = newCount;
-        }
-        else
-            AddWithResize(ref array, ref count);
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        void AddWithResize(ref T[] array, ref int count)
-        {
-            int count_ = count;
-            if (count_ == 0)
-            {
-                Debug.Assert(array.Length == 0);
-                array = RentArray<T>(otherCount);
-                Array.Copy(otherArray, array, otherCount);
-                count = otherCount;
-            }
-            else
-            {
-                Debug.Assert(count_ == array.Length);
-                int newLength = count_;
-                while (newLength < newCount)
-                    newLength *= GROW_FACTOR;
-                T[] newArray = RentArray<T>(newLength);
-                Array.Copy(array, newArray, count_);
-                Array.Copy(otherArray, 0, newArray, count_, otherCount);
-                count = newCount;
-                array = newArray;
-                ReturnArray(array, count_);
-            }
-        }
-    }
-
     public static void ConcurrentRemove<TComparer, TElement>(ref TElement[]? array, ref int count, TComparer comparer)
         where TComparer : IPredicator<TElement>
     {

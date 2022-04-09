@@ -7,9 +7,11 @@ namespace Enderlook.EventManager;
 
 internal abstract class InvokersHolder
 {
+    public abstract bool ListenToAssignableEvents { get; }
+
     public abstract void Purge();
 
-    public abstract bool RemoveIfEmpty([NotNullWhen(true)] out Type? eventType, [NotNullWhen(true)] out Type? holderType);
+    public abstract bool RemoveIfEmpty([NotNullWhen(true)] out Type? eventType, out InvokersHolderTypeKey holderType);
 
     public abstract bool WasRemoved();
 
@@ -30,6 +32,10 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
 {
     private TCallback[]? callbacks = ArrayUtils.InitialArray<TCallback>();
     private int count;
+
+    public override bool ListenToAssignableEvents { get; }
+
+    public InvokersHolder(bool listenAssignableEvents) => ListenToAssignableEvents = listenAssignableEvents;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Subscribe(TCallback callback)
@@ -84,7 +90,7 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
         callbacks = array;
     }
 
-    public override bool RemoveIfEmpty([NotNullWhen(true)] out Type? eventType, [NotNullWhen(true)] out Type? holderType)
+    public override bool RemoveIfEmpty([NotNullWhen(true)] out Type? eventType, out InvokersHolderTypeKey holderType)
     {
         if (count == 0)
         {
@@ -92,14 +98,15 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
             Debug.Assert(array is not null);
             ArrayUtils.ReturnArray(array);
             eventType = typeof(TEvent);
-            holderType = typeof(InvokersHolder<TEvent, TCallbackHelper, TCallback>);
+            holderType = new(typeof(InvokersHolder<TEvent, TCallbackHelper, TCallback>), ListenToAssignableEvents);
             return true;
         }
 #if NET5_0_OR_GREATER
         Unsafe.SkipInit(out eventType);
         Unsafe.SkipInit(out holderType);
 #else
-        eventType = holderType = null;
+        eventType = default;
+        holderType = default;
 #endif
         return false;
     }

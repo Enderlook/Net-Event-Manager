@@ -5,7 +5,7 @@
 A type safe event manager library for .NET.
 Due the use of generic, this event manager doesn't suffer for boxing and unboxing of value types nor for casting errors of the consumers.
 Additionaly, closures of delegates can be stored apart in order to reuse the delegate and reduce allocations.
-Also, it support and respect inheritance of event types which can be used to categorize events by hierarchy. For example, if you raise an event of type `ConcreteEvent`, both delegates subscribed to `ConcreteEvent` **and** `BaseEvent` are run (and `IEvent` if it does implement it). For receiving **all** events, subscribe to `Object`.
+Also, it support and respect (if configured to do so) inheritance of event types which can be used to categorize events by hierarchy. For example, if you raise an event of type `ConcreteEvent`, both delegates subscribed to `ConcreteEvent` **and** `BaseEvent` are run (and `IEvent` if it does implement it). For receiving **all** events, subscribe to `Object`.
 Even more, it support raising event dynamically when the type is not know at compile-time.
 Finally, it has support for weak-refence listeners.
 
@@ -23,17 +23,17 @@ public static class Player
 
         eventManager.Subscribe<PlayerPickedUpItemEvent>(("Excalibur", "Mimic"), OnPlayerPickedUpItem2);
 
-        eventManager.RaiseExactly(new PlayerPickedUpItemEvent("Excalibur"));
+        eventManager.Raise(new PlayerPickedUpItemEvent("Excalibur"));
 
         eventManager.SubscribeOnce<PlayerPickedUpItemEvent>(OnPlayerPickedUpItemOnce);
 
-        eventManager.RaiseExactly(new PlayerPickedUpItemEvent("Pencil"));
+        eventManager.Raise(new PlayerPickedUpItemEvent("Pencil"));
 
-        eventManager.RaiseExactly(new PlayerPickedUpItemEvent("Mimic"));
+        eventManager.Raise(new PlayerPickedUpItemEvent("Mimic"));
 
         eventManager.Unsubscribe<PlayerPickedUpItemEvent>(OnPlayerPickedUpItem2);
 
-        eventManager.RaiseExactly(new PlayerPickedUpItemEvent("Mimic"));
+        eventManager.Raise(new PlayerPickedUpItemEvent("Mimic"));
     }
 
     private static void OnPlayerHurt(string closure)
@@ -74,89 +74,48 @@ public static class Player
 public sealed class EventManager : IDisposable
 {
     /// Subscribes an action to run when the event `TEvent` is raised.
-    public void Subscribe<TEvent>(Action<TEvent> callback);
-    public void Subscribe<TEvent>(Action callback);
-    public void Unsubscribe<TEvent>(Action<TEvent> callback);
-    public void Unsubscribe<TEvent>(Action callback);
+    public void Subscribe<TEvent>(Action<TEvent> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
+    public void Subscribe<TEvent>(Action callback, , SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
+    public void Unsubscribe<TEvent>(Action<TEvent> callback, , SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
+    public void Unsubscribe<TEvent>(Action callback, , SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
 
     /// Subscribes an action to run when the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
-    public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback);
-    public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback);
-    public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback);
-    public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback);
-
-    /// Subscribes an action to run the next time the event `TEvent` is raised.
-    public void SubscribeOnce<TEvent>(Action<TEvent> callback);
-    public void SubscribeOnce<TEvent>(Action callback);
-    public void UnsubscribeOnce<TEvent>(Action<TEvent> callback);
-    public void UnsubscribeOnce<TEvent>(Action callback);
-
-    /// Subscribes an action to run the next time the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
-    public void SubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback);
-    public void SubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure> callback);
-    public void UnsubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback);
-    public void UnsubscribeOnce<TClosure, TEvent>(TClosure closure, Action<TClosure> callback);
+    public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback, , SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
+    public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback, , SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
+    public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback, , SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
+    public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
 
     /// Subscribes an action to run when the event `TEvent` is raised.
     /// A weak reference to handle is stored. If the reference gets garbage collected, the listener is automatically removed.
-    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection);
-    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection);
-    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection);
-    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection);
-    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection);
-    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection);
-    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection);
-    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection);
+    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
 
     /// Subscribes an action to run when the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
     /// A weak reference to handle is stored. If the reference gets garbage collected, the listener is automatically removed.
-    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, bool trackResurrection);
-    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
-    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
-    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
-    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, bool trackResurrection);
-    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
-    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
-    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
+    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
 
-    /// Subscribes an action to run the next time the event `TEvent` is raised.
-    public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection);
-    public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection);
-    public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection);
-    public void WeakSubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection);
-    public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<TEvent> callback, bool trackResurrection);
-    public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action callback, bool trackResurrection);
-    public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, bool trackResurrection);
-    public void WeakUnsubscribeOnce<THandle, TEvent>(THandle handle, Action<THandle> callback, bool trackResurrection);
+    /// Raise the event of type `TEvent`.
+    public void Raise<TEvent>(TEvent eventArgument);
 
-    /// Subscribes an action to run the next time the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
-    public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, bool trackResurrection);
-    public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
-    public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
-    public void WeakSubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
-    public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, bool trackResurrection);
-    public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, bool trackResurrection);
-    public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, bool trackResurrection);
-    public void WeakUnsubscribeOnce<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, bool trackResurrection);
-    
-    /// Raise the specified event to delegates of the event type `typeof(TEvent)`.
-    public void RaiseExactly<TEvent>(TEvent eventArgument);
-
-	/// Raises event of type `typeof(TEvent)` with a new instance of `TEvent` using its parameterless constructor.
+	/// Raise the event of type `TEvent` with a new instance of `TEvent` using its parameterless constructor.
     public void RaiseExactly<TEvent>() where TEvent : new();
 
-	/// Raise the specified event to delegates of the event type `typeof(TEvent)` and all types assignables to it (i.e: its type hierarchy including interfaces).
-    public void RaiseHierarchy<TEvent>(TEvent eventArgument);
-
-	/// Raises event of type `typeof(TEvent)`, all its base types and implemented interfaces with a new instance of `TEvent` using its parameterless constructor.
-    public void RaiseHierarchy<TEvent>() where TEvent : new();
-
-	/// Raise the specified event to delegates of event type `eventArgument.GetType()` or `typeof(TEvent)` if `eventArgument is null`.
+	/// Raise the event of the type `eventArgument.GetType()` or `typeof(TEvent)` if `eventArgument is null`.
     public void DynamicRaiseExactly<TEvent>(TEvent eventArgument);
-	
-	/// Raise the specified event to delegates of the event type `eventArgument.GetType()` or `typeof(TEvent)` if `eventARgument is null` and all types assignables to it (i.e: its type hierarchy including interfaces).
-    public void DynamicRaiseHierarchy<TEvent>(TEvent eventArgument);
-    
+
     /// Dispose the underlying content of this event manager.
     public void Dispose();
 }

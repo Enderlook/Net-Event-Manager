@@ -119,7 +119,7 @@ public sealed partial class EventManager
                         }
 
                         InvokersHolder holder = Utils.ExpectAssignableType<InvokersHolder>(holders_[i].Value);
-                        if (holder.RemoveIfEmpty(out Type? eventType, out Type? holderType))
+                        if (holder.RemoveIfEmpty(out Type? eventType, out InvokersHolderTypeKey holderType))
                         {
                             holdersPerType.Remove(holderType);
                             managersPerType[eventType].Remove(holder);
