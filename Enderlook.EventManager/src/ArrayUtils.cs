@@ -131,27 +131,27 @@ internal static class ArrayUtils
         int originalSize = array_.Length;
         int size = originalSize;
 
-        if (count == 0 && array_.Length != 0)
+        if (count != 0 || array_.Length == 0)
         {
-            ReturnArray(array_);
-            array = EmptyArray<T>();
-            return true;
+            float size_ = size;
+            while ((count / size_) < SHRINK_FACTOR_THRESHOLD && size > INITIAL_CAPACITY)
+                size /= GROW_FACTOR;
+
+            if (size != originalSize)
+            {
+                T[] newArray = RentArray<T>(size);
+                Array.Copy(array_, newArray, count);
+                array = newArray;
+                ReturnArray(array_, count);
+                return true;
+            }
+
+            return false;
         }
 
-        float size_ = size;
-        while ((count / size_) < SHRINK_FACTOR_THRESHOLD && size > INITIAL_CAPACITY)
-            size /= GROW_FACTOR;
-
-        if (size != originalSize)
-        {
-            T[] newArray = RentArray<T>(size);
-            Array.Copy(array_, newArray, count);
-            array = newArray;
-            ReturnArray(array_, count);
-            return true;
-        }
-
-        return false;
+        ReturnArray(array_);
+        array = EmptyArray<T>();
+        return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
