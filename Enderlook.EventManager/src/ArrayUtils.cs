@@ -125,7 +125,7 @@ internal static class ArrayUtils
 
     public static bool TryShrink<T>(ref T[] array, int count)
     {
-        Debug.Assert((1 / GROW_FACTOR) > SHRINK_FACTOR_THRESHOLD);
+        Debug.Assert((1f / GROW_FACTOR) > SHRINK_FACTOR_THRESHOLD);
 
         T[] array_ = array;
         int originalSize = array_.Length;
@@ -140,6 +140,7 @@ internal static class ArrayUtils
             if (size != originalSize)
             {
                 T[] newArray = RentArray<T>(size);
+                Debug.Assert(newArray.Length < array_.Length);
                 Array.Copy(array_, newArray, count);
                 array = newArray;
                 ReturnArray(array_, count);
