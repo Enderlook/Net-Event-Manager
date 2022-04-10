@@ -18,8 +18,8 @@ public sealed partial class EventManager
 
     private bool ConcurrentPurge()
     {
-        const int LowAfterMilliseconds = 180 * 1000; // Trim after 60 seconds for low pressure.
-        const int MediumAfterMilliseconds = 90 * 1000; // Trim after 60 seconds for medium pressure.
+        const int LowAfterMilliseconds = 180 * 1000; // Trim after 180 seconds for low pressure.
+        const int MediumAfterMilliseconds = 90 * 1000; // Trim after 90 seconds for medium pressure.
         const double HighPressureThreshold = .90; // Percent of GC memory pressure threshold we consider "high".
         const double MediumPressureThreshold = .70; // Percent of GC memory pressure threshold we consider "medium".
 
