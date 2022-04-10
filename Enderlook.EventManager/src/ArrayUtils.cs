@@ -9,7 +9,7 @@ internal static class ArrayUtils
 {
     private const int INITIAL_CAPACITY = 16;
     private const int GROW_FACTOR = 2;
-    private const float SHRINK_FACTOR_THRESHOLD = .9f;
+    private const float SHRINK_FACTOR_THRESHOLD = .25f;
 
     public static void ConcurrentAdd<T>(ref T[]? array, ref int count, T element)
     {
@@ -125,6 +125,8 @@ internal static class ArrayUtils
 
     public static bool TryShrink<T>(ref T[] array, int count)
     {
+        Debug.Assert((1 / GROW_FACTOR) > SHRINK_FACTOR_THRESHOLD);
+
         T[] array_ = array;
         int originalSize = array_.Length;
         int size = originalSize;
