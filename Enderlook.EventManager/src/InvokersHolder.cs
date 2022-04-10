@@ -74,7 +74,7 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
     {
         TCallback[] callbacks_ = Utils.Take(ref callbacks);
         int count_ = count;
-        if (Utils.Null<TCallbackHelper>().IsOnce())
+        if (Utils.NullRef<TCallbackHelper>().IsOnce())
         {
             count = 0;
             Utils.Untake(ref callbacks, ArrayUtils.RentArray<TCallback>(count_)); // Alternatively we could do, ArrayUtils.InitialArray<TCallback>();
@@ -92,7 +92,7 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
     public override void Raise(Slice slice, TEvent argument)
     {
         TCallback[] callbacks_ = Utils.ExpectExactType<TCallback[]>(slice.Array);
-        Utils.Null<TCallbackHelper>().Invoke(argument, callbacks_, slice.Count);
+        Utils.NullRef<TCallbackHelper>().Invoke(argument, callbacks_, slice.Count);
     }
 
     public override void RaiseDerived<TConcreteEvent>(Slice slice, object? argument)
@@ -103,7 +103,7 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
         Debug.Assert(argument is null || argument.GetType() == typeof(TConcreteEvent));
 
         TCallback[] callbacks_ = Utils.ExpectExactType<TCallback[]>(slice.Array);
-        Utils.Null<TCallbackHelper>().Invoke(Utils.ExpectAssignableTypeOrNull<TEvent>(argument), callbacks_, slice.Count);
+        Utils.NullRef<TCallbackHelper>().Invoke(Utils.ExpectAssignableTypeOrNull<TEvent>(argument), callbacks_, slice.Count);
     }
 
     public override bool Purge(out InvokersHolderTypeKey holderType, int currentMilliseconds, int trimMilliseconds, bool hasHighMemoryPressure)
@@ -119,7 +119,7 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
         Debug.Assert(array is not null);
         int count_ = count;
         {
-            Utils.Null<TCallbackHelper>().Purge(array, ref count_);
+            Utils.NullRef<TCallbackHelper>().Purge(array, ref count_);
             ArrayUtils.TryShrink(ref array, count_);
         }
         count = count_;
@@ -160,7 +160,7 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
         {
             TCallback[]? array = callbacks;
             Debug.Assert(array is not null);
-            Utils.Null<TCallbackHelper>().Dispose(array, count_);
+            Utils.NullRef<TCallbackHelper>().Dispose(array, count_);
             ArrayUtils.ReturnArray(array, count_);
         }
     }

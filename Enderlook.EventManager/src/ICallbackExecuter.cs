@@ -29,7 +29,7 @@ internal readonly struct ExecuteAndFree<TEvent, TCallback, TCallbackExecuter> : 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Invoke(TEvent argument, TCallback callback)
     {
-        Utils.Null<TCallbackExecuter>().Invoke(argument, callback);
+        Utils.NullRef<TCallbackExecuter>().Invoke(argument, callback);
         callback.Free();
     }
 }
@@ -144,7 +144,7 @@ internal static class CallbackExecuterHelper
 
         while (Unsafe.IsAddressLessThan(ref current, ref end))
         {
-            Utils.Null<TCallbackExecuter>().Invoke(argument, current);
+            Utils.NullRef<TCallbackExecuter>().Invoke(argument, current);
             current = ref Unsafe.Add(ref current, 1);
         }
     }

@@ -161,14 +161,6 @@ internal static class Utils
 
 #if NET5_0_OR_GREATER
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ref T Null<T>() where T : struct => ref Unsafe.NullRef<T>();
-#else
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T Null<T>() where T : struct => new();
-#endif
-
-#if NET5_0_OR_GREATER
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe static ref T NullRef<T>() => ref Unsafe.NullRef<T>();
 #else
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
