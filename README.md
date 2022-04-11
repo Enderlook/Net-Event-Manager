@@ -5,7 +5,7 @@
 A type safe event manager library for .NET.
 Due the use of generic, this event manager doesn't suffer for boxing and unboxing of value types nor for casting errors of the consumers.
 Additionaly, closures of delegates can be stored apart in order to reuse the delegate and reduce allocations.
-Also, it support and respect (if configured to do so) inheritance of event types which can be used to categorize events by hierarchy. For example, if you raise an event of type `ConcreteEvent`, both delegates subscribed to `ConcreteEvent` **and** `BaseEvent` are run (and `IEvent` if it does implement it). For receiving **all** events, subscribe to `Object`.
+Also, it support and respect (if configured to do so) inheritance of event types which can be used to categorize events by hierarchy. For example, if you raise an event of type `ConcreteEvent`, both delegates subscribed to `ConcreteEvent` **and** `BaseEvent` are run (and `IEvent` if it does implement it). For receiving **all** events, just subscribe to `Object` and configure that subscribe to listen to assignable types.
 Even more, it support raising event dynamically when the type is not know at compile-time.
 Finally, it has support for weak-refence listeners.
 
@@ -52,7 +52,7 @@ public static class Player
             eventManager.RaiseExactly(new PlayerHurtEvent());
         }
     }
-    
+
     private static void OnPlayerPickedUpItemOnce(PlayerPickedUpItemEvent @event)
         => Console.WriteLine($"This was registered to only execute once.");
 
@@ -87,25 +87,41 @@ public sealed class EventManager : IDisposable
 
     /// Subscribes an action to run when the event `TEvent` is raised.
     /// A weak reference to handle is stored. If the reference gets garbage collected, the listener is automatically removed.
-    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakSubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakUnsubscribe<THandle, TEvent>(THandle handle, Action<THandle> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
 
     /// Subscribes an action to run when the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
     /// A weak reference to handle is stored. If the reference gets garbage collected, the listener is automatically removed.
-    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
-    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default);
+    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakSubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<TClosure> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure, TEvent> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
+    public void WeakUnsubscribe<THandle, TClosure, TEvent>(THandle handle, TClosure closure, Action<THandle, TClosure> callback, WeakSubscribeFlags subscribeAttributes = WeakSubscribeFlags.Default)
+        where THandle : class;
 
     /// Raise the event of type `TEvent`.
     public void Raise<TEvent>(TEvent eventArgument);
