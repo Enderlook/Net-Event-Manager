@@ -75,9 +75,9 @@ public sealed partial class EventManager
     private void FromReadToWrite()
     {
         Lock(ref globalLock);
-        readers--;
+        int readers_ = --readers;
 
-        if (readers == 0)
+        if (readers_ == 0)
             return;
 
         reserved++;
