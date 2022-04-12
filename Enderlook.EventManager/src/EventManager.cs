@@ -54,8 +54,11 @@ public sealed partial class EventManager : IDisposable
                 manager_.StaticRaise(argument, this);
             }
             else
-                ReadEnd();
+                SlowPath();
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        void SlowPath() => CreateInvokersHolderManager<TEvent>().StaticRaise(argument, this);
     }
 
     /// <summary>
@@ -76,8 +79,11 @@ public sealed partial class EventManager : IDisposable
                 manager_.StaticRaise(new TEvent(), this);
             }
             else
-                ReadEnd();
+                SlowPath();
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        void SlowPath() => CreateInvokersHolderManager<TEvent>().StaticRaise(new TEvent(), this);
     }
 
     /// <summary>
@@ -97,9 +103,10 @@ public sealed partial class EventManager : IDisposable
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
     public void DynamicRaise<TEvent>(TEvent argument)
     {
+        Type key = argument?.GetType() ?? typeof(TEvent);
         ReadBegin();
         {
-            if (managersPerType.TryGetValue(argument?.GetType() ?? typeof(TEvent), out InvokersHolderManager? manager))
+            if (managersPerType.TryGetValue(key, out InvokersHolderManager? manager))
             {
                 FromReadToInHolder();
                 // TODO: This virtual call is actually only required if argument.GetType().IsValueType
@@ -107,8 +114,11 @@ public sealed partial class EventManager : IDisposable
                 manager.DynamicRaise(argument, this);
             }
             else
-                ReadEnd();
+                SlowPath();
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        void SlowPath() => CreateInvokersHolderManagerDynamic(key).DynamicRaise(argument, this);
     }
 
     internal void Unsubscribe<TEvent, TCallbackHelper, TPredicator, TCallback>(TPredicator predicator, bool listenToAssignableEvents)
@@ -254,15 +264,12 @@ public sealed partial class EventManager : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private InvokersHolderManager CreateInvokersHolderManager<TEvent>()
+    private InvokersHolderManager<TEvent> CreateInvokersHolderManager<TEvent>()
     {
         InvokersHolderManager? manager;
         FromReadToWrite();
         {
-            ref InvokersHolderManager slot = ref managersPerType.GetOrCreateValueSlot(typeof(TEvent), out bool found);
-            if (found)
-                manager = slot;
-            else
+            if (!managersPerType.TryGetValue(typeof(TEvent), out manager))
             {
                 manager = new InvokersHolderManager<TEvent>();
 
@@ -278,12 +285,11 @@ public sealed partial class EventManager : IDisposable
                         }
                     }
                 }
-
-                slot = manager;
+                managersPerType.Add(typeof(TEvent), manager);
             }
         }
         FromWriteToInHolder();
-        return manager;
+        return Utils.ExpectExactType<InvokersHolderManager<TEvent>>(manager);
     }
 
     [DoesNotReturn]

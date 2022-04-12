@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- Fix callbacks that listen to derived event types not being raised unless the derived type has at least one subscribed callback.
+
 ## 0.4.0
 
 - Increase performance on weak handles.
