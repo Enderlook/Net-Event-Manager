@@ -1,6 +1,6 @@
 # Changelog
 
-##
+## 0.4.0
 
 - Increase performance on weak handles.
 - Increase constant propagation of certain branches.
