@@ -24,7 +24,7 @@ internal readonly struct InvariantObjectComparer<T> : IPredicator<InvariantObjec
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool DoesMatch(InvariantObject element)
-        => comparer.Equals(Utils.ExpectExactType<T>(source.Value), Utils.ExpectExactType<T>(element.Value));
+        => comparer.Equals(Utils.ExpectExactType<T>(source.Unwrap()), Utils.ExpectExactType<T>(element.Unwrap()));
 }
 
 internal readonly struct StrongValueClosureActionComparer<TClosure, TEvent> : IPredicator<InvariantObjectAndT<TClosure>>

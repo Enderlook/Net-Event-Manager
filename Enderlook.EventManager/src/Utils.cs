@@ -147,6 +147,22 @@ internal static class Utils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static InvariantObject Wrap(this object obj) =>
+#if NET5_0_OR_GREATER
+        obj;
+#else
+        new(obj);
+#endif
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static object Unwrap(this InvariantObject obj) =>
+#if NET5_0_OR_GREATER
+        obj;
+#else
+        obj.Value;
+#endif
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ref T GetArrayDataReference<T>(T[] array)
     {
         Debug.Assert(array.Length > 0);
@@ -172,6 +188,6 @@ internal static class Utils
     public static bool IsNullRef<T>(ref T value) => Unsafe.IsNullRef(ref value);
 #else
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsNullRef<T>(ref T value) => Unsafe.AreSame(ref Utils.NullRef<T>(), ref value);
+    public static bool IsNullRef<T>(ref T value) => Unsafe.AreSame(ref NullRef<T>(), ref value);
 #endif
 }

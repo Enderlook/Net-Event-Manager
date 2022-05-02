@@ -11,14 +11,14 @@ internal struct StrongActionArgument<TEvent> : ICallbackExecuterSingle<TEvent, I
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Invoke(TEvent argument, InvariantObject callback)
-        => Utils.ExecuteActionLike(callback.Value, argument);
+        => Utils.ExecuteActionLike(callback.Unwrap(), argument);
 }
 
 internal struct StrongActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObject>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Invoke(TEvent argument, InvariantObject callback)
-        => Utils.ExecuteActionLike(callback.Value);
+        => Utils.ExecuteActionLike(callback.Unwrap());
 }
 
 internal struct StrongInvariantObjectAndTArgument<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndT<TClosure?>>

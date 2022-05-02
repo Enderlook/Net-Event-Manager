@@ -18,9 +18,9 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
 
         if ((subscribeAttributes & SubscribeFlags.RaiseOnce) == 0)
-            Subscribe<TEvent, StrongMultipleCallbackExecuter<TEvent, InvariantObject, StrongActionArgument<TEvent>>, InvariantObject>(new(callback), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
+            Subscribe<TEvent, StrongMultipleCallbackExecuter<TEvent, InvariantObject, StrongActionArgument<TEvent>>, InvariantObject>(callback.Wrap(), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
         else
-            Subscribe<TEvent, StrongOnceCallbackExecuter<TEvent, InvariantObject, StrongActionArgument<TEvent>>, InvariantObject>(new(callback), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
+            Subscribe<TEvent, StrongOnceCallbackExecuter<TEvent, InvariantObject, StrongActionArgument<TEvent>>, InvariantObject>(callback.Wrap(), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
     }
 
     /// <summary>
@@ -36,9 +36,9 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
 
         if ((subscribeAttributes & SubscribeFlags.RaiseOnce) == 0)
-            Subscribe<TEvent, StrongMultipleCallbackExecuter<TEvent, InvariantObject, StrongActionVoid<TEvent>>, InvariantObject>(new(callback), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
+            Subscribe<TEvent, StrongMultipleCallbackExecuter<TEvent, InvariantObject, StrongActionVoid<TEvent>>, InvariantObject>(callback.Wrap(), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
         else
-            Subscribe<TEvent, StrongOnceCallbackExecuter<TEvent, InvariantObject, StrongActionVoid<TEvent>>, InvariantObject>(new(callback), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
+            Subscribe<TEvent, StrongOnceCallbackExecuter<TEvent, InvariantObject, StrongActionVoid<TEvent>>, InvariantObject>(callback.Wrap(), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
     }
 
     /// <summary>
@@ -112,9 +112,9 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
 
         if ((subscribeAttributes & SubscribeFlags.RaiseOnce) == 0)
-            Unsubscribe<TEvent, StrongMultipleCallbackExecuter<TEvent, InvariantObject, StrongActionArgument<TEvent>>, InvariantObjectComparer<Action<TEvent>>, InvariantObject>(new(new(callback)), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
+            Unsubscribe<TEvent, StrongMultipleCallbackExecuter<TEvent, InvariantObject, StrongActionArgument<TEvent>>, InvariantObjectComparer<Action<TEvent>>, InvariantObject>(new(callback.Wrap()), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
         else
-            Unsubscribe<TEvent, StrongOnceCallbackExecuter<TEvent, InvariantObject, StrongActionArgument<TEvent>>, InvariantObjectComparer<Action<TEvent>>, InvariantObject>(new(new(callback)), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
+            Unsubscribe<TEvent, StrongOnceCallbackExecuter<TEvent, InvariantObject, StrongActionArgument<TEvent>>, InvariantObjectComparer<Action<TEvent>>, InvariantObject>(new(callback.Wrap()), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
     }
 
     /// <summary>
@@ -130,9 +130,9 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
 
         if ((subscribeAttributes & SubscribeFlags.RaiseOnce) == 0)
-            Unsubscribe<TEvent, StrongMultipleCallbackExecuter<TEvent, InvariantObject, StrongActionVoid<TEvent>>, InvariantObjectComparer<Action>, InvariantObject>(new(new(callback)), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
+            Unsubscribe<TEvent, StrongMultipleCallbackExecuter<TEvent, InvariantObject, StrongActionVoid<TEvent>>, InvariantObjectComparer<Action>, InvariantObject>(new(callback.Wrap()), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
         else
-            Unsubscribe<TEvent, StrongOnceCallbackExecuter<TEvent, InvariantObject, StrongActionVoid<TEvent>>, InvariantObjectComparer<Action>, InvariantObject>(new(new(callback)), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
+            Unsubscribe<TEvent, StrongOnceCallbackExecuter<TEvent, InvariantObject, StrongActionVoid<TEvent>>, InvariantObjectComparer<Action>, InvariantObject>(new(callback.Wrap()), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
     }
 
     /// <summary>

@@ -25,7 +25,7 @@ internal abstract class InvokersHolderManager
     public void Add(InvokersHolder holder)
     {
         Debug.Assert(GetType().GenericTypeArguments[0] == holder.GetType().GenericTypeArguments[0]);
-        ArrayUtils.ConcurrentAdd(ref holders, ref holdersCount, new(holder));
+        ArrayUtils.ConcurrentAdd(ref holders, ref holdersCount, holder.Wrap());
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -36,7 +36,7 @@ internal abstract class InvokersHolderManager
         // This lock is required to prevent a data invalidation in the Raise methods.
         InvariantObject[] @lock = Utils.Take(ref holders);
         {
-            ArrayUtils.Add(ref derivedHolders, ref derivedHoldersCount, new(holder));
+            ArrayUtils.Add(ref derivedHolders, ref derivedHoldersCount, holder.Wrap());
         }
         Utils.Untake(ref holders, @lock);
     }
@@ -57,7 +57,7 @@ internal abstract class InvokersHolderManager
                     for (int i = 0; i < holdersCount; i++)
                     {
                         InvariantObject holder = takenHolders[i];
-                        if (Utils.ExpectAssignableType<InvokersHolder>(holder.Value).ListenToAssignableEvents)
+                        if (Utils.ExpectAssignableType<InvokersHolder>(holder.Unwrap()).ListenToAssignableEvents)
                             ArrayUtils.Add(ref derivedHolders, ref derivedHoldersCount, holder);
                     }
                 }
@@ -120,11 +120,11 @@ internal abstract class InvokersHolderManager
                     ref InvariantObject end = ref Unsafe.Add(ref current, count_);
                     while (Unsafe.IsAddressLessThan(ref current, ref end))
                     {
-                        if (Utils.ExpectAssignableType<InvokersHolder>(current.Value).WasPurged())
+                        if (Utils.ExpectAssignableType<InvokersHolder>(current.Unwrap()).WasPurged())
                         {
                             end = ref Unsafe.Subtract(ref end, 1);
                             current = end;
-                            end = new(null!);
+                            end = default!;
 #if DEBUG
                             count_--;
 #endif
@@ -166,7 +166,7 @@ internal abstract class InvokersHolderManager
 
             while (Unsafe.IsAddressLessThan(ref currentHolder, ref endHolder))
             {
-                InvokersHolder? holder = Utils.ExpectAssignableType<InvokersHolder>(currentHolder.Value);
+                InvokersHolder? holder = Utils.ExpectAssignableType<InvokersHolder>(currentHolder.Unwrap());
                 Slice callbacks = holder.GetCallbacks();
                 sliceCurrent = new(holder, callbacks);
 

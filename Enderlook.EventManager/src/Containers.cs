@@ -1,10 +1,15 @@
-﻿using System.Diagnostics;
+﻿#if NET5_0_OR_GREATER
+global using InvariantObject = System.Object;
+#endif
+
+using System.Diagnostics;
 using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Enderlook.EventManager;
 
+#if !NET5_0_OR_GREATER
 internal readonly struct InvariantObject
 {
     public readonly object Value;
@@ -12,6 +17,7 @@ internal readonly struct InvariantObject
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public InvariantObject(object value) => Value = value;
 }
+#endif
 
 internal readonly struct InvariantObjectAndT<T>
 {
@@ -67,7 +73,7 @@ internal struct InvariantObjectAndGCHandle : IWeak
             return true;
         }
         return false;
-        #else
+#else
         if (Handle.Target is null)
         {
             Handle.Free();
