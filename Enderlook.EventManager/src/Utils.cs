@@ -168,10 +168,8 @@ internal static class Utils
         Debug.Assert(array.Length > 0);
 #if NET5_0_OR_GREATER
         return ref MemoryMarshal.GetArrayDataReference(array);
-#elif NETSTANDARD2_1_OR_GREATER
-        return ref MemoryMarshal.GetReference((Span<T>)array);
 #else
-        return ref array[0];
+        return ref MemoryMarshal.GetReference((Span<T>)array);
 #endif
     }
 
