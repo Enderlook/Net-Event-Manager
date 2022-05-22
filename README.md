@@ -2,11 +2,11 @@
 
 # .NET Event Manager
 
-A type safe event manager library for .NET.
-Due the use of generic, this event manager doesn't suffer for boxing and unboxing of value types nor for casting errors of the consumers.
-Additionaly, closures of delegates can be stored apart in order to reuse the delegate and reduce allocations.
-Also, it support and respect (if configured to do so) inheritance of event types which can be used to categorize events by hierarchy. For example, if you raise an event of type `ConcreteEvent`, both delegates subscribed to `ConcreteEvent` **and** `BaseEvent` are run (and `IEvent` if it does implement it). For receiving **all** events, just subscribe to `Object` and configure that subscribe to listen to assignable types.
-Even more, it support raising event dynamically when the type is not know at compile-time.
+A type safe event manager library for .NET.  
+Due the use of generic, this event manager doesn't suffer for boxing and unboxing of value types nor for casting errors of the consumers.  
+Additionaly, closures of delegates can be stored apart in order to reuse the delegate and reduce allocations (i.e: `Action<T>` instead of `Action`, so you can pass a value that works as closure).  
+Also, it support and respect (if configured to do so) inheritance of event types which can be used to categorize events by hierarchy. For example, if you raise an event of type `ConcreteEvent`, both delegates subscribed to `ConcreteEvent` **and** `BaseEvent` are run (and `IEvent` if it does implement it). For receiving **all** events, just subscribe to `Object` and configure that specific subscription to listen to all assignable types.  
+Even more, it support raising event dynamically when the type is not know at compile-time.  
 Finally, it has support for weak-refence listeners.
 
 The following example show some of the functions of the event manager:
@@ -22,6 +22,8 @@ public static class Player
         eventManager.Subscribe<PlayerPickedUpItemEvent>(OnPlayerPickedUpItem);
 
         eventManager.Subscribe<PlayerPickedUpItemEvent>(("Excalibur", "Mimic"), OnPlayerPickedUpItem2);
+		
+		eventManager.Subscribe<object>(OnAnyEvent, SubscribeFlags.ListenAssignableEvents);
 
         eventManager.Raise(new PlayerPickedUpItemEvent("Excalibur"));
 
@@ -34,6 +36,9 @@ public static class Player
         eventManager.Unsubscribe<PlayerPickedUpItemEvent>(OnPlayerPickedUpItem2);
 
         eventManager.Raise(new PlayerPickedUpItemEvent("Mimic"));
+
+		object obj = new PlayerPickedUpItemEvent("Mimic");
+        eventManager.DynamicRaise(obj); // Note that we are assing `object` instead of `PlayerPickedUpItemEvent`.
     }
 
     private static void OnPlayerHurt(string closure)
@@ -56,6 +61,9 @@ public static class Player
     private static void OnPlayerPickedUpItemOnce(PlayerPickedUpItemEvent @event)
         => Console.WriteLine($"This was registered to only execute once.");
 
+	private static void OnAnyEvent(object @event)
+		=> Console.WriteLine(@event.GetType());
+
     public readonly struct PlayerHurtEvent { }
 
     public readonly struct PlayerPickedUpItemEvent
@@ -75,14 +83,14 @@ public sealed class EventManager : IDisposable
 {
     /// Subscribes an action to run when the event `TEvent` is raised.
     public void Subscribe<TEvent>(Action<TEvent> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
-    public void Subscribe<TEvent>(Action callback, , SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
-    public void Unsubscribe<TEvent>(Action<TEvent> callback, , SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
-    public void Unsubscribe<TEvent>(Action callback, , SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
+    public void Subscribe<TEvent>(Action callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
+    public void Unsubscribe<TEvent>(Action<TEvent> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
+    public void Unsubscribe<TEvent>(Action callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
 
     /// Subscribes an action to run when the event `TEvent` is raised. The `closure` is passed as a parameter to `callback`.
-    public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback, , SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
-    public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback, , SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
-    public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback, , SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
+    public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
+    public void Subscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
+    public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure, TEvent> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
     public void Unsubscribe<TClosure, TEvent>(TClosure closure, Action<TClosure> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
 
     /// Subscribes an action to run when the event `TEvent` is raised.
@@ -126,11 +134,11 @@ public sealed class EventManager : IDisposable
     /// Raise the event of type `TEvent`.
     public void Raise<TEvent>(TEvent eventArgument);
 
-	/// Raise the event of type `TEvent` with a new instance of `TEvent` using its parameterless constructor.
-    public void RaiseExactly<TEvent>() where TEvent : new();
+    /// Raise the event of type `TEvent` with a new instance of `TEvent` using its parameterless constructor.
+    public void Raise<TEvent>() where TEvent : new();
 
-	/// Raise the event of the type `eventArgument.GetType()` or `typeof(TEvent)` if `eventArgument is null`.
-    public void DynamicRaiseExactly<TEvent>(TEvent eventArgument);
+    /// Raise the event of the type `eventArgument.GetType()` or `typeof(TEvent)` if `eventArgument is null`.
+    public void DynamicRaise<TEvent>(TEvent eventArgument);
 
     /// Dispose the underlying content of this event manager.
     public void Dispose();
