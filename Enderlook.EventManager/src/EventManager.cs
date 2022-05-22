@@ -87,8 +87,8 @@ public sealed partial class EventManager : IDisposable
     }
 
     /// <summary>
-    /// If <c><paramref name="argument"/> <see langword="is"/> <see langword="null"/></c>, it does the same as <c>RaiseExactly&lt;<typeparamref name="TEvent"/>&gt;(<see langword="default"/>)</c>.<br/>
-    /// If not, it runs the method <see cref="Raise{TEvent}(TEvent)"/> using the type of the passed instance.<br/>
+    /// If <c><paramref name="argument"/> <see langword="is"/> <see langword="null"/></c>, it does the same as <see cref="Raise{TEvent}(TEvent)"/> passing <see langword="null"/>.<br/>
+    /// If not, it runs the method <see cref="Raise{TEvent}(TEvent)"/> using the type of the passed instance as generic argument.<br/>
     /// This method is equivalent to following pseudo-code:
     /// <code>
     /// <see langword="if"/> (<paramref name="argument"/> <see langword="is"/> <see langword="null"/>)
@@ -96,7 +96,7 @@ public sealed partial class EventManager : IDisposable
     /// <see langword="else"/><br/>
     ///     RaiseExactly&lt;<paramref name="argument"/>.GetType()&gt;((<paramref name="argument"/>.GetType())<paramref name="argument"/>);
     /// </code>
-    /// (Internally it doesn't use reflection unlike what the pseudo-code looks like, so isn't expensive).
+    /// (Internally it doesn't use reflection unlike what the pseudo-code looks like, so it isn't expensive).
     /// </summary>
     /// <typeparam name="TEvent">Type of the event.</typeparam>
     /// <param name="argument">Arguments of this event.</param>
