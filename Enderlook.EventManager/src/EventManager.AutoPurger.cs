@@ -202,7 +202,10 @@ public sealed partial class EventManager
                 if (manager.ConcurrentPurge())
                     GC.ReRegisterForFinalize(this);
                 else
+                {
+                    manager.Dispose();
                     handle.Free();
+                }
             }
         }
     }

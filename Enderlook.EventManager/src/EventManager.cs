@@ -32,11 +32,6 @@ public sealed partial class EventManager : IDisposable
     public static EventManager Shared { get; } = new EventManager();
 
     /// <summary>
-    /// Automatically disposes the object in case it wasn't disposed by the user.
-    /// </summary>
-    ~EventManager() => Dispose();
-
-    /// <summary>
     /// Raises an event type <typeparamref name="TEvent"/>.<br/>
     /// Execution order of subscribed delegates is undefined.
     /// </summary>

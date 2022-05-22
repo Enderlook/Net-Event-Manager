@@ -6,6 +6,7 @@
 - Improve internal array pool sharing (reduces memory consumption and allocation) in .NET >= 5.
 - Remove dependencies in .NET >= 5.
 - Replace `System.Buffers` and `System.Runtime.CompilerServices.Unsafe` for `System.Memory` dependency in .NET < 5.
+- Remove finalizer in `EventManager`.
 
 ## 0.4.1
 

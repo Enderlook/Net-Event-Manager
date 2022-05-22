@@ -18,8 +18,6 @@ public sealed partial class EventManager : IDisposable
                 return;
             }
 
-            GC.SuppressFinalize(this);
-
             Lock(ref stateLock);
             {
                 state = IS_DISPOSED_OR_DISPOSING;
