@@ -1,6 +1,6 @@
 # Changelog
 
-##
+## v0.4.2
 
 - Add support for trimming.
 - Improve internal array pool sharing (reduces memory consumption and allocation) in .NET >= 5.
