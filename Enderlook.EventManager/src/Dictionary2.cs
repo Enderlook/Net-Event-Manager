@@ -482,11 +482,7 @@ internal struct Dictionary2<TKey, TValue>
         {
             buckets = buckets_;
             entries = entries_;
-#if !NETSTANDARD2_0
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<TKey>() || RuntimeHelpers.IsReferenceOrContainsReferences<TValue>())
-#endif
-                Array.Clear(oldEntries, 0, oldEntries.Length);
-            ArrayUtils.ReturnArray(oldEntries);
+            ArrayUtils.ReturnArray(oldEntries, oldEntries.Length);
         }
 
         size = newSize;
