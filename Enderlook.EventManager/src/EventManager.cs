@@ -224,32 +224,46 @@ public sealed partial class EventManager : IDisposable
         invokersHolderManagerCreatorsReaders++;
         Unlock(ref invokersHolderManagerCreatorsLock);
 
-        ref Func<EventManager, InvokersHolderManager> creator = ref invokersHolderManagerCreators.GetOrCreateValueSlot(type, out bool found);
-        if (!found)
+        Func<EventManager, InvokersHolderManager>? creator;
+        if (invokersHolderManagerCreators.TryGetValue(type, out creator))
+        {
+            // Release read lock.
+            Lock(ref invokersHolderManagerCreatorsLock);
+            invokersHolderManagerCreatorsReaders--;
+            Unlock(ref invokersHolderManagerCreatorsLock);
+        }
+        else
         {
             // From read lock to write lock.
             Lock(ref invokersHolderManagerCreatorsLock);
-            invokersHolderManagerCreatorsReaders--;
-            if (invokersHolderManagerCreatorsReaders != 0)
+            int invokersHolderManagerCreatorsReaders_ = --invokersHolderManagerCreatorsReaders;
+            if (invokersHolderManagerCreatorsReaders_ != 0)
             {
+                Unlock(ref invokersHolderManagerCreatorsLock);
                 while (true)
                 {
                     Lock(ref invokersHolderManagerCreatorsLock);
-                    if (readers > 0)
+                    if (invokersHolderManagerCreatorsReaders > 0)
                         Unlock(ref invokersHolderManagerCreatorsLock);
                     else
                         break;
                 }
             }
 
-            MethodInfo? methodInfo = typeof(EventManager).GetMethod(nameof(CreateInvokersHolderManager), BindingFlags.NonPublic | BindingFlags.Instance);
-            Debug.Assert(methodInfo is not null);
-            Type[] array = Interlocked.Exchange(ref one, null) ?? new Type[1];
-            array[0] = type;
-            MethodInfo methodInfoFull = methodInfo.MakeGenericMethod(array);
-            array[0] = null!;
-            one = array;
-            creator = (Func<EventManager, InvokersHolderManager>)methodInfoFull.CreateDelegate(typeof(Func<EventManager, InvokersHolderManager>));
+            ref Func<EventManager, InvokersHolderManager> value = ref invokersHolderManagerCreators.GetOrCreateValueSlot(type, out bool found);
+            if (!found)
+            {
+                MethodInfo? methodInfo = typeof(EventManager).GetMethod(nameof(CreateInvokersHolderManager), BindingFlags.NonPublic | BindingFlags.Instance);
+                Debug.Assert(methodInfo is not null);
+                Type[] array = Interlocked.Exchange(ref one, null) ?? new Type[1];
+                array[0] = type;
+                MethodInfo methodInfoFull = methodInfo.MakeGenericMethod(array);
+                array[0] = null!;
+                one = array;
+                value = creator = (Func<EventManager, InvokersHolderManager>)methodInfoFull.CreateDelegate(typeof(Func<EventManager, InvokersHolderManager>));
+            }
+            else
+                creator = value;
 
             // Release write lock.
             Unlock(ref invokersHolderManagerCreatorsLock);

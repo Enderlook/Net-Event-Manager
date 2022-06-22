@@ -3,6 +3,7 @@
 ##
 
 - Fix and improve documentation.
+- Fix racing condition in `DynamicRaise` method.
 
 ## v0.4.2
 
