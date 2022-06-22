@@ -143,4 +143,45 @@ public sealed class EventManager : IDisposable
     /// Dispose the underlying content of this event manager.
     public void Dispose();
 }
+
+/// Determines the configuration of the delegate to subscribe.
+[Flags]
+public enum SubscribeFlags
+{
+    /// By default callbacks can be executed multiple times and only listen to the exact type match.
+    /// This behaviour can be overriden by applying other flags.
+    Default = 0,
+
+    /// The callback is automatically unsubscribed from the event manager after its first execution.
+    RaiseOnce,
+
+    /// The callback will listen to any event whose type assignable to the event type of this delegate
+    /// For example, a delegate `Action<BaseEvent>` will not only listen for type `BaseEvent` but also for `ConcreteEvent` given `ConcreteEvent` is a subtype of `BaseEvent`.
+    /// This also supports interface types.
+    /// When the derived type is a value-type and the callback takes a reference-type (i.e: `Action<object> and derived type `SomeEvent` is a `struct`), the boxed event is shared to all delegate calls (and may or may not be pooled).
+    /// By convention, value-types should be immutable, so this is not a problem. However, if you have a mutable type, be warned.
+    ListenAssignableEvents,
+}
+
+/// Determines the configuration of the delegate to subscribe.
+[Flags]
+public enum WeakSubscribeFlags
+{
+    /// By default callbacks can be executed multiple times, are only listen to the exact type match and resurrection of handle is not tracked.
+    /// This behaviour can be overriden by applying other flags.
+    Default = 0,
+
+    /// The callback is automatically unsubscribed from the event manager after its first execution.
+    RaiseOnce,
+
+    /// The callback will listen to any event whose type assignable to the event type of this delegate
+    /// For example, a delegate `Action<BaseEvent>` will not only listen for type `BaseEvent` but also for `ConcreteEvent` given `ConcreteEvent` is a subtype of `BaseEvent`.
+    /// This also supports interface types.
+    /// When the derived type is a value-type and the callback takes a reference-type (i.e: `Action<object> and derived type `SomeEvent` is a `struct`), the boxed event is shared to all delegate calls (and may or may not be pooled).
+    /// By convention, value-types should be immutable, so this is not a problem. However, if you have a mutable type, be warned.
+    ListenAssignableEvents,
+
+    /// Includes tracking the resurrection of the handle.
+    TrackResurrection,
+}
 ```
