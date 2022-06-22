@@ -23,9 +23,17 @@ internal struct Dictionary2<TKey, TValue>
     private int freeList;
     private int freeCount;
 
-    public int Count => count - freeCount;
+    public int Count
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => count - freeCount;
+    }
 
-    public int EndIndex => Count;
+    public int EndIndex
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => Count;
+    }
 
     public void Add(TKey key, TValue value)
     {
