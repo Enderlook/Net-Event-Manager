@@ -1,5 +1,9 @@
 # Changelog
 
+##
+
+- Fix and improve documentation.
+
 ## v0.4.2
 
 - Add support for trimming.

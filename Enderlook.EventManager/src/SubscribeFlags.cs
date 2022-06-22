@@ -3,7 +3,7 @@
 namespace Enderlook.EventManager;
 
 /// <summary>
-/// Determines the configuration of delegate to subscribe.
+/// Determines the configuration of the delegate to subscribe.
 /// </summary>
 [Flags]
 public enum SubscribeFlags
@@ -20,10 +20,10 @@ public enum SubscribeFlags
     RaiseOnce = 1 << 1,
 
     /// <summary>
-    /// The callback will listen to any event of assignable type.<br/>
+    /// The callback will listen to any event whose type assignable to the event type of this delegate.<br/>
     /// For example, a delegate <c>Action&lt;BaseEvent&gt;</c> will not only listen for type <c>BaseEvent</c> but also for <c>ConcreteEvent</c> given <c>ConcreteEvent</c> is a subtype of <c>BaseEvent</c>.<br/>
     /// This also supports interface types.<br/>
-    /// When the derived type is a value-type and the callback takes a reference-type (i.e: <c>Action&lt;<see langword="object"/>&gt;</c> and derived type is <c><see langword="struct"/> SomeEvent</c>), the boxed event is shared to all delegate calls (and may or may not be pooled).<br/>
+    /// When the derived type is a value-type and the callback takes a reference-type (i.e: <c>Action&lt;<see langword="object"/>&gt;</c> and derived type <c>SomeEvent</c> is a <see langword="struct"/>), the boxed event is shared to all delegate calls (and may or may not be pooled).<br/>
     /// By convention, value-types should be immutable, so this is not a problem. However, if you have a mutable type, be warned.
     /// </summary>
     ListenAssignableEvents = 1 << 2,
