@@ -22,8 +22,8 @@ public static class Player
         eventManager.Subscribe<PlayerPickedUpItemEvent>(OnPlayerPickedUpItem);
 
         eventManager.Subscribe<PlayerPickedUpItemEvent>(("Excalibur", "Mimic"), OnPlayerPickedUpItem2);
-		
-		eventManager.Subscribe<object>(OnAnyEvent, SubscribeFlags.ListenAssignableEvents);
+  
+        eventManager.Subscribe<object>(OnAnyEvent, SubscribeFlags.ListenAssignableEvents);
 
         eventManager.Raise(new PlayerPickedUpItemEvent("Excalibur"));
 
@@ -37,8 +37,8 @@ public static class Player
 
         eventManager.Raise(new PlayerPickedUpItemEvent("Mimic"));
 
-		object obj = new PlayerPickedUpItemEvent("Mimic");
-        eventManager.DynamicRaise(obj); // Note that we are assing `object` instead of `PlayerPickedUpItemEvent`.
+        object obj = new PlayerPickedUpItemEvent("Mimic");
+        eventManager.DynamicRaise(obj); // Note that we assign `object` instead of `PlayerPickedUpItemEvent`.
     }
 
     private static void OnPlayerHurt(string closure)
@@ -61,8 +61,8 @@ public static class Player
     private static void OnPlayerPickedUpItemOnce(PlayerPickedUpItemEvent @event)
         => Console.WriteLine($"This was registered to only execute once.");
 
-	private static void OnAnyEvent(object @event)
-		=> Console.WriteLine(@event.GetType());
+   private static void OnAnyEvent(object @event)
+        => Console.WriteLine(@event.GetType());
 
     public readonly struct PlayerHurtEvent { }
 
