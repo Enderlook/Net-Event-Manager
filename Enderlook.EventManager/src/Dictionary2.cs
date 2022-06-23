@@ -342,11 +342,11 @@ internal struct Dictionary2<TKey, TValue>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TValue Get(TKey key)
+    public ref TValue TryFind(TKey key, out bool found)
     {
-        ref TValue value = ref FindValue(key);
-        Debug.Assert(!Utils.IsNullRef(ref value));
-        return value;
+        ref TValue valRef = ref FindValue(key);
+        found = !Utils.IsNullRef(ref valRef);
+        return ref valRef;
     }
 
     private ref TValue FindValue(TKey key)
@@ -614,6 +614,33 @@ internal struct Dictionary2<TKey, TValue>
 #if NET5_0_OR_GREATER
         Unsafe.SkipInit(out value);
 #else
+        value = default;
+#endif
+        return false;
+    }
+
+    public bool TryGetFromIndex(int index, [NotNullWhen(true)] out TKey key, [NotNullWhen(true)] out TValue value)
+    {
+        Debug.Assert(index < count, "Index out of range.");
+
+        Entry[]? entries_ = entries;
+        Debug.Assert(entries_ is not null);
+        ref Entry entries_Root = ref Utils.GetArrayDataReference(entries_);
+        Debug.Assert(index < entries_.Length, "Index out of range.");
+        ref Entry entry = ref Unsafe.Add(ref entries_Root, index);
+
+        if (entry.Next >= -1)
+        {
+            value = entry.Value!;
+            key = entry.Key!;
+            return true;
+        }
+
+#if NET5_0_OR_GREATER
+        Unsafe.SkipInit(out key);
+        Unsafe.SkipInit(out value);
+#else
+        key = default;
         value = default;
 #endif
         return false;

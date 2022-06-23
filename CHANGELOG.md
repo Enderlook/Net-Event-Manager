@@ -1,11 +1,12 @@
 # Changelog
 
-##
+## v0.4.3
 
 - Fix and improve documentation.
 - Fix racing condition in `DynamicRaise` method.
 - Improve performance by avoiding some array index checks.
 - Improve incremental capabilities of auto purger when canceled.
+- Improve auto purger to avoid a small memory leak produced by storing some internal values in a static field.
 
 ## v0.4.2
 

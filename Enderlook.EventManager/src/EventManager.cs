@@ -13,10 +13,12 @@ namespace Enderlook.EventManager;
 /// </summary>
 public sealed partial class EventManager : IDisposable
 {
-    // TODO: We could add purging to these.
     private static int invokersHolderManagerCreatorsLock;
     private static int invokersHolderManagerCreatorsReaders;
-    private static Dictionary2<Type, Func<EventManager, InvokersHolderManager>> invokersHolderManagerCreators;
+    private static int invokersHolderManagerCreatorsState;
+    private static int invokersHolderManagerCreatorsStateLock;
+    private static int invokersHolderManagerCreatorsPurgeIndex;
+    private static Dictionary2<Type, (Func<EventManager, InvokersHolderManager> Delegate, int MillisecondsTimestamp)> invokersHolderManagerCreators;
     private static Type[]? one;
 
     // Value type is actually InvokersHolder<TEvent, TInvoke>.
@@ -219,14 +221,22 @@ public sealed partial class EventManager : IDisposable
     [MethodImpl(MethodImplOptions.NoInlining)]
     private InvokersHolderManager CreateInvokersHolderManagerDynamic(Type type)
     {
+        if (invokersHolderManagerCreatorsState != 0)
+            TryRequestCancellation();
+
         // Get read lock.
         Lock(ref invokersHolderManagerCreatorsLock);
         invokersHolderManagerCreatorsReaders++;
         Unlock(ref invokersHolderManagerCreatorsLock);
 
         Func<EventManager, InvokersHolderManager>? creator;
-        if (invokersHolderManagerCreators.TryGetValue(type, out creator))
+        ref (Func<EventManager, InvokersHolderManager> Delegate, int MillisecondsTimestamp) value = ref invokersHolderManagerCreators.TryFind(type, out bool found);
+        if (found)
         {
+            creator = value.Delegate;
+            // Atomic swap.
+            value.MillisecondsTimestamp = Environment.TickCount;
+
             // Release read lock.
             Lock(ref invokersHolderManagerCreatorsLock);
             invokersHolderManagerCreatorsReaders--;
@@ -250,7 +260,7 @@ public sealed partial class EventManager : IDisposable
                 }
             }
 
-            ref Func<EventManager, InvokersHolderManager> value = ref invokersHolderManagerCreators.GetOrCreateValueSlot(type, out bool found);
+            ref (Func<EventManager, InvokersHolderManager> Delegate, int MillisecondsTimestamp) value2 = ref invokersHolderManagerCreators.GetOrCreateValueSlot(type, out found);
             if (!found)
             {
                 MethodInfo? methodInfo = typeof(EventManager).GetMethod(nameof(CreateInvokersHolderManager), BindingFlags.NonPublic | BindingFlags.Instance);
@@ -260,16 +270,37 @@ public sealed partial class EventManager : IDisposable
                 MethodInfo methodInfoFull = methodInfo.MakeGenericMethod(array);
                 array[0] = null!;
                 one = array;
-                value = creator = (Func<EventManager, InvokersHolderManager>)methodInfoFull.CreateDelegate(typeof(Func<EventManager, InvokersHolderManager>));
+                value2.Delegate = creator = (Func<EventManager, InvokersHolderManager>)methodInfoFull.CreateDelegate(typeof(Func<EventManager, InvokersHolderManager>));
+                value2.MillisecondsTimestamp = Environment.TickCount;
             }
             else
-                creator = value;
+            {
+                creator = value.Delegate;
+                value2.MillisecondsTimestamp = Environment.TickCount;
+            }
 
             // Release write lock.
             Unlock(ref invokersHolderManagerCreatorsLock);
         }
 
         return creator(this);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void TryRequestCancellation()
+        {
+            int invokersHolderManagerCreatorsState_ = invokersHolderManagerCreatorsState;
+            if ((invokersHolderManagerCreatorsState_ & IS_PURGING) != 0)
+            {
+                Lock(ref invokersHolderManagerCreatorsStateLock);
+                {
+                    invokersHolderManagerCreatorsState_ = invokersHolderManagerCreatorsState;
+
+                    if ((invokersHolderManagerCreatorsState_ & IS_PURGING) != 0)
+                        invokersHolderManagerCreatorsState = invokersHolderManagerCreatorsState_ | IS_CANCELLATION_REQUESTED;
+                }
+                Unlock(ref invokersHolderManagerCreatorsStateLock);
+            }
+        }
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]

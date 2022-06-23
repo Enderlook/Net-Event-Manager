@@ -181,6 +181,12 @@ public sealed partial class EventManager
     {
         private readonly GCHandle handle;
 
+        static AutoPurger()
+        {
+            // We use this static constructor instead of EventManager's static constructor to prevent adding an static constructor in a public type.
+            StaticAutoPurger _ = new();
+        }
+
         public AutoPurger(EventManager manager) => handle = GCHandle.Alloc(manager, GCHandleType.WeakTrackResurrection);
 
         ~AutoPurger()
@@ -199,6 +205,109 @@ public sealed partial class EventManager
                     handle.Free();
                 }
             }
+        }
+    }
+
+    private sealed class StaticAutoPurger
+    {
+        ~StaticAutoPurger()
+        {
+            const int LowAfterMilliseconds = 240 * 1000; // Trim after 240 seconds for low pressure.
+            const int MediumAfterMilliseconds = 120 * 1000; // Trim after 120 seconds for medium pressure.
+
+            for (int j = 0; j < PurgeAttempts; j++)
+            {
+                // Check if dictionary was not used.
+                if (invokersHolderManagerCreators.EndIndex == 0)
+                    return;
+
+                // Get write lock.
+                Lock(ref invokersHolderManagerCreatorsLock);
+                if (invokersHolderManagerCreatorsReaders != 0)
+                {
+                    Unlock(ref invokersHolderManagerCreatorsLock);
+                    while (true)
+                    {
+                        Lock(ref invokersHolderManagerCreatorsLock);
+                        if (invokersHolderManagerCreatorsReaders > 0)
+                            Unlock(ref invokersHolderManagerCreatorsLock);
+                        else
+                            break;
+                        if ((invokersHolderManagerCreatorsState & IS_CANCELLATION_REQUESTED) != 0)
+                            goto yield;
+                    }
+                }
+
+                Lock(ref invokersHolderManagerCreatorsStateLock);
+                {
+                    if (invokersHolderManagerCreatorsStateLock == IS_CANCELLATION_REQUESTED)
+                    {
+                        Unlock(ref invokersHolderManagerCreatorsStateLock);
+                        goto exit;
+                    }
+                    invokersHolderManagerCreatorsStateLock = IS_PURGING;
+                }
+                Unlock(ref invokersHolderManagerCreatorsStateLock);
+
+                int currentMilliseconds = Environment.TickCount;
+                MemoryPressure memoryPressure = Utils.GetMemoryPressure();
+                int trimMilliseconds = memoryPressure switch
+                {
+                    MemoryPressure.Low => LowAfterMilliseconds,
+                    MemoryPressure.Medium => MediumAfterMilliseconds,
+                    _ => 0,
+                };
+
+                int purgeIndex_ = invokersHolderManagerCreatorsPurgeIndex;
+                int end = invokersHolderManagerCreators.EndIndex;
+                int count;
+                if (purgeIndex_ >= end)
+                {
+                    purgeIndex_ = 0;
+                    count = end;
+                }
+                else
+                    count = end - purgeIndex_;
+
+                for (; count > 0; count--)
+                {
+                    if ((invokersHolderManagerCreatorsState & IS_CANCELLATION_REQUESTED) == 0)
+                    {
+                        if (invokersHolderManagerCreators.TryGetFromIndex(purgeIndex_, out Type key, out (Func<EventManager, InvokersHolderManager> Delegate, int MillisecondsTimestamp) value)
+                            && (currentMilliseconds - value.MillisecondsTimestamp) > trimMilliseconds)
+                        {
+                            invokersHolderManagerCreators.Remove(key);
+                            continue;
+                        }
+                        purgeIndex_++;
+                        if (purgeIndex_ == end)
+                            purgeIndex_ = 0;
+                    }
+                    else
+                        break;
+                }
+
+                if ((invokersHolderManagerCreatorsState & IS_CANCELLATION_REQUESTED) == 0)
+                    invokersHolderManagerCreators.TryShrink();
+
+                invokersHolderManagerCreatorsPurgeIndex = purgeIndex_;
+
+            exit:
+                // Release write lock.
+                Unlock(ref invokersHolderManagerCreatorsLock);
+
+                if ((invokersHolderManagerCreatorsState & IS_CANCELLATION_REQUESTED) == 0)
+                {
+                    invokersHolderManagerCreatorsState = 0;
+                    break;
+                }
+
+            yield:
+                if (!Thread.Yield())
+                    Thread.Sleep(PurgeSleepMilliseconds);
+            }
+
+            GC.ReRegisterForFinalize(this);
         }
     }
 }
