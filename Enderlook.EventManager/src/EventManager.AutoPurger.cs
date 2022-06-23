@@ -77,24 +77,17 @@ public sealed partial class EventManager
                             _ => 0,
                         };
 
-                        for (; purgeIndex_ < end;)
+                        for (; count > 0; count--)
                         {
                             if ((state & IS_CANCELLATION_REQUESTED) == 0)
                             {
-                                if (holdersPerType_.TryGetFromIndex(purgeIndex_, out InvokersHolder? holder))
-                                {
-                                    if (holder.Purge(out InvokersHolderTypeKey holderType, currentMilliseconds, trimMilliseconds, hasHighMemoryPressure))
-                                        // Note: We could also remove this holder from the manager instead of wait to the next phase for doing that.
-                                        holdersPerType_.Remove(holderType);
-                                    else
-                                        purgeIndex_++;
-
-                                    // Check if we already visited all holders to break early.
-                                    if (--count == 0)
-                                        break;
-                                }
-                                else
+                                if (holdersPerType_.TryGetFromIndex(purgeIndex_, out InvokersHolder? holder)
+                                    && holder.Purge(out InvokersHolderTypeKey holderType, currentMilliseconds, trimMilliseconds, hasHighMemoryPressure))
+                                    // Note: We could also remove this holder from the manager instead of wait to the next phase for doing that.
+                                    holdersPerType_.Remove(holderType);
                                     purgeIndex_++;
+                                if (purgeIndex_ == end)
+                                    purgeIndex_ = 0;
                             }
                             else
                                 goto exit;
@@ -123,28 +116,20 @@ public sealed partial class EventManager
                             _ => 0,
                         };
 
-                        for (int i = purgeIndex_; i < end;)
+                        for (; count > 0; count--)
                         {
                             if ((state & IS_CANCELLATION_REQUESTED) == 0)
                             {
-                                if (managersPerType_.TryGetFromIndex(i, out InvokersHolderManager? manager))
-                                {
-                                    if (manager.Purge(out Type? key, currentMilliseconds, trimMilliseconds, hasHighMemoryPressure))
-                                        managersPerType_.Remove(key);
-                                    else
-                                        i++;
-
-                                    // Check if we already visited all holders to break early.
-                                    if (--count == 0)
-                                        break;
-                                }
-                                else
-                                    i++;
+                                if (managersPerType_.TryGetFromIndex(purgeIndex_, out InvokersHolderManager? manager)
+                                    && manager.Purge(out Type? key, currentMilliseconds, trimMilliseconds, hasHighMemoryPressure))
+                                    managersPerType_.Remove(key);
+                                purgeIndex_++;
+                                if (purgeIndex_ == end)
+                                    purgeIndex_ = 0;
                             }
                             else
                             {
                                 purgePhase = PurgePhase_PurgeInvokersHolderManager;
-                                purgeIndex_ = i;
                                 goto exit;
                             }
                         }
