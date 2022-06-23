@@ -39,18 +39,25 @@ public sealed partial class EventManager
 
             MassiveWriteBegin();
             {
-                if ((state & IS_PURGING) != 0 || state == IS_DISPOSED_OR_DISPOSING)
+                // Check if is already purging or disposing, or is disposed.
+                // If neither, set as purging.
+                Lock(ref stateLock);
                 {
-                    WriteEnd();
-                    return false;
+                    int state_ = state;
+                    if ((state_ & IS_PURGING) != 0 || state_ == IS_DISPOSED_OR_DISPOSING)
+                    {
+                        Unlock(ref stateLock);
+                        WriteEnd();
+                        return false;
+                    }
+                    state = IS_PURGING;
                 }
+                Unlock(ref stateLock);
 
                 int currentMilliseconds = Environment.TickCount;
 
                 MemoryPressure memoryPressure = Utils.GetMemoryPressure();
                 bool hasHighMemoryPressure = memoryPressure == MemoryPressure.High;
-
-                state = IS_PURGING;
 
                 int purgeIndex_ = purgeIndex;
                 Dictionary2<InvokersHolderTypeKey, InvokersHolder> holdersPerType_ = holdersPerType;
