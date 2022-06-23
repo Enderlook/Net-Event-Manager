@@ -603,7 +603,7 @@ internal struct Dictionary2<TKey, TValue>
         Debug.Assert(entries_ is not null);
         ref Entry entries_Root = ref Utils.GetArrayDataReference(entries_);
         Debug.Assert(index < entries_.Length, "Index out of range.");
-        ref Entry entry = ref Unsafe.Add(ref entries_Root, index++);
+        ref Entry entry = ref Unsafe.Add(ref entries_Root, index);
 
         if (entry.Next >= -1)
         {
