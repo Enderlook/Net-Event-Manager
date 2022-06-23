@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Enderlook.EventManager;
 
@@ -49,6 +50,7 @@ internal struct Dictionary2<TKey, TValue>
 
         Entry[]? entries_ = entries;
         Debug.Assert(entries_ is not null, "entries should have been initialized by Initialize method.");
+        ref Entry entries_Root = ref Utils.GetArrayDataReference(entries_);
 
         uint hashCode = unchecked((uint)key.GetHashCode());
         ref int bucket = ref GetBucket(hashCode, buckets_);
@@ -68,7 +70,7 @@ internal struct Dictionary2<TKey, TValue>
                     Debug.Assert(i < entries_.Length, "Index out of range.");
                     Debug.Assert(i < size, "Accessing index outside prime range.");
 
-                    entry = ref entries_[i];
+                    entry = ref Unsafe.Add(ref entries_Root, i);
                     Debug.Assert(entry.HashCode != hashCode || !EqualityComparer<TKey>.Default.Equals(entry.Key, key), "Key is already found.");
 
                     i = entry.Next;
@@ -91,7 +93,7 @@ internal struct Dictionary2<TKey, TValue>
                     Debug.Assert(i < entries_.Length, "Index out of range.");
                     Debug.Assert(i < size, "Accessing index outside prime range.");
 
-                    entry = ref entries_[i];
+                    entry = ref Unsafe.Add(ref entries_Root, i);
                     Debug.Assert(entry.HashCode != hashCode || !defaultComparer.Equals(entry.Key, key), "Key is already found.");
 
                     i = entry.Next;
@@ -109,8 +111,9 @@ internal struct Dictionary2<TKey, TValue>
         if (freeCount_ > 0)
         {
             index = freeList;
+            Debug.Assert(index < entries_.Length, "Index out of range.");
             Debug.Assert((StartOfFreeList - entries_[index].Next) >= -1, "Shouldn't overflow because `next` cannot underflow.");
-            freeList = StartOfFreeList - entries_[index].Next;
+            freeList = StartOfFreeList - Unsafe.Add(ref entries_Root, index).Next;
             freeCount = freeCount_ - 1;
         }
         else
@@ -130,7 +133,8 @@ internal struct Dictionary2<TKey, TValue>
         }
 
         {
-            ref Entry entry = ref entries_[index];
+            Debug.Assert(index < entries_.Length, "Index out of range.");
+            ref Entry entry = ref Unsafe.Add(ref entries_Root, index);
             entry.HashCode = hashCode;
             entry.Next = bucket - 1; // Value in buckets is 1-based.
             entry.Key = key;
@@ -153,6 +157,7 @@ internal struct Dictionary2<TKey, TValue>
 
         Entry[]? entries_ = entries;
         Debug.Assert(entries_ is not null, "entries should have been initialized by Initialize method.");
+        ref Entry entries_Root = ref Utils.GetArrayDataReference(entries_);
 
         uint hashCode = unchecked((uint)key.GetHashCode());
 #if DEBUG
@@ -173,7 +178,7 @@ internal struct Dictionary2<TKey, TValue>
                 Debug.Assert(i < entries_.Length, "Index out of range.");
                 Debug.Assert(i < size, "Accessing index outside prime range.");
 
-                entry = ref entries_[i];
+                entry = ref Unsafe.Add(ref entries_Root, i);
                 if (entry.HashCode == hashCode && EqualityComparer<TKey>.Default.Equals(entry.Key, key))
                     goto ReturnFound;
 
@@ -202,7 +207,7 @@ internal struct Dictionary2<TKey, TValue>
                 Debug.Assert(i < entries_.Length, "Index out of range.");
                 Debug.Assert(i < size, "Accessing index outside prime range.");
 
-                entry = ref entries_[i];
+                entry = ref Unsafe.Add(ref entries_Root, i);
                 if (entry.HashCode == hashCode && defaultComparer.Equals(entry.Key, key))
                     goto ReturnFound;
 
@@ -221,8 +226,9 @@ internal struct Dictionary2<TKey, TValue>
         if (freeCount_ > 0)
         {
             index = freeList;
+            Debug.Assert(index < entries_.Length, "Index out of range.");
             Debug.Assert((StartOfFreeList - entries_[index].Next) >= -1, "Shouldn't overflow because `next` cannot underflow.");
-            freeList = StartOfFreeList - entries_[index].Next;
+            freeList = StartOfFreeList - Unsafe.Add(ref entries_Root, index).Next;
             freeCount = freeCount_ - 1;
         }
         else
@@ -241,7 +247,8 @@ internal struct Dictionary2<TKey, TValue>
             count = count_ + 1;
         }
 
-        entry = ref entries_[index];
+        Debug.Assert(index < entries_.Length, "Index out of range.");
+        entry = ref Unsafe.Add(ref entries_Root, index);
         entry.HashCode = hashCode;
         entry.Next = bucket - 1; // Value in buckets is 1-based.
         entry.Key = key;
@@ -266,6 +273,7 @@ internal struct Dictionary2<TKey, TValue>
         {
             Entry[]? entries_ = entries;
             Debug.Assert(entries_ != null, "Expected entries to not be null.");
+            ref Entry entries_Root = ref Utils.GetArrayDataReference(entries_);
 #if DEBUG
             uint collisionCount = 0;
 #endif
@@ -275,14 +283,18 @@ internal struct Dictionary2<TKey, TValue>
             int i = bucket - 1; // Value in buckets is 1-based
             while (i >= 0)
             {
-                ref Entry entry = ref entries_[i];
+                Debug.Assert(i < entries_.Length, "Index out of range.");
+                ref Entry entry = ref Unsafe.Add(ref entries_Root, i);
 
                 if (entry.HashCode == hashCode && EqualityComparer<TKey>.Default.Equals(entry.Key, key))
                 {
                     if (last < 0)
                         bucket = entry.Next + 1; // Value in buckets is 1-based
                     else
-                        entries_[last].Next = entry.Next;
+                    {
+                        Debug.Assert(last < entries_.Length, "Index out of range.");
+                        Unsafe.Add(ref entries_Root, last).Next = entry.Next;
+                    }
 
                     int freeList_ = freeList;
                     Debug.Assert((StartOfFreeList - freeList_) < 0, "Shouldn't underflow because max hashtable length is MaxPrimeArrayLength = 0x7FEFFFFD(2146435069) _freelist underflow threshold 2147483646.");
@@ -347,6 +359,7 @@ internal struct Dictionary2<TKey, TValue>
         {
             Entry[]? entries_ = entries;
             Debug.Assert(entries_ != null, "Expected entries to not be null.");
+            ref Entry entries_Root = ref Utils.GetArrayDataReference(entries_);
 
             uint hashCode = unchecked((uint)key.GetHashCode());
             int i = GetBucket(hashCode, buckets_);
@@ -372,7 +385,7 @@ internal struct Dictionary2<TKey, TValue>
                     Debug.Assert(i < entries_.Length, "Index out of range.");
                     Debug.Assert(i < size, "Accessing index outside prime range.");
 
-                    entry = ref entries_[i];
+                    entry = ref Unsafe.Add(ref entries_Root, i);
                     if (entry.HashCode == hashCode && EqualityComparer<TKey>.Default.Equals(entry.Key, key))
                         goto ReturnFound;
 
@@ -404,7 +417,7 @@ internal struct Dictionary2<TKey, TValue>
                     Debug.Assert(i < entries_.Length, "Index out of range.");
                     Debug.Assert(i < size, "Accessing index outside prime range.");
 
-                    entry = ref entries_[i];
+                    entry = ref Unsafe.Add(ref entries_Root, i);
                     if (entry.HashCode == hashCode && defaultComparer.Equals(entry.Key, key))
                         goto ReturnFound;
 
@@ -460,15 +473,22 @@ internal struct Dictionary2<TKey, TValue>
             replaceArrays = true;
         }
 
+        ref int buckets_Root = ref Utils.GetArrayDataReference(buckets_);
+        ref Entry entries_Root = ref Utils.GetArrayDataReference(entries_);
+
         if (IntPtr.Size == sizeof(long))
         {
             ulong fastModMultiplier_ = fastModMultiplier = HashHelpers.GetFastModMultiplier((uint)newSize);
             for (int i = 0; i < count_; i++)
             {
+                Debug.Assert(i < entries_.Length, "Index out of range.");
+                ref Entry entry = ref Unsafe.Add(ref entries_Root, i);
                 if (entries_[i].Next >= -1)
                 {
-                    ref int bucket = ref GetBucket64Bit(entries_[i].HashCode, buckets_, newSize, fastModMultiplier_);
-                    entries_[i].Next = bucket - 1; // Value in buckets is 1-based.
+                    int j = (int)HashHelpers.FastMod(entry.HashCode, (uint)size, fastModMultiplier_);
+                    Debug.Assert(j < buckets_.Length, "Index out of range.");
+                    ref int bucket = ref Unsafe.Add(ref buckets_Root, j);
+                    entry.Next = bucket - 1; // Value in buckets is 1-based.
                     bucket = i + 1;
                 }
             }
@@ -477,10 +497,14 @@ internal struct Dictionary2<TKey, TValue>
         {
             for (int i = 0; i < count_; i++)
             {
-                if (entries_[i].Next >= -1)
+                Debug.Assert(i < entries_.Length, "Index out of range.");
+                ref Entry entry = ref Unsafe.Add(ref entries_Root, i);
+                if (entry.Next >= -1)
                 {
-                    ref int bucket = ref GetBucket32Bit(entries_[i].HashCode, buckets_, newSize);
-                    entries_[i].Next = bucket - 1; // Value in buckets is 1-based.
+                    int j = (int)(entry.HashCode % (uint)size);
+                    Debug.Assert(j < buckets_.Length, "Index out of range.");
+                    ref int bucket = ref Unsafe.Add(ref buckets_Root, j);
+                    entry.Next = bucket - 1; // Value in buckets is 1-based.
                     bucket = i + 1;
                 }
             }
@@ -518,17 +542,26 @@ internal struct Dictionary2<TKey, TValue>
                 buckets = newBuckets;
                 entries = newEntries;
 
+                ref int newBucketsRoot = ref Utils.GetArrayDataReference(newBuckets);
+                ref Entry oldEntriesRoot = ref Utils.GetArrayDataReference(oldEntries);
+                ref Entry newEntriesRoot = ref Utils.GetArrayDataReference(newEntries);
+
                 int newCount = 0;
                 if (IntPtr.Size == sizeof(long))
                 {
                     ulong fastModMultiplier_ = fastModMultiplier = HashHelpers.GetFastModMultiplier((uint)newSize);
                     for (int i = 0; i < oldCount; i++)
                     {
-                        if (oldEntries[i].Next >= -1)
+                        Debug.Assert(i < oldEntries.Length, "Index out of range.");
+                        if (Unsafe.Add(ref oldEntriesRoot, i).Next >= -1)
                         {
-                            ref Entry entry = ref newEntries[newCount];
-                            entry = newEntries[i];
-                            ref int bucket = ref GetBucket64Bit(newEntries[i].HashCode, newBuckets, newSize, fastModMultiplier_);
+                            Debug.Assert(newCount < newEntries.Length, "Index out of range.");
+                            ref Entry entry = ref Unsafe.Add(ref newEntriesRoot, newCount);
+                            Debug.Assert(i < newEntries.Length, "Index out of range.");
+                            entry = Unsafe.Add(ref newEntriesRoot, i);
+                            int j = (int)HashHelpers.FastMod(entry.HashCode, (uint)newSize, fastModMultiplier_);
+                            Debug.Assert(j < newBuckets.Length, "Index out of range.");
+                            ref int bucket = ref Unsafe.Add(ref newBucketsRoot, j);
                             entry.Next = bucket - 1; // Value in _buckets is 1-based.
                             bucket = newCount + 1;
                             newCount++;
@@ -541,9 +574,13 @@ internal struct Dictionary2<TKey, TValue>
                     {
                         if (oldEntries[i].Next >= -1)
                         {
-                            ref Entry entry = ref newEntries[newCount];
-                            entry = newEntries[i];
-                            ref int bucket = ref GetBucket32Bit(newEntries[i].HashCode, newBuckets, newSize);
+                            Debug.Assert(newCount < newEntries.Length, "Index out of range.");
+                            ref Entry entry = ref Unsafe.Add(ref newEntriesRoot, newCount);
+                            Debug.Assert(i < newEntries.Length, "Index out of range.");
+                            entry = Unsafe.Add(ref newEntriesRoot, i);
+                            int j = (int)(entry.HashCode % (uint)size);
+                            Debug.Assert(j < newBuckets.Length, "Index out of range.");
+                            ref int bucket = ref Unsafe.Add(ref newBucketsRoot, j);
                             entry.Next = bucket - 1; // Value in _buckets is 1-based.
                             bucket = newCount + 1;
                             newCount++;
@@ -564,7 +601,9 @@ internal struct Dictionary2<TKey, TValue>
 
         Entry[]? entries_ = entries;
         Debug.Assert(entries_ is not null);
-        ref Entry entry = ref entries_[index++];
+        ref Entry entries_Root = ref Utils.GetArrayDataReference(entries_);
+        Debug.Assert(index < entries_.Length, "Index out ofe range.");
+        ref Entry entry = ref Unsafe.Add(ref entries_Root, index++);
 
         if (entry.Next >= -1)
         {
@@ -584,9 +623,11 @@ internal struct Dictionary2<TKey, TValue>
     {
         Entry[]? entries_ = entries;
         Debug.Assert(entries_ is not null, "Check if Count > 0 property before using this method.");
+        ref Entry entries_Root = ref Utils.GetArrayDataReference(entries_);
         while (index < count)
         {
-            ref Entry entry = ref entries_[index++];
+            Debug.Assert(index < entries_.Length, "Index out ofe range.");
+            ref Entry entry = ref Unsafe.Add(ref entries_Root, index++);
 
             if (entry.Next >= -1)
             {
@@ -606,9 +647,11 @@ internal struct Dictionary2<TKey, TValue>
     {
         Entry[]? entries_ = entries;
         Debug.Assert(entries_ is not null, "Check if Count > 0 property before using this method.");
+        ref Entry entries_Root = ref Utils.GetArrayDataReference(entries_);
         while (index < count)
         {
-            ref Entry entry = ref entries_[index++];
+            Debug.Assert(index < entries_.Length, "Index out ofe range.");
+            ref Entry entry = ref Unsafe.Add(ref entries_Root, index++);
 
             if (entry.Next >= -1)
             {
@@ -640,23 +683,16 @@ internal struct Dictionary2<TKey, TValue>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private ref int GetBucket(uint hashCode, int[] buckets)
     {
+#if NET5_0_OR_GREATER
+        ref int bucketsRoot = ref MemoryMarshal.GetArrayDataReference(buckets);
+        int i = (int)(IntPtr.Size == sizeof(long) ? HashHelpers.FastMod(hashCode, (uint)size, fastModMultiplier) : hashCode % (uint)size);
+        Debug.Assert(i < buckets.Length, "Index out of range.");
+        return ref Unsafe.Add(ref bucketsRoot, i);
+#else
         if (IntPtr.Size == sizeof(long))
             return ref buckets[HashHelpers.FastMod(hashCode, (uint)size, fastModMultiplier)];
         return ref buckets[hashCode % (uint)size];
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ref int GetBucket64Bit(uint hashCode, int[] buckets, int size, ulong fastModMultiplier)
-    {
-        Debug.Assert(IntPtr.Size == sizeof(long));
-        return ref buckets[HashHelpers.FastMod(hashCode, (uint)size, fastModMultiplier)];
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ref int GetBucket32Bit(uint hashCode, int[] buckets, int size)
-    {
-        Debug.Assert(IntPtr.Size == sizeof(int));
-        return ref buckets[hashCode % (uint)size];
+#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

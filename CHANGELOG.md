@@ -4,6 +4,7 @@
 
 - Fix and improve documentation.
 - Fix racing condition in `DynamicRaise` method.
+- Improve performance by avoiding some array index checks.
 
 ## v0.4.2
 
