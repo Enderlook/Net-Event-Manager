@@ -248,9 +248,6 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
             if (derivedHoldersCount_ > 0)
             {
                 Debug.Assert(derivedSlicers is not null);
-                ref SliceOfCallbacks currentSlice = ref Utils.GetArrayDataReference(derivedSlicers);
-                ref SliceOfCallbacks endSlice = ref Unsafe.Add(ref currentSlice, derivedHoldersCount_);
-
                 // If typeof(TEvent).IsValueType, then derived are reference types since in .NET all value types inherits directly from a reference type,
                 // so we may need to box the argument.
                 object? boxedArgument = argument;
