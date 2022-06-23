@@ -79,7 +79,7 @@ public sealed partial class EventManager
 
                         for (; purgeIndex_ < end;)
                         {
-                            if ((state & IS_CANCELATION_REQUESTED) == 0)
+                            if ((state & IS_CANCELLATION_REQUESTED) == 0)
                             {
                                 if (holdersPerType_.TryGetFromIndex(purgeIndex_, out InvokersHolder? holder))
                                 {
@@ -125,7 +125,7 @@ public sealed partial class EventManager
 
                         for (int i = purgeIndex_; i < end;)
                         {
-                            if ((state & IS_CANCELATION_REQUESTED) == 0)
+                            if ((state & IS_CANCELLATION_REQUESTED) == 0)
                             {
                                 if (managersPerType_.TryGetFromIndex(i, out InvokersHolderManager? manager))
                                 {
@@ -169,7 +169,7 @@ public sealed partial class EventManager
 
                 WriteEnd();
 
-                if ((state & IS_CANCELATION_REQUESTED) != 0)
+                if ((state & IS_CANCELLATION_REQUESTED) != 0)
                 {
                     if (!Thread.Yield())
                         Thread.Sleep(PurgeSleepMilliseconds);

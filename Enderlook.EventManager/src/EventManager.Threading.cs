@@ -10,7 +10,7 @@ public sealed partial class EventManager
 
     private const int IS_DISPOSED_OR_DISPOSING = 1 << 1;
     private const int IS_PURGING = 1 << 2;
-    private const int IS_CANCELATION_REQUESTED = 1 << 3;
+    private const int IS_CANCELLATION_REQUESTED = 1 << 3;
 
     private int globalLock;
     private int readers;
@@ -57,7 +57,7 @@ public sealed partial class EventManager
                 }
 
                 if ((state & IS_PURGING) != 0)
-                    this.state |= IS_CANCELATION_REQUESTED;
+                    this.state |= IS_CANCELLATION_REQUESTED;
             }
             Unlock(ref stateLock);
         }
