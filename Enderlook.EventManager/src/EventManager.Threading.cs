@@ -57,7 +57,7 @@ public sealed partial class EventManager
                 }
 
                 if ((state & IS_PURGING) != 0)
-                    this.state |= IS_CANCELLATION_REQUESTED;
+                    this.state = state | IS_CANCELLATION_REQUESTED;
             }
             Unlock(ref stateLock);
         }
