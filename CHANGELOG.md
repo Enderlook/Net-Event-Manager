@@ -3,6 +3,7 @@
 ## 
 
 - Remove unnecessary aggressive inlining in `Raise<TEvent>()` method.
+- Remove static constructor from `EventManager`.
 
 ## v0.4.3
 

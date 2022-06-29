@@ -30,7 +30,16 @@ public sealed partial class EventManager : IDisposable
     /// <summary>
     /// A shared instance of the event manager.
     /// </summary>
-    public static EventManager Shared { get; } = new EventManager();
+    public static EventManager Shared
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => Container.Shared; // Avoid having an static constructor in a public type.
+    }
+
+    private static class Container
+    {
+        public static readonly EventManager Shared = new();
+    }
 
     /// <summary>
     /// Raises an event type <typeparamref name="TEvent"/>.<br/>
