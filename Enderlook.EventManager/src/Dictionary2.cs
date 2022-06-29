@@ -646,7 +646,7 @@ internal struct Dictionary2<TKey, TValue>
         return false;
     }
 
-    public bool MoveNext(ref int index, out KeyValuePair<TKey, TValue> item)
+    public bool MoveNext(ref int index, [NotNullWhen(true)] out TKey? key, [NotNullWhen(true)] out TValue? value)
     {
         Entry[]? entries_ = entries;
         Debug.Assert(entries_ is not null, "Check if Count > 0 property before using this method.");
@@ -658,14 +658,18 @@ internal struct Dictionary2<TKey, TValue>
 
             if (entry.Next >= -1)
             {
-                item = new KeyValuePair<TKey, TValue>(entry.Key, entry.Value);
+                key = entry.Key;
+                Debug.Assert(key is not null);
+                value = entry.Value!; // Value can only be null if TValue is marked as nullable.
                 return true;
             }
         }
 #if NET5_0_OR_GREATER
-        Unsafe.SkipInit(out item);
+        Unsafe.SkipInit(out key);
+        Unsafe.SkipInit(out value);
 #else
-        item = default;
+        key = default;
+        value = default;
 #endif
         return false;
     }

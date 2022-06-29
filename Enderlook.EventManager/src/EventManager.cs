@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
@@ -184,12 +183,12 @@ public sealed partial class EventManager : IDisposable
                         if (managersPerType.Count > 0)
                         {
                             int index = 0;
-                            while (managersPerType.MoveNext(ref index, out KeyValuePair<Type, InvokersHolderManager> kv))
+                            while (managersPerType.MoveNext(ref index, out Type? key, out InvokersHolderManager? value))
                             {
-                                if (kv.Key.IsAssignableFrom(typeof(TEvent)))
+                                if (key.IsAssignableFrom(typeof(TEvent)))
                                 {
-                                    Debug.Assert(kv.Key != typeof(TEvent));
-                                    kv.Value.AddTo(manager, typeof(TEvent));
+                                    Debug.Assert(key != typeof(TEvent));
+                                    value.AddTo(manager, typeof(TEvent));
                                 }
                             }
                         }
@@ -201,10 +200,10 @@ public sealed partial class EventManager : IDisposable
                     if (listenToAssignableEvents && managersPerType.Count > 0)
                     {
                         int index = 0;
-                        while (managersPerType.MoveNext(ref index, out KeyValuePair<Type, InvokersHolderManager> kv))
+                        while (managersPerType.MoveNext(ref index, out Type? key, out InvokersHolderManager? value))
                         {
-                            if (typeof(TEvent).IsAssignableFrom(kv.Key) && kv.Key != typeof(TEvent))
-                                kv.Value.AddDerived(holder_, typeof(TEvent));
+                            if (typeof(TEvent).IsAssignableFrom(key) && key != typeof(TEvent))
+                                value.AddDerived(holder_, typeof(TEvent));
                         }
                     }
                 }
@@ -316,12 +315,12 @@ public sealed partial class EventManager : IDisposable
                 if (managersPerType.Count > 0)
                 {
                     int index = 0;
-                    while (managersPerType.MoveNext(ref index, out KeyValuePair<Type, InvokersHolderManager> kv))
+                    while (managersPerType.MoveNext(ref index, out Type? key, out InvokersHolderManager? value))
                     {
-                        if (kv.Key.IsAssignableFrom(typeof(TEvent)))
+                        if (key.IsAssignableFrom(typeof(TEvent)))
                         {
-                            Debug.Assert(kv.Key != typeof(TEvent));
-                            kv.Value.AddTo(manager, typeof(TEvent));
+                            Debug.Assert(key != typeof(TEvent));
+                            value.AddTo(manager, typeof(TEvent));
                         }
                     }
                 }
