@@ -595,7 +595,7 @@ internal struct Dictionary2<TKey, TValue>
         }
     }
 
-    public bool TryGetFromIndex(int index, [NotNullWhen(true)] out TValue value)
+    public bool TryGetFromIndex(int index, [NotNullWhen(true)] out TValue? value)
     {
         Debug.Assert(index < count, "Index out of range.");
 
@@ -619,7 +619,7 @@ internal struct Dictionary2<TKey, TValue>
         return false;
     }
 
-    public bool TryGetFromIndex(int index, [NotNullWhen(true)] out TKey key, [NotNullWhen(true)] out TValue value)
+    public bool TryGetFromIndex(int index, [NotNullWhen(true)] out TKey? key, [NotNullWhen(true)] out TValue? value)
     {
         Debug.Assert(index < count, "Index out of range.");
 
@@ -670,7 +670,7 @@ internal struct Dictionary2<TKey, TValue>
         return false;
     }
 
-    public bool MoveNext(ref int index, [NotNullWhen(true)] out TValue value)
+    public bool MoveNext(ref int index, [NotNullWhen(true)] out TValue? value)
     {
         Entry[]? entries_ = entries;
         Debug.Assert(entries_ is not null, "Check if Count > 0 property before using this method.");
