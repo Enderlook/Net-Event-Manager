@@ -1,5 +1,9 @@
 # Changelog
 
+## 
+
+- Remove unnecessary aggressive inlining in `Raise<TEvent>()` method.
+
 ## v0.4.3
 
 - Fix and improve documentation.

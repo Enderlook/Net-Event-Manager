@@ -63,7 +63,6 @@ public sealed partial class EventManager : IDisposable
     /// </summary>
     /// <typeparam name="TEvent">Type of the event.</typeparam>
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Raise<TEvent>() where TEvent : new()
     {
         ReadBegin();
