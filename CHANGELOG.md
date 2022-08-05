@@ -4,6 +4,7 @@
 
 - Remove unnecessary aggressive inlining in `Raise<TEvent>()` method.
 - Remove static constructor from `EventManager`.
+- Fix errors in `Subscribe` and `Unsubscribe` methods using wrong parameters.
 
 ## v0.4.3
 

@@ -57,16 +57,16 @@ public sealed partial class EventManager
         if (typeof(TClosure).IsValueType)
         {
             if ((subscribeAttributes & SubscribeFlags.RaiseOnce) == 0)
-                Subscribe<TEvent, StrongMultipleCallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTVoid<TClosure, TEvent>>, InvariantObjectAndT<TClosure?>>(new(callback, closure), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
+                Subscribe<TEvent, StrongMultipleCallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTArgument<TClosure, TEvent>>, InvariantObjectAndT<TClosure?>>(new(callback, closure), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
             else
-                Subscribe<TEvent, StrongOnceCallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTVoid<TClosure, TEvent>>, InvariantObjectAndT<TClosure?>>(new(callback, closure), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
+                Subscribe<TEvent, StrongOnceCallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTArgument<TClosure, TEvent>>, InvariantObjectAndT<TClosure?>>(new(callback, closure), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
         }
         else
         {
             if ((subscribeAttributes & SubscribeFlags.RaiseOnce) == 0)
-                Subscribe<TEvent, StrongMultipleCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TEvent>>, InvariantObjectAndT<object?>>(new(callback, closure), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
+                Subscribe<TEvent, StrongMultipleCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TEvent>>, InvariantObjectAndT<object?>>(new(callback, closure), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
             else
-                Subscribe<TEvent, StrongOnceCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TEvent>>, InvariantObjectAndT<object?>>(new(callback, closure), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
+                Subscribe<TEvent, StrongOnceCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TEvent>>, InvariantObjectAndT<object?>>(new(callback, closure), (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0);
         }
     }
 

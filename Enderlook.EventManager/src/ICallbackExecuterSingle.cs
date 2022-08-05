@@ -87,7 +87,7 @@ internal struct WeakActionHandleVoid<THandle, TEvent> : ICallbackExecuterSingle<
     {
 #if NET6_0
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, Utils.ExpectExactTypeOrNull<THandle>(tuple.Dependent));
+        Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, Utils.ExpectExactTypeOrNull<THandle>(tuple.Target));
 #else
         object? target = callback.Handle.Target;
         Utils.WeakExecuteActionLike(target, callback.Value, Utils.ExpectExactTypeOrNull<THandle>(target));
@@ -109,7 +109,7 @@ internal struct WeakActionHandleArgument<THandle, TEvent> : ICallbackExecuterSin
     {
 #if NET6_0
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, Utils.ExpectExactTypeOrNull<THandle>(tuple.Dependent), argument);
+        Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, Utils.ExpectExactTypeOrNull<THandle>(tuple.Target), argument);
 #else
         object? target = callback.Handle.Target;
         Utils.WeakExecuteActionLike(target, callback.Value, Utils.ExpectExactTypeOrNull<THandle>(target), argument);
@@ -197,7 +197,7 @@ internal struct WeakInvariantObjectAndTVoidWithHandle<TClosure, TEvent> : ICallb
     {
 #if NET6_0
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Dependent, callback.ValueT);
+        Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Target, callback.ValueT);
 #else
         object? target = callback.Handle.Target;
         Utils.WeakExecuteActionLike(target, callback.Value, target, callback.ValueT);
@@ -219,7 +219,7 @@ internal struct WeakInvariantObjectAndTArgumentWithHandleWithoutClosure<TClosure
     {
 #if NET6_0
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Dependent, callback.ValueT);
+        Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Target, callback.ValueT);
 #else
         object? target = callback.Handle.Target;
         Utils.WeakExecuteActionLike(target, callback.Value, target, callback.ValueT);
