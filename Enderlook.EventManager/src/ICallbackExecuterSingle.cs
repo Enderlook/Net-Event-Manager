@@ -79,17 +79,17 @@ internal struct WeakActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, Invaria
     }
 }
 
-internal struct WeakActionHandleVoid<THandle, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>, ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
+internal struct WeakActionHandleVoid<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>, ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
     {
 #if NET6_0
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, Utils.ExpectExactTypeOrNull<THandle>(tuple.Target));
+        Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Target);
 #else
         object? target = callback.Handle.Target;
-        Utils.WeakExecuteActionLike(target, callback.Value, Utils.ExpectExactTypeOrNull<THandle>(target));
+        Utils.WeakExecuteActionLike(target, callback.Value, target);
 #endif
     }
 
@@ -97,21 +97,21 @@ internal struct WeakActionHandleVoid<THandle, TEvent> : ICallbackExecuterSingle<
     public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
     {
         object? target = callback.Handle.Target;
-        Utils.WeakExecuteActionLike(target, callback.Value, Utils.ExpectExactTypeOrNull<THandle>(target));
+        Utils.WeakExecuteActionLike(target, callback.Value, target);
     }
 }
 
-internal struct WeakActionHandleArgument<THandle, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>, ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
+internal struct WeakActionHandleArgument<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>, ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
     {
 #if NET6_0
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, Utils.ExpectExactTypeOrNull<THandle>(tuple.Target), argument);
+        Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Target, argument);
 #else
         object? target = callback.Handle.Target;
-        Utils.WeakExecuteActionLike(target, callback.Value, Utils.ExpectExactTypeOrNull<THandle>(target), argument);
+        Utils.WeakExecuteActionLike(target, callback.Value, target, argument);
 #endif
     }
 
@@ -119,7 +119,7 @@ internal struct WeakActionHandleArgument<THandle, TEvent> : ICallbackExecuterSin
     public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
     {
         object? target = callback.Handle.Target;
-        Utils.WeakExecuteActionLike(target, callback.Value, Utils.ExpectExactTypeOrNull<THandle>(target), argument);
+        Utils.WeakExecuteActionLike(target, callback.Value, target, argument);
     }
 }
 
