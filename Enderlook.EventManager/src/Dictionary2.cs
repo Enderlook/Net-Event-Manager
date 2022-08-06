@@ -485,7 +485,7 @@ internal struct Dictionary2<TKey, TValue>
                 ref Entry entry = ref Unsafe.Add(ref entries_Root, i);
                 if (entry.Next >= -1)
                 {
-                    int j = (int)HashHelpers.FastMod(entry.HashCode, (uint)size, fastModMultiplier_);
+                    int j = (int)HashHelpers.FastMod(entry.HashCode, (uint)newSize, fastModMultiplier_);
                     Debug.Assert(j < buckets_.Length, "Index out of range.");
                     ref int bucket = ref Unsafe.Add(ref buckets_Root, j);
                     entry.Next = bucket - 1; // Value in buckets is 1-based.
