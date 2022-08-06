@@ -483,7 +483,7 @@ internal struct Dictionary2<TKey, TValue>
             {
                 Debug.Assert(i < entries_.Length, "Index out of range.");
                 ref Entry entry = ref Unsafe.Add(ref entries_Root, i);
-                if (entries_[i].Next >= -1)
+                if (entry.Next >= -1)
                 {
                     int j = (int)HashHelpers.FastMod(entry.HashCode, (uint)size, fastModMultiplier_);
                     Debug.Assert(j < buckets_.Length, "Index out of range.");
