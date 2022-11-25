@@ -18,7 +18,7 @@ public sealed partial class EventManager
             Dictionary2<InvokersHolderTypeKey, InvokersHolder> holdersPerType_ = holdersPerType;
             for (int i = 0; i < holdersPerType_.EndIndex; i++)
             {
-                if (holdersPerType_.TryGetFromIndex(i, out InvokersHolder holder))
+                if (holdersPerType_.TryGetFromIndex(i, out InvokersHolder? holder))
                     holder.Dispose();
             }
 
