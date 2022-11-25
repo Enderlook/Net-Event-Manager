@@ -1,8 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
-
-namespace Enderlook.EventManager;
+﻿namespace Enderlook.EventManager;
 
 public sealed partial class EventManager
 {
