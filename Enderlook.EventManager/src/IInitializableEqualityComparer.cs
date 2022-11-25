@@ -126,7 +126,7 @@ internal readonly struct InvariantObjectAndGCHandleComparer<TDelegate, THandle> 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool DoesMatch(InvariantObjectAndGCHandle element)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = element.Token.TargetAndDependent;
         return delegateComparer.Equals(@delegate, Utils.ExpectExactTypeOrNull<TDelegate>(tuple.Target))
           && handleComparer.Equals(handle, Utils.ExpectExactTypeOrNull<THandle>(tuple.Dependent));
@@ -164,7 +164,7 @@ internal readonly struct InvariantObjectAndValueTAndGCHandleComparer<TDelegate, 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool DoesMatch(InvariantObjectAndTAndGCHandle<TValue> element)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = element.Token.TargetAndDependent;
         return delegateComparer.Equals(@delegate, Utils.ExpectExactTypeOrNull<TDelegate>(tuple.Target))
             && EqualityComparer<TValue>.Default.Equals(value, element.ValueT)
@@ -207,7 +207,7 @@ internal readonly struct InvariantObjectAndReferenceTAndGCHandleComparer<TDelega
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool DoesMatch(InvariantObjectAndTAndGCHandle<object?> element)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = element.Token.TargetAndDependent;
         return delegateComparer.Equals(@delegate, Utils.ExpectExactTypeOrNull<TDelegate>(tuple.Target))
             && closureComparer.Equals(value, Utils.ExpectExactTypeOrNull<TValue>(element.ValueT))

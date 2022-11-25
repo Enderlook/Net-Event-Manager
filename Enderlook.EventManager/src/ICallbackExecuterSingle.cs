@@ -4,12 +4,18 @@ namespace Enderlook.EventManager;
 
 internal interface ICallbackExecuterSingle<TEvent, TCallback>
 {
+#if NET7_0_OR_GREATER
+    static abstract
+#endif
     void Invoke(TEvent argument, TCallback callback);
 }
 
 internal struct StrongActionArgument<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObject>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObject callback)
         => Utils.ExecuteActionLike(callback.Unwrap(), argument);
 }
@@ -17,6 +23,9 @@ internal struct StrongActionArgument<TEvent> : ICallbackExecuterSingle<TEvent, I
 internal struct StrongActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObject>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObject callback)
         => Utils.ExecuteActionLike(callback.Unwrap());
 }
@@ -24,6 +33,9 @@ internal struct StrongActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, Invar
 internal struct StrongInvariantObjectAndTArgument<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndT<TClosure?>>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndT<TClosure?> callback)
         => Utils.ExecuteActionLike(callback.Value, callback.ValueT, argument);
 }
@@ -31,6 +43,9 @@ internal struct StrongInvariantObjectAndTArgument<TClosure, TEvent> : ICallbackE
 internal struct StrongInvariantObjectAndTVoid<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndT<TClosure?>>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndT<TClosure?> callback)
         => Utils.ExecuteActionLike(callback.Value, callback.ValueT);
 }
@@ -38,9 +53,12 @@ internal struct StrongInvariantObjectAndTVoid<TClosure, TEvent> : ICallbackExecu
 internal struct WeakActionArgument<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>, ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
         Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, argument);
 #else
@@ -50,6 +68,9 @@ internal struct WeakActionArgument<TEvent> : ICallbackExecuterSingle<TEvent, Inv
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
     {
         object? target = callback.Handle.Target;
@@ -60,9 +81,12 @@ internal struct WeakActionArgument<TEvent> : ICallbackExecuterSingle<TEvent, Inv
 internal struct WeakActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>, ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
         Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent);
 #else
@@ -72,6 +96,9 @@ internal struct WeakActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, Invaria
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
     {
         object? target = callback.Handle.Target;
@@ -82,9 +109,12 @@ internal struct WeakActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, Invaria
 internal struct WeakActionHandleVoid<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>, ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
         Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Target);
 #else
@@ -94,6 +124,9 @@ internal struct WeakActionHandleVoid<TEvent> : ICallbackExecuterSingle<TEvent, I
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
     {
         object? target = callback.Handle.Target;
@@ -104,9 +137,12 @@ internal struct WeakActionHandleVoid<TEvent> : ICallbackExecuterSingle<TEvent, I
 internal struct WeakActionHandleArgument<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>, ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndGCHandle callback)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
         Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Target, argument);
 #else
@@ -116,6 +152,9 @@ internal struct WeakActionHandleArgument<TEvent> : ICallbackExecuterSingle<TEven
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
     {
         object? target = callback.Handle.Target;
@@ -126,9 +165,12 @@ internal struct WeakActionHandleArgument<TEvent> : ICallbackExecuterSingle<TEven
 internal struct WeakInvariantObjectAndTArgument<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>, ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure>>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
         Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, callback.ValueT, argument);
 #else
@@ -138,6 +180,9 @@ internal struct WeakInvariantObjectAndTArgument<TClosure, TEvent> : ICallbackExe
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
     {
         object? target = callback.Handle.Target;
@@ -148,9 +193,12 @@ internal struct WeakInvariantObjectAndTArgument<TClosure, TEvent> : ICallbackExe
 internal struct WeakInvariantObjectAndTVoid<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>, ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure>>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
         Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, callback.ValueT);
 #else
@@ -160,6 +208,9 @@ internal struct WeakInvariantObjectAndTVoid<TClosure, TEvent> : ICallbackExecute
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
     {
         object? target = callback.Handle.Target;
@@ -170,9 +221,12 @@ internal struct WeakInvariantObjectAndTVoid<TClosure, TEvent> : ICallbackExecute
 internal struct WeakInvariantObjectAndTArgumentWithHandle<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>, ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure>>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
         Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Target, callback.ValueT, argument);
 #else
@@ -182,6 +236,9 @@ internal struct WeakInvariantObjectAndTArgumentWithHandle<TClosure, TEvent> : IC
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
     {
         object? target = callback.Handle.Target;
@@ -192,9 +249,12 @@ internal struct WeakInvariantObjectAndTArgumentWithHandle<TClosure, TEvent> : IC
 internal struct WeakInvariantObjectAndTVoidWithHandle<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>, ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure>>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
         Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Target, callback.ValueT);
 #else
@@ -204,6 +264,9 @@ internal struct WeakInvariantObjectAndTVoidWithHandle<TClosure, TEvent> : ICallb
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
     {
         object? target = callback.Handle.Target;
@@ -214,9 +277,12 @@ internal struct WeakInvariantObjectAndTVoidWithHandle<TClosure, TEvent> : ICallb
 internal struct WeakInvariantObjectAndTArgumentWithHandleWithoutClosure<TClosure, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandle<TClosure>>, ICallbackExecuterSingle<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure>>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandle<TClosure> callback)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
         Utils.WeakExecuteActionLike(tuple.Target, tuple.Dependent, tuple.Target, callback.ValueT);
 #else
@@ -226,6 +292,9 @@ internal struct WeakInvariantObjectAndTArgumentWithHandleWithoutClosure<TClosure
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
     {
         object? target = callback.Handle.Target;

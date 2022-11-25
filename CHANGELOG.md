@@ -1,5 +1,9 @@
 # Changelog
 
+##
+
+- Add support for .NET 7.
+
 ## v0.4.4
 
 - Remove unnecessary aggressive inlining in `Raise<TEvent>()` method.

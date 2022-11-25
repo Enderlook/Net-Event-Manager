@@ -6,12 +6,24 @@ namespace Enderlook.EventManager;
 
 internal interface ICallbackExecuter<TEvent, TCallback>
 {
+#if NET7_0_OR_GREATER
+    static abstract
+#endif
     void Invoke(TEvent argument, TCallback[] callbacks, int count);
 
+#if NET7_0_OR_GREATER
+    static abstract
+#endif
     bool IsOnce();
 
+#if NET7_0_OR_GREATER
+    static abstract
+#endif
     void Purge(TCallback[] callbacks, ref int count);
 
+#if NET7_0_OR_GREATER
+    static abstract
+#endif
     void Dispose(TCallback[] callbacks, int count);
 }
 
@@ -27,9 +39,17 @@ internal readonly struct ExecuteAndFree<TEvent, TCallback, TCallbackExecuter> : 
     where TCallbackExecuter : struct, ICallbackExecuterSingle<TEvent, TCallback>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, TCallback callback)
     {
-        Utils.NullRef<TCallbackExecuter>().Invoke(argument, callback);
+#if NET7_0_OR_GREATER
+        TCallbackExecuter
+#else
+        Utils.NullRef<TCallbackExecuter>()
+#endif
+            .Invoke(argument, callback);
         callback.Free();
     }
 }
@@ -38,6 +58,9 @@ internal struct StrongMultipleCallbackExecuter<TEvent, TCallback, TCallbackExecu
     where TCallbackExecuter : struct, ICallbackExecuterSingle<TEvent, TCallback>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, TCallback[] callbacks, int count)
     {
         if (count == 0)
@@ -47,12 +70,21 @@ internal struct StrongMultipleCallbackExecuter<TEvent, TCallback, TCallbackExecu
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public bool IsOnce() => false;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Purge(TCallback[] callbacks, ref int count) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Dispose(TCallback[] callbacks, int count) { }
 }
 
@@ -61,6 +93,9 @@ internal struct WeakMultipleCallbackExecuter<TEvent, TCallback, TCallbackExecute
     where TCallbackExecuter : struct, ICallbackExecuterSingle<TEvent, TCallback>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, TCallback[] callbacks, int count)
     {
         if (count == 0)
@@ -70,13 +105,22 @@ internal struct WeakMultipleCallbackExecuter<TEvent, TCallback, TCallbackExecute
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public bool IsOnce() => false;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Purge(TCallback[] callbacks, ref int count)
         => CallbackExecuterHelper.Purge(callbacks, ref count);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Dispose(TCallback[] callbacks, int count)
         => CallbackExecuterHelper.WeakDispose(callbacks, count);
 }
@@ -85,6 +129,9 @@ internal struct StrongOnceCallbackExecuter<TEvent, TCallback, TCallbackExecuter>
     where TCallbackExecuter : struct, ICallbackExecuterSingle<TEvent, TCallback>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, TCallback[] callbacks, int count)
     {
         if (count == 0)
@@ -95,12 +142,21 @@ internal struct StrongOnceCallbackExecuter<TEvent, TCallback, TCallbackExecuter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public bool IsOnce() => true;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Purge(TCallback[] callbacks, ref int count) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Dispose(TCallback[] callbacks, int count) { }
 }
 
@@ -109,6 +165,9 @@ internal struct WeakOnceCallbackExecuter<TEvent, TCallback, TCallbackExecuter> :
     where TCallbackExecuter : struct, ICallbackExecuterSingle<TEvent, TCallback>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Invoke(TEvent argument, TCallback[] callbacks, int count)
     {
         if (count == 0)
@@ -119,13 +178,22 @@ internal struct WeakOnceCallbackExecuter<TEvent, TCallback, TCallbackExecuter> :
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public bool IsOnce() => true;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Purge(TCallback[] callbacks, ref int count)
         => CallbackExecuterHelper.Purge(callbacks, ref count);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET7_0_OR_GREATER
+    static
+#endif
     public void Dispose(TCallback[] callbacks, int count)
         => CallbackExecuterHelper.WeakDispose(callbacks, count);
 }
@@ -144,7 +212,12 @@ internal static class CallbackExecuterHelper
 
         while (Unsafe.IsAddressLessThan(ref current, ref end))
         {
-            Utils.NullRef<TCallbackExecuter>().Invoke(argument, current);
+#if NET7_0_OR_GREATER
+            TCallbackExecuter
+#else
+            Utils.NullRef<TCallbackExecuter>()
+#endif
+                .Invoke(argument, current);
             current = ref Unsafe.Add(ref current, 1);
         }
     }

@@ -35,7 +35,7 @@ internal readonly struct InvariantObjectAndT<T>
 
 internal struct InvariantObjectAndGCHandle : IWeak
 {
-#if NET6_0
+#if NET6_0_OR_GREATER
     public DependentHandle Token;
 #else
     public readonly object Value;
@@ -45,7 +45,7 @@ internal struct InvariantObjectAndGCHandle : IWeak
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public InvariantObjectAndGCHandle(object value, object handle)
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         Token = new DependentHandle(handle, value);
 #else
         Value = value;
@@ -56,7 +56,7 @@ internal struct InvariantObjectAndGCHandle : IWeak
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Free()
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         Token.Dispose();
 #else
         Handle.Free();
@@ -66,7 +66,7 @@ internal struct InvariantObjectAndGCHandle : IWeak
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool FreeIfIsCollected()
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         if (Token.Dependent is null)
         {
             Token.Dispose();
@@ -114,7 +114,7 @@ internal readonly struct InvariantObjectAndGCHandleTrackResurrection : IWeak
 internal struct InvariantObjectAndTAndGCHandle<T> : IWeak
 {
     public readonly T ValueT;
-#if NET6_0
+#if NET6_0_OR_GREATER
     public DependentHandle Token;
 #else
     public readonly object Value;
@@ -125,7 +125,7 @@ internal struct InvariantObjectAndTAndGCHandle<T> : IWeak
     public InvariantObjectAndTAndGCHandle(object value, object handle, T valueT)
     {
         ValueT = valueT;
-#if NET6_0
+#if NET6_0_OR_GREATER
         Token = new DependentHandle(handle, value);
 #else
         Value = value;
@@ -136,7 +136,7 @@ internal struct InvariantObjectAndTAndGCHandle<T> : IWeak
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Free()
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         Token.Dispose();
 #else
         Handle.Free();
@@ -146,7 +146,7 @@ internal struct InvariantObjectAndTAndGCHandle<T> : IWeak
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool FreeIfIsCollected()
     {
-#if NET6_0
+#if NET6_0_OR_GREATER
         if (Token.Dependent is null)
         {
             Token.Dispose();
