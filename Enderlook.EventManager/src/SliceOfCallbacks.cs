@@ -18,6 +18,10 @@ internal readonly struct SliceOfCallbacks
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Clear()
+        => holder.Clear(new(callbacks, count));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Raise<TEvent>(TEvent argument)
         => Utils.ExpectAssignableType<InvokersHolder<TEvent>>(holder).Raise(new(callbacks, count), argument);
 

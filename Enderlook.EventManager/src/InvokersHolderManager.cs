@@ -191,17 +191,24 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
 
         SetAsRaised();
 
+        int holdersCount_;
+        int derivedHoldersCount_;
+        SliceOfCallbacks[]? derivedSlicers;
+        SliceOfCallbacks[]? slices;
         InvariantObject[] takenHolders = Utils.Take(ref holders);
         {
-            int holdersCount_ = holdersCount;
-            int derivedHoldersCount_ = derivedHoldersCount;
+            holdersCount_ = holdersCount;
+            derivedHoldersCount_ = derivedHoldersCount;
 
-            SliceOfCallbacks[]? derivedSlicers = GetSlices(derivedHolders, derivedHoldersCount_);
-            SliceOfCallbacks[]? slices = GetSlices(takenHolders, holdersCount_);
-            Utils.Untake(ref holders, takenHolders);
+            derivedSlicers = GetSlices(derivedHolders, derivedHoldersCount_);
+            slices = GetSlices(takenHolders, holdersCount_);
+        }
+        Utils.Untake(ref holders, takenHolders);
 
-            eventManager.InHolderEnd();
+        eventManager.InHolderEnd();
 
+        try
+        {
             if (holdersCount_ > 0)
             {
                 TEvent? argument_;
@@ -224,6 +231,17 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
                 RaiseDerivedSlice(boxedArgument, derivedSlicers, derivedHoldersCount_);
             }
         }
+        finally
+        {
+            if (holdersCount_ > 0)
+                Clear(slices, holdersCount_);
+
+            if (derivedHoldersCount_ > 0)
+            {
+                Debug.Assert(derivedSlicers is not null);
+                Clear(derivedSlicers, derivedHoldersCount_);
+            }
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -231,17 +249,24 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
     {
         SetAsRaised();
 
+        int holdersCount_;
+        int derivedHoldersCount_;
+        SliceOfCallbacks[]? derivedSlicers;
+        SliceOfCallbacks[]? slices;
         InvariantObject[] takenHolders = Utils.Take(ref holders);
         {
-            int holdersCount_ = holdersCount;
-            int derivedHoldersCount_ = derivedHoldersCount;
+            holdersCount_ = holdersCount;
+            derivedHoldersCount_ = derivedHoldersCount;
 
-            SliceOfCallbacks[]? derivedSlicers = GetSlices(derivedHolders, derivedHoldersCount_);
-            SliceOfCallbacks[]? slices = GetSlices(takenHolders, holdersCount_);
-            Utils.Untake(ref holders, takenHolders);
+            derivedSlicers = GetSlices(derivedHolders, derivedHoldersCount_);
+            slices = GetSlices(takenHolders, holdersCount_);
+        }
+        Utils.Untake(ref holders, takenHolders);
 
-            eventManager.InHolderEnd();
+        eventManager.InHolderEnd();
 
+        try
+        {
             if (holdersCount_ > 0)
                 RaiseSlice(argument, slices, holdersCount_);
 
@@ -254,6 +279,34 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
                 RaiseDerivedSlice(boxedArgument, derivedSlicers, derivedHoldersCount_);
             }
         }
+        finally
+        {
+            if (holdersCount_ > 0)
+                Clear(slices, holdersCount_);
+
+            if (derivedHoldersCount_ > 0)
+            {
+                Debug.Assert(derivedSlicers is not null);
+                Clear(derivedSlicers, derivedHoldersCount_);
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void Clear(SliceOfCallbacks[]? slices, int count)
+    {
+        Debug.Assert(count > 0);
+
+        Debug.Assert(slices is not null);
+        ref SliceOfCallbacks currentSlice = ref Utils.GetArrayDataReference(slices);
+        ref SliceOfCallbacks endSlice = ref Unsafe.Add(ref currentSlice, count);
+
+        while (Unsafe.IsAddressLessThan(ref currentSlice, ref endSlice))
+        {
+            currentSlice.Clear();
+            currentSlice = ref Unsafe.Add(ref currentSlice, 1);
+        }
+        ArrayUtils.ReturnArray(slices, count);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -270,7 +323,6 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
             currentSlice.Raise(argument);
             currentSlice = ref Unsafe.Add(ref currentSlice, 1);
         }
-        ArrayUtils.ReturnArray(slices, count);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -287,6 +339,5 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
             currentSlice.RaiseDerived<TEvent>(argument);
             currentSlice = ref Unsafe.Add(ref currentSlice, 1);
         }
-        ArrayUtils.ReturnArray(slices, count);
     }
 }

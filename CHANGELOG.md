@@ -3,6 +3,7 @@
 ##
 
 - Add support for .NET 7.
+- Fix disposing and reuse of internal structures and callbacks during execution of `Raise` and `DynamicRaise`.
 
 ## v0.4.4
 

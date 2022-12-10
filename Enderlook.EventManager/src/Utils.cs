@@ -7,6 +7,10 @@ using System.Threading;
 
 namespace Enderlook.EventManager;
 
+internal struct Yes { }
+
+internal struct No { }
+
 internal static class Utils
 {
     public static MemoryPressure GetMemoryPressure()
@@ -209,4 +213,11 @@ internal static class Utils
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsNullRef<T>(ref T value) => Unsafe.AreSame(ref NullRef<T>(), ref value);
 #endif
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsToggled<T>()
+    {
+        Debug.Assert(typeof(T) == typeof(Yes) || typeof(T) == typeof(No));
+        return typeof(T) == typeof(Yes);
+    }
 }

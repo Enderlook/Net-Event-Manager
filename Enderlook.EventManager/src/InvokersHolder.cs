@@ -30,6 +30,8 @@ internal abstract class InvokersHolder
 
     public abstract Slice GetCallbacks();
 
+    public abstract void Clear(Slice slice);
+
     public abstract void Dispose();
 
     public abstract void RaiseDerived<TConcreteEvent>(Slice slice, object? argument);
@@ -42,7 +44,7 @@ internal abstract class InvokersHolder<TEvent> : InvokersHolder
     public abstract void Raise(Slice slice, TEvent argument);
 }
 
-internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : InvokersHolder<TEvent>
+internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce> : InvokersHolder<TEvent>
     where TCallbackHelper : struct, ICallbackExecuter<TEvent, TCallback>
 {
     private TCallback[]? callbacks = ArrayUtils.InitialArray<TCallback>();
@@ -74,11 +76,7 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
     {
         TCallback[] callbacks_ = Utils.Take(ref callbacks);
         int count_ = count;
-#if NET7_0_OR_GREATER
-        if (TCallbackHelper.IsOnce())
-#else
-        if (Utils.NullRef<TCallbackHelper>().IsOnce())
-#endif
+        if (Utils.IsToggled<TIsOnce>())
         {
             count = 0;
             Utils.Untake(ref callbacks, ArrayUtils.RentArray<TCallback>(count_)); // Alternatively we could do, ArrayUtils.InitialArray<TCallback>();
@@ -90,6 +88,22 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
             Array.Copy(callbacks_, array, count_);
             Utils.Untake(ref callbacks, callbacks_);
             return new(array, count_);
+        }
+    }
+
+    public override void Clear(Slice slice)
+    {
+        TCallback[] callbacks_ = Utils.ExpectExactType<TCallback[]>(slice.Array);
+
+        if (Utils.IsToggled<TIsOnce>())
+        {
+            ArrayUtils.ReturnArray(callbacks_, slice.Count);
+#if NET7_0_OR_GREATER
+            TCallbackHelper
+#else
+            Utils.NullRef<TCallbackHelper>()
+#endif
+                .Dispose(callbacks_, slice.Count);
         }
     }
 
@@ -162,7 +176,7 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback> : Invok
         return false;
 
     remove:
-        holderType = new(typeof(InvokersHolder<TEvent, TCallbackHelper, TCallback>), ListenToAssignableEvents);
+        holderType = new(typeof(InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce>), ListenToAssignableEvents);
         return true;
     }
 

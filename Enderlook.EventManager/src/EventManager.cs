@@ -125,7 +125,7 @@ public sealed partial class EventManager : IDisposable
         void SlowPath() => CreateInvokersHolderManagerDynamic(key).DynamicRaise(argument, this);
     }
 
-    internal void Unsubscribe<TEvent, TCallbackHelper, TPredicator, TCallback>(TPredicator predicator, bool listenToAssignableEvents)
+    internal void Unsubscribe<TEvent, TCallbackHelper, TIsOnce, TPredicator, TCallback>(TPredicator predicator, bool listenToAssignableEvents)
         where TCallbackHelper : struct, ICallbackExecuter<TEvent, TCallback>
         where TPredicator : IPredicator<TCallback>
     {
@@ -135,7 +135,7 @@ public sealed partial class EventManager : IDisposable
             {
                 FromReadToInHolder();
                 {
-                    Utils.ExpectExactType<InvokersHolder<TEvent, TCallbackHelper, TCallback>>(holder)
+                    Utils.ExpectExactType<InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce>>(holder)
                         .Unsubscribe(predicator);
                 }
                 InHolderEnd();
@@ -145,7 +145,7 @@ public sealed partial class EventManager : IDisposable
         }
     }
 
-    internal void Subscribe<TEvent, TCallbackHelper, TCallback>(TCallback callback, bool listenToAssignableEvents)
+    internal void Subscribe<TEvent, TCallbackHelper, TIsOnce, TCallback>(TCallback callback, bool listenToAssignableEvents)
         where TCallbackHelper : struct, ICallbackExecuter<TEvent, TCallback>
     {
         ReadBegin();
@@ -154,7 +154,7 @@ public sealed partial class EventManager : IDisposable
             {
                 FromReadToInHolder();
                 {
-                    Utils.ExpectExactType<InvokersHolder<TEvent, TCallbackHelper, TCallback>>(holder).Subscribe(callback);
+                    Utils.ExpectExactType<InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce>>(holder).Subscribe(callback);
                 }
                 InHolderEnd();
             }
@@ -165,13 +165,13 @@ public sealed partial class EventManager : IDisposable
         [MethodImpl(MethodImplOptions.NoInlining)]
         void SlowPath()
         {
-            InvokersHolder<TEvent, TCallbackHelper, TCallback> holder_;
+            InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce> holder_;
             FromReadToWrite();
             {
                 ref InvokersHolder holderSlot = ref holdersPerType.GetOrCreateValueSlot(new(typeof(TCallbackHelper), listenToAssignableEvents), out bool found);
                 if (found)
                 {
-                    holder_ = Utils.ExpectExactType<InvokersHolder<TEvent, TCallbackHelper, TCallback>>(holderSlot);
+                    holder_ = Utils.ExpectExactType<InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce>>(holderSlot);
                     goto exit;
                 }
                 else
