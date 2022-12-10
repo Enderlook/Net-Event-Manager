@@ -189,23 +189,7 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
     {
         Debug.Assert(typeof(TEvent) == (argument?.GetType() ?? typeof(TBaseEvent)));
 
-        SetAsRaised();
-
-        int holdersCount_;
-        int derivedHoldersCount_;
-        SliceOfCallbacks[]? derivedSlicers;
-        SliceOfCallbacks[]? slices;
-        InvariantObject[] takenHolders = Utils.Take(ref holders);
-        {
-            holdersCount_ = holdersCount;
-            derivedHoldersCount_ = derivedHoldersCount;
-
-            derivedSlicers = GetSlices(derivedHolders, derivedHoldersCount_);
-            slices = GetSlices(takenHolders, holdersCount_);
-        }
-        Utils.Untake(ref holders, takenHolders);
-
-        eventManager.InHolderEnd();
+        PrepareToRaise(eventManager, out int holdersCount_, out int derivedHoldersCount_, out SliceOfCallbacks[]? derivedSlicers, out SliceOfCallbacks[]? slices);
 
         try
         {
@@ -247,23 +231,7 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StaticRaise(TEvent? argument, EventManager eventManager)
     {
-        SetAsRaised();
-
-        int holdersCount_;
-        int derivedHoldersCount_;
-        SliceOfCallbacks[]? derivedSlicers;
-        SliceOfCallbacks[]? slices;
-        InvariantObject[] takenHolders = Utils.Take(ref holders);
-        {
-            holdersCount_ = holdersCount;
-            derivedHoldersCount_ = derivedHoldersCount;
-
-            derivedSlicers = GetSlices(derivedHolders, derivedHoldersCount_);
-            slices = GetSlices(takenHolders, holdersCount_);
-        }
-        Utils.Untake(ref holders, takenHolders);
-
-        eventManager.InHolderEnd();
+        PrepareToRaise(eventManager, out int holdersCount_, out int derivedHoldersCount_, out SliceOfCallbacks[]? derivedSlicers, out SliceOfCallbacks[]? slices);
 
         try
         {
@@ -290,6 +258,23 @@ internal sealed class InvokersHolderManager<TEvent> : InvokersHolderManager
                 Clear(derivedSlicers, derivedHoldersCount_);
             }
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void PrepareToRaise(EventManager eventManager, out int holdersCount_, out int derivedHoldersCount_, out SliceOfCallbacks[]? derivedSlicers, out SliceOfCallbacks[]? slices)
+    {
+        SetAsRaised();
+        InvariantObject[] takenHolders = Utils.Take(ref holders);
+        {
+            holdersCount_ = holdersCount;
+            derivedHoldersCount_ = derivedHoldersCount;
+
+            derivedSlicers = GetSlices(derivedHolders, derivedHoldersCount_);
+            slices = GetSlices(takenHolders, holdersCount_);
+        }
+        Utils.Untake(ref holders, takenHolders);
+
+        eventManager.InHolderEnd();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
