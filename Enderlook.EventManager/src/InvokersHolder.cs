@@ -45,7 +45,7 @@ internal abstract class InvokersHolder<TEvent> : InvokersHolder
 }
 
 internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce> : InvokersHolder<TEvent>
-    where TCallbackHelper : struct, ICallbackExecuter<TEvent, TCallback>
+    where TCallbackHelper : ICallbackExecuter<TEvent, TCallback>
 {
     private TCallback[]? callbacks = ArrayUtils.InitialArray<TCallback>();
     private int count;

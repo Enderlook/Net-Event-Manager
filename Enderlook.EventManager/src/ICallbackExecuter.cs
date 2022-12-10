@@ -29,7 +29,7 @@ internal interface IWeak
 }
 
 internal struct StrongCallbackExecuter<TEvent, TCallback, TCallbackExecuter> : ICallbackExecuter<TEvent, TCallback>
-    where TCallbackExecuter : struct, ICallbackExecuterSingle<TEvent, TCallback>
+    where TCallbackExecuter : ICallbackExecuterSingle<TEvent, TCallback>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NET7_0_OR_GREATER
@@ -58,7 +58,7 @@ internal struct StrongCallbackExecuter<TEvent, TCallback, TCallbackExecuter> : I
 
 internal struct WeakCallbackExecuter<TEvent, TCallback, TCallbackExecuter> : ICallbackExecuter<TEvent, TCallback>
     where TCallback : IWeak
-    where TCallbackExecuter : struct, ICallbackExecuterSingle<TEvent, TCallback>
+    where TCallbackExecuter : ICallbackExecuterSingle<TEvent, TCallback>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NET7_0_OR_GREATER
@@ -91,7 +91,7 @@ internal static class CallbackExecuterHelper
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Invoke<TEvent, TCallback, TCallbackExecuter>(TEvent argument, TCallback[] callbacks, int count)
-        where TCallbackExecuter : struct, ICallbackExecuterSingle<TEvent, TCallback>
+        where TCallbackExecuter : ICallbackExecuterSingle<TEvent, TCallback>
     {
         Debug.Assert(count > 0);
         Debug.Assert(callbacks.Length > count);
