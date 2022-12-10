@@ -21,19 +21,23 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
         if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionArgument<TEvent>>, No, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            InvariantObjectAndGCHandle callback_ = new(callback, handle);
+            if (multipleRaises)
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionArgument<TEvent>>, No, InvariantObjectAndGCHandle>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionArgument<TEvent>>, Yes, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionArgument<TEvent>>, Yes, InvariantObjectAndGCHandle>(callback_, listenToAssignableEvents);
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionArgument<TEvent>>, No, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            InvariantObjectAndGCHandleTrackResurrection callback_ = new(callback, handle);
+            if (multipleRaises)
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionArgument<TEvent>>, No, InvariantObjectAndGCHandleTrackResurrection>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionArgument<TEvent>>, Yes, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionArgument<TEvent>>, Yes, InvariantObjectAndGCHandleTrackResurrection>(callback_, listenToAssignableEvents);
         }
     }
 
@@ -53,19 +57,23 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
         if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionVoid<TEvent>>, No, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            InvariantObjectAndGCHandle callback_ = new(callback, handle);
+            if (multipleRaises)
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionVoid<TEvent>>, No, InvariantObjectAndGCHandle>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionVoid<TEvent>>, Yes, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionVoid<TEvent>>, Yes, InvariantObjectAndGCHandle>(callback_, listenToAssignableEvents);
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionVoid<TEvent>>, No, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            InvariantObjectAndGCHandleTrackResurrection callback_ = new(callback, handle);
+            if (multipleRaises)
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionVoid<TEvent>>, No, InvariantObjectAndGCHandleTrackResurrection>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionVoid<TEvent>>, Yes, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionVoid<TEvent>>, Yes, InvariantObjectAndGCHandleTrackResurrection>(callback_, listenToAssignableEvents);
         }
     }
 
@@ -86,38 +94,45 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
+        bool trackResurrection = (subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0;
         if (typeof(TClosure).IsValueType)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandle<TClosure?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandle<TClosure?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<TClosure?>>(callback_, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(callback_, listenToAssignableEvents);
             }
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, No, InvariantObjectAndTAndGCHandle<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandle<object?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, No, InvariantObjectAndTAndGCHandle<object?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<object?>>(callback_, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandleTrackResurrection<object?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(callback_, listenToAssignableEvents);
             }
         }
     }
@@ -139,38 +154,45 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
+        bool trackResurrection = (subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0;
         if (typeof(TClosure).IsValueType)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandle<TClosure?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandle<TClosure?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<TClosure?>>(callback_, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(callback_, listenToAssignableEvents);
             }
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, No, InvariantObjectAndTAndGCHandle<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandle<object?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, No, InvariantObjectAndTAndGCHandle<object?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<object?>>(callback_, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandleTrackResurrection<object?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(callback_, listenToAssignableEvents);
             }
         }
     }
@@ -192,38 +214,45 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
+        bool trackResurrection = (subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0;
         if (typeof(TClosure).IsValueType)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandle<TClosure?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandle<TClosure?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<TClosure?>>(callback_, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(callback_, listenToAssignableEvents);
             }
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, No, InvariantObjectAndTAndGCHandle<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandle<object?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, No, InvariantObjectAndTAndGCHandle<object?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<object?>>(callback_, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandleTrackResurrection<object?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(callback_, listenToAssignableEvents);
             }
         }
     }
@@ -245,38 +274,45 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
+        bool trackResurrection = (subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0;
         if (typeof(TClosure).IsValueType)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandle<TClosure?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandle<TClosure?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<TClosure?>>(callback_, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(callback_, listenToAssignableEvents);
             }
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, No, InvariantObjectAndTAndGCHandle<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandle<object?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, No, InvariantObjectAndTAndGCHandle<object?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandle<object?>>(callback_, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                InvariantObjectAndTAndGCHandleTrackResurrection<object?> callback_ = new(callback, handle, closure);
+                if (multipleRaises)
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, No, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(callback_, listenToAssignableEvents);
                 else
-                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, handle, closure), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, Yes, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(callback_, listenToAssignableEvents);
             }
         }
     }
@@ -297,19 +333,23 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
         if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleArgument<TEvent>>, No, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            InvariantObjectAndGCHandle callback_ = new(callback, handle);
+            if (multipleRaises)
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleArgument<TEvent>>, No, InvariantObjectAndGCHandle>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleArgument<TEvent>>, Yes, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleArgument<TEvent>>, Yes, InvariantObjectAndGCHandle>(callback_, listenToAssignableEvents);
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleArgument<TEvent>>, No, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            InvariantObjectAndGCHandleTrackResurrection callback_ = new(callback, handle);
+            if (multipleRaises)
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleArgument<TEvent>>, No, InvariantObjectAndGCHandleTrackResurrection>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleArgument<TEvent>>, Yes, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleArgument<TEvent>>, Yes, InvariantObjectAndGCHandleTrackResurrection>(callback_, listenToAssignableEvents);
         }
     }
 
@@ -329,19 +369,23 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
         if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleVoid<TEvent>>, No, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            InvariantObjectAndGCHandle callback_ = new(callback, handle);
+            if (multipleRaises)
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleVoid<TEvent>>, No, InvariantObjectAndGCHandle>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleVoid<TEvent>>, Yes, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleVoid<TEvent>>, Yes, InvariantObjectAndGCHandle>(callback_, listenToAssignableEvents);
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleVoid<TEvent>>, No, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            InvariantObjectAndGCHandleTrackResurrection callback_ = new(callback, handle);
+            if (multipleRaises)
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleVoid<TEvent>>, No, InvariantObjectAndGCHandleTrackResurrection>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleVoid<TEvent>>, Yes, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Subscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleVoid<TEvent>>, Yes, InvariantObjectAndGCHandleTrackResurrection>(callback_, listenToAssignableEvents);
         }
     }
 
@@ -360,19 +404,23 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
         if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionArgument<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action<TEvent>, THandle>, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            InvariantObjectAndGCHandleComparer<Action<TEvent>, THandle> predicator = new(callback, handle);
+            if (multipleRaises)
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionArgument<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action<TEvent>, THandle>, InvariantObjectAndGCHandle>(predicator, listenToAssignableEvents);
             else
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionArgument<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action<TEvent>, THandle>, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionArgument<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action<TEvent>, THandle>, InvariantObjectAndGCHandle>(predicator, listenToAssignableEvents);
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionArgument<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action<TEvent>, THandle>, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            InvariantObjectAndGCHandleComparer<Action<TEvent>, THandle> predicator = new(callback, handle);
+            if (multipleRaises)
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionArgument<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action<TEvent>, THandle>, InvariantObjectAndGCHandleTrackResurrection>(predicator, listenToAssignableEvents);
             else
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionArgument<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action<TEvent>, THandle>, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionArgument<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action<TEvent>, THandle>, InvariantObjectAndGCHandleTrackResurrection>(predicator, listenToAssignableEvents);
         }
     }
 
@@ -391,19 +439,22 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        InvariantObjectAndGCHandleComparer<Action, THandle> predicator = new(callback, handle);
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
         if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionVoid<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action, THandle>, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            if (multipleRaises)
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionVoid<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action, THandle>, InvariantObjectAndGCHandle>(predicator, listenToAssignableEvents);
             else
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionVoid<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action, THandle>, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionVoid<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action, THandle>, InvariantObjectAndGCHandle>(predicator, listenToAssignableEvents);
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionVoid<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action, THandle>, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            if (multipleRaises)
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionVoid<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action, THandle>, InvariantObjectAndGCHandleTrackResurrection>(predicator, listenToAssignableEvents);
             else
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionVoid<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action, THandle>, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionVoid<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action, THandle>, InvariantObjectAndGCHandleTrackResurrection>(predicator, listenToAssignableEvents);
         }
     }
 
@@ -423,38 +474,43 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
+        bool trackResurrection = (subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0;
         if (typeof(TClosure).IsValueType)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle> predicator = new(callback, closure, handle);
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(predicator, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgument<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(predicator, listenToAssignableEvents);
             }
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle> predicator = new(callback, closure, handle);
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(predicator, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgument<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(predicator, listenToAssignableEvents);
             }
         }
     }
@@ -475,38 +531,43 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
+        bool trackResurrection = (subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0;
         if (typeof(TClosure).IsValueType)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle> predicator = new(callback, closure, handle);
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(predicator, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoid<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(predicator, listenToAssignableEvents);
             }
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle> predicator = new(callback, closure, handle);
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(predicator, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoid<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(predicator, listenToAssignableEvents);
             }
         }
     }
@@ -527,38 +588,43 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
+        bool trackResurrection = (subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0;
         if (typeof(TClosure).IsValueType)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle> predicator = new(callback, closure, handle);
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(predicator, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTArgumentWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(predicator, listenToAssignableEvents);
             }
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle> predicator = new(callback, closure, handle);
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(predicator, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTArgumentWithHandle<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?, TEvent>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(predicator, listenToAssignableEvents);
             }
         }
     }
@@ -579,38 +645,43 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
+        bool trackResurrection = (subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0;
         if (typeof(TClosure).IsValueType)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle> predicator = new(callback, closure, handle);
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<TClosure?>>(predicator, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, No, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>, WeakInvariantObjectAndTVoidWithHandle<TClosure?, TEvent>>, Yes, InvariantObjectAndValueTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure?>>(predicator, listenToAssignableEvents);
             }
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
+            InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle> predicator = new(callback, closure, handle);
+            if (trackResurrection)
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandle<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandle<object?>>(predicator, listenToAssignableEvents);
             }
             else
             {
-                if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                if (multipleRaises)
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, No, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(predicator, listenToAssignableEvents);
                 else
-                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(new(callback, closure, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                    Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndTAndGCHandleTrackResurrection<object?>, WeakInvariantObjectAndTVoidWithHandle<object?, TEvent>>, Yes, InvariantObjectAndReferenceTAndGCHandleComparer<Action<THandle, TClosure?>, TClosure?, THandle>, InvariantObjectAndTAndGCHandleTrackResurrection<object?>>(predicator, listenToAssignableEvents);
             }
         }
     }
@@ -630,19 +701,22 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        InvariantObjectAndGCHandleComparer<Action<THandle, TEvent>, THandle> predicator = new(callback, handle);
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
         if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleArgument<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action<THandle, TEvent>, THandle>, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            if (multipleRaises)
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleArgument<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action<THandle, TEvent>, THandle>, InvariantObjectAndGCHandle>(predicator, listenToAssignableEvents);
             else
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleArgument<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action<THandle, TEvent>, THandle>, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleArgument<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action<THandle, TEvent>, THandle>, InvariantObjectAndGCHandle>(predicator, listenToAssignableEvents);
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleArgument<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action<THandle, TEvent>, THandle>, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            if (multipleRaises)
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleArgument<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action<THandle, TEvent>, THandle>, InvariantObjectAndGCHandleTrackResurrection>(predicator, listenToAssignableEvents);
             else
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleArgument<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action<THandle, TEvent>, THandle>, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleArgument<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action<THandle, TEvent>, THandle>, InvariantObjectAndGCHandleTrackResurrection>(predicator, listenToAssignableEvents);
         }
     }
 
@@ -661,19 +735,22 @@ public sealed partial class EventManager
         if (callback is null) ThrowNullCallbackException();
         if (handle is null) ThrowNullHandleException();
 
+        InvariantObjectAndGCHandleComparer<Action<THandle>, THandle> predicator = new(callback, handle);
+        bool listenToAssignableEvents = (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0;
+        bool multipleRaises = (subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0;
         if ((subscribeAttributes & WeakSubscribeFlags.TrackResurrection) == 0)
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleVoid<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action<THandle>, THandle>, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            if (multipleRaises)
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleVoid<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action<THandle>, THandle>, InvariantObjectAndGCHandle>(predicator, listenToAssignableEvents);
             else
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleVoid<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action<THandle>, THandle>, InvariantObjectAndGCHandle>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandle, WeakActionHandleVoid<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action<THandle>, THandle>, InvariantObjectAndGCHandle>(predicator, listenToAssignableEvents);
         }
         else
         {
-            if ((subscribeAttributes & WeakSubscribeFlags.RaiseOnce) == 0)
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleVoid<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action<THandle>, THandle>, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+            if (multipleRaises)
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleVoid<TEvent>>, No, InvariantObjectAndGCHandleComparer<Action<THandle>, THandle>, InvariantObjectAndGCHandleTrackResurrection>(predicator, listenToAssignableEvents);
             else
-                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleVoid<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action<THandle>, THandle>, InvariantObjectAndGCHandleTrackResurrection>(new(callback, handle), (subscribeAttributes & WeakSubscribeFlags.ListenAssignableEvents) != 0);
+                Unsubscribe<TEvent, WeakCallbackExecuter<TEvent, InvariantObjectAndGCHandleTrackResurrection, WeakActionHandleVoid<TEvent>>, Yes, InvariantObjectAndGCHandleComparer<Action<THandle>, THandle>, InvariantObjectAndGCHandleTrackResurrection>(predicator, listenToAssignableEvents);
         }
     }
 }

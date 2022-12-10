@@ -12,11 +12,11 @@ internal interface IPredicator<TElement>
 
 internal readonly struct InvariantObjectComparer<T> : IPredicator<InvariantObject>
 {
-    private readonly InvariantObject source;
+    private readonly T source;
     private readonly EqualityComparer<T> comparer;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public InvariantObjectComparer(InvariantObject source)
+    public InvariantObjectComparer(T source)
     {
         this.source = source;
         comparer = EqualityComparer<T>.Default;
@@ -24,7 +24,7 @@ internal readonly struct InvariantObjectComparer<T> : IPredicator<InvariantObjec
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool DoesMatch(InvariantObject element)
-        => comparer.Equals(Utils.ExpectExactType<T>(source.Unwrap()), Utils.ExpectExactType<T>(element.Unwrap()));
+        => comparer.Equals(source, Utils.ExpectExactType<T>(element.Unwrap()));
 }
 
 internal readonly struct StrongValueClosureActionComparer<TClosure, TEvent> : IPredicator<InvariantObjectAndT<TClosure>>

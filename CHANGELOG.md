@@ -2,9 +2,12 @@
 
 ##
 
+## v0.4.5
+
 - Add support for .NET 7.
 - Fix disposing and reuse of internal structures and callbacks during execution of `Raise` and `DynamicRaise`.
 - Improve performance by avoiding some array index checks.
+- Reduce code size in subscribe and unsubscribe methods to improve code quality and inlining in them.
 
 ## v0.4.4
 
