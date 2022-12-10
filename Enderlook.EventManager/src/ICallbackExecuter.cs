@@ -116,22 +116,24 @@ internal static class CallbackExecuterHelper
         where TCallback : IWeak
     {
         TCallback[] callbacks_ = callbacks;
-        int count_ = count;
-        for (int i = 0; i < count_; i++)
+        ref TCallback start = ref Utils.GetArrayDataReference(callbacks_);
+        ref TCallback i = ref start;
+        ref TCallback j = ref i;
+        ref TCallback end = ref Unsafe.Add(ref i, count);
+        while (Unsafe.IsAddressLessThan(ref i, ref end))
         {
-            if (callbacks_[i].FreeIfIsCollected())
+            if (!i.FreeIfIsCollected())
             {
-                do
-                {
-                    if (--count_ == i)
-                        goto end;
-                }
-                while (callbacks_[count_].FreeIfIsCollected());
-                callbacks_[i] = callbacks_[count_ + 1];
+                j = i;
+                j = ref Unsafe.Add(ref j, 1);
             }
+            i = ref Unsafe.Add(ref i, 1);
         }
-        end:
-        count = count_;
+        count = (int)(Unsafe.ByteOffset(ref start, ref j)
+#if !NET7_0_OR_GREATER
+            .ToInt64()
+#endif
+            / Unsafe.SizeOf<TCallback>());
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
