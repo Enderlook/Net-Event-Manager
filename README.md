@@ -27,7 +27,7 @@ public static class Player
 
         eventManager.Raise(new PlayerPickedUpItemEvent("Excalibur"));
 
-        eventManager.SubscribeOnce<PlayerPickedUpItemEvent>(OnPlayerPickedUpItemOnce);
+        eventManager.Subscribe<PlayerPickedUpItemEvent>(OnPlayerPickedUpItemOnce, SubscribeFlags.RaiseOnce);
 
         eventManager.Raise(new PlayerPickedUpItemEvent("Pencil"));
 
