@@ -7,6 +7,10 @@ public sealed partial class EventManager : IDisposable
     /// <inheritdoc cref="IDisposable.Dispose"/>
     public void Dispose()
     {
+        // Shared state can't be disposed.
+        if (ReferenceEquals(this, Shared))
+            return;
+
         if (state == IS_DISPOSED_OR_DISPOSING)
             return;
 

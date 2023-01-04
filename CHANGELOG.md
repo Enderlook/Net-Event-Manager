@@ -2,6 +2,8 @@
 
 ##
 
+- Prevent `.Shared.Dispose()` from actually disposing the manager.
+
 ## v0.4.5
 
 - Add support for .NET 7.
