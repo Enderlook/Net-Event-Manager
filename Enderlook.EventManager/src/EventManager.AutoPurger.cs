@@ -273,7 +273,7 @@ public sealed partial class EventManager
                 {
                     if ((invokersHolderManagerCreatorsState & IS_CANCELLATION_REQUESTED) == 0)
                     {
-                        if (invokersHolderManagerCreators.TryGetFromIndex(purgeIndex_, out Type key, out (Func<EventManager, InvokersHolderManager> Delegate, int MillisecondsTimestamp) value)
+                        if (invokersHolderManagerCreators.TryGetFromIndex(purgeIndex_, out Type? key, out (Func<EventManager, InvokersHolderManager> Delegate, int MillisecondsTimestamp) value)
                             && (currentMilliseconds - value.MillisecondsTimestamp) > trimMilliseconds)
                         {
                             invokersHolderManagerCreators.Remove(key);
