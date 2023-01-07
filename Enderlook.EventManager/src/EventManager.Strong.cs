@@ -74,7 +74,7 @@ public sealed partial class EventManager
             if (multipleRaises)
                 Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TEvent>>, No, InvariantObjectAndT<object?>>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TEvent>>, Yes, InvariantObjectAndT<object?>>(callback_,  listenToAssignableEvents);
+                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TEvent>>, Yes, InvariantObjectAndT<object?>>(callback_, listenToAssignableEvents);
         }
     }
 
