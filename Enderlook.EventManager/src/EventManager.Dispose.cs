@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager;
 
@@ -14,14 +15,11 @@ public sealed partial class EventManager : IDisposable
         if (state == IS_DISPOSED_OR_DISPOSING)
             return;
 
-        MassiveWriteBegin();
-        {
-            if (state == IS_DISPOSED_OR_DISPOSING)
-            {
-                WriteEnd();
-                return;
-            }
+        if (!TryMassiveWriteBegin())
+            Work();
 
+        if (state != IS_DISPOSED_OR_DISPOSING)
+        {
             Lock(ref stateLock);
             {
                 state = IS_DISPOSED_OR_DISPOSING;
@@ -42,6 +40,38 @@ public sealed partial class EventManager : IDisposable
             while (managersPerType_.MoveNext(ref i, out InvokersHolderManager? holder))
                 holder.Dispose();
         }
+
         WriteEnd();
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        void Work()
+        {
+            while (!TryMassiveWriteBegin())
+            {
+                int state_ = state;
+                if (state_ == IS_DISPOSED_OR_DISPOSING)
+                    return;
+                if ((state_ & IS_PURGING) != 0)
+                {
+                    if ((state_ & IS_CANCELLATION_REQUESTED) != 0)
+                        continue;
+
+                    Lock(ref stateLock);
+                    {
+                        state_ = state;
+
+                        if (state_ == IS_DISPOSED_OR_DISPOSING)
+                        {
+                            Unlock(ref stateLock);
+                            return;
+                        }
+
+                        if ((state_ & IS_PURGING) != 0)
+                            state = state_ | IS_CANCELLATION_REQUESTED;
+                    }
+                    Unlock(ref stateLock);
+                }
+            }
+        }
     }
 }

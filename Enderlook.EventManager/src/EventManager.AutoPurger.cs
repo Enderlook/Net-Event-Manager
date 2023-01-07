@@ -30,7 +30,17 @@ public sealed partial class EventManager
 
         for (int j = 0; j < PurgeAttempts; j++)
         {
-            int state_ = state;
+            int state_;
+            while (!TryMassiveWriteBegin())
+            {
+                state_ = state;
+                if ((state_ & IS_PURGING) != 0)
+                    return true;
+                if (state_ == IS_DISPOSED_OR_DISPOSING)
+                    return false;
+            }
+
+            state_ = state;
             // Check if callback was called before finishing the previous purge or if dictionaries were not used.
             if ((state_ & IS_PURGING) != 0 || holdersPerType.EndIndex + managersPerType.EndIndex == 0)
                 return true;
@@ -38,140 +48,143 @@ public sealed partial class EventManager
             if (state_ == IS_DISPOSED_OR_DISPOSING)
                 return false;
 
-            MassiveWriteBegin();
+            // Check if is already purging or disposing, or is disposed.
+            // If neither, set as purging.
+            Lock(ref stateLock);
             {
-                // Check if is already purging or disposing, or is disposed.
-                // If neither, set as purging.
-                Lock(ref stateLock);
+                state_ = state;
+                if ((state_ & IS_PURGING) != 0)
                 {
-                    state_ = state;
-                    if ((state_ & IS_PURGING) != 0 || state_ == IS_DISPOSED_OR_DISPOSING)
-                    {
-                        Unlock(ref stateLock);
-                        WriteEnd();
-                        return false;
-                    }
-                    state = IS_PURGING;
+                    Unlock(ref stateLock);
+                    WriteEnd();
+                    return true;
                 }
-                Unlock(ref stateLock);
-
-                int currentMilliseconds = Environment.TickCount;
-
-                MemoryPressure memoryPressure = Utils.GetMemoryPressure();
-                bool hasHighMemoryPressure = memoryPressure == MemoryPressure.High;
-
-                int purgeIndex_ = purgeIndex;
-                Dictionary2<InvokersHolderTypeKey, InvokersHolder> holdersPerType_ = holdersPerType;
-                Dictionary2<Type, InvokersHolderManager> managersPerType_ = managersPerType;
-
-                switch (purgePhase)
+                if (state_ == IS_DISPOSED_OR_DISPOSING)
                 {
-                    case PurgePhase_PurgeInvokersHolder:
-                    {
-                        int end = holdersPerType_.EndIndex;
-                        int count;
-                        if (purgeIndex_ >= end)
-                        {
-                            purgeIndex_ = 0;
-                            count = end;
-                        }
-                        else
-                            count = end - purgeIndex_;
-
-                        int trimMilliseconds = memoryPressure switch
-                        {
-                            MemoryPressure.Low => InvokersHolder_LowAfterMilliseconds,
-                            MemoryPressure.Medium => InvokersHolder_MediumAfterMilliseconds,
-                            _ => 0,
-                        };
-
-                        for (; count > 0; count--)
-                        {
-                            if ((state & IS_CANCELLATION_REQUESTED) == 0)
-                            {
-                                if (holdersPerType_.TryGetFromIndex(purgeIndex_, out InvokersHolder? holder)
-                                    && holder.Purge(out InvokersHolderTypeKey holderType, currentMilliseconds, trimMilliseconds, hasHighMemoryPressure))
-                                    // Note: We could also remove this holder from the manager instead of wait to the next phase for doing that.
-                                    holdersPerType_.Remove(holderType);
-                                purgeIndex_++;
-                                if (purgeIndex_ == end)
-                                    purgeIndex_ = 0;
-                            }
-                            else
-                                goto exit;
-                        }
-
-                        purgeIndex_ = 0;
-                        holdersPerType_.TryShrink();
-                        goto case PurgePhase_PurgeInvokersHolderManager;
-                    }
-                    case PurgePhase_PurgeInvokersHolderManager:
-                    {
-                        int end = managersPerType_.EndIndex;
-                        int count;
-                        if (purgeIndex_ >= end)
-                        {
-                            purgeIndex_ = 0;
-                            count = end;
-                        }
-                        else
-                            count = end - purgeIndex_;
-
-                        int trimMilliseconds = memoryPressure switch
-                        {
-                            MemoryPressure.Low => InvokersHolderManager_LowAfterMilliseconds,
-                            MemoryPressure.Medium => InvokersHolderManager_MediumAfterMilliseconds,
-                            _ => 0,
-                        };
-
-                        for (; count > 0; count--)
-                        {
-                            if ((state & IS_CANCELLATION_REQUESTED) == 0)
-                            {
-                                if (managersPerType_.TryGetFromIndex(purgeIndex_, out InvokersHolderManager? manager)
-                                    && manager.Purge(out Type? key, currentMilliseconds, trimMilliseconds, hasHighMemoryPressure))
-                                    managersPerType_.Remove(key);
-                                purgeIndex_++;
-                                if (purgeIndex_ == end)
-                                    purgeIndex_ = 0;
-                            }
-                            else
-                            {
-                                purgePhase = PurgePhase_PurgeInvokersHolderManager;
-                                goto exit;
-                            }
-                        }
-
-                        purgeIndex_ = 0;
-                        managersPerType_.TryShrink();
-                        purgePhase = PurgePhase_PurgeInvokersHolder;
-                        break;
-                    }
+                    Unlock(ref stateLock);
+                    WriteEnd();
+                    return false;
                 }
-
-            exit:
-                purgeIndex = purgeIndex_;
-                holdersPerType = holdersPerType_;
-                managersPerType = managersPerType_;
-
-                Lock(ref stateLock);
-                {
-                    state_ = state;
-                    state = 0;
-                }
-                Unlock(ref stateLock);
-
-                WriteEnd();
-
-                if ((state_ & IS_CANCELLATION_REQUESTED) != 0)
-                {
-                    if (!Thread.Yield())
-                        Thread.Sleep(PurgeSleepMilliseconds);
-                    continue;
-                }
-
-                return true;
+                state = IS_PURGING;
             }
+            Unlock(ref stateLock);
+
+            int currentMilliseconds = Environment.TickCount;
+
+            MemoryPressure memoryPressure = Utils.GetMemoryPressure();
+            bool hasHighMemoryPressure = memoryPressure == MemoryPressure.High;
+
+            int purgeIndex_ = purgeIndex;
+            Dictionary2<InvokersHolderTypeKey, InvokersHolder> holdersPerType_ = holdersPerType;
+            Dictionary2<Type, InvokersHolderManager> managersPerType_ = managersPerType;
+
+            switch (purgePhase)
+            {
+                case PurgePhase_PurgeInvokersHolder:
+                {
+                    int end = holdersPerType_.EndIndex;
+                    int count;
+                    if (purgeIndex_ >= end)
+                    {
+                        purgeIndex_ = 0;
+                        count = end;
+                    }
+                    else
+                        count = end - purgeIndex_;
+
+                    int trimMilliseconds = memoryPressure switch
+                    {
+                        MemoryPressure.Low => InvokersHolder_LowAfterMilliseconds,
+                        MemoryPressure.Medium => InvokersHolder_MediumAfterMilliseconds,
+                        _ => 0,
+                    };
+
+                    for (; count > 0; count--)
+                    {
+                        if ((state & IS_CANCELLATION_REQUESTED) == 0)
+                        {
+                            if (holdersPerType_.TryGetFromIndex(purgeIndex_, out InvokersHolder? holder)
+                                && holder.Purge(out InvokersHolderTypeKey holderType, currentMilliseconds, trimMilliseconds, hasHighMemoryPressure))
+                                // Note: We could also remove this holder from the manager instead of wait to the next phase for doing that.
+                                holdersPerType_.Remove(holderType);
+                            purgeIndex_++;
+                            if (purgeIndex_ == end)
+                                purgeIndex_ = 0;
+                        }
+                        else
+                            goto exit;
+                    }
+
+                    purgeIndex_ = 0;
+                    holdersPerType_.TryShrink();
+                    goto case PurgePhase_PurgeInvokersHolderManager;
+                }
+                case PurgePhase_PurgeInvokersHolderManager:
+                {
+                    int end = managersPerType_.EndIndex;
+                    int count;
+                    if (purgeIndex_ >= end)
+                    {
+                        purgeIndex_ = 0;
+                        count = end;
+                    }
+                    else
+                        count = end - purgeIndex_;
+
+                    int trimMilliseconds = memoryPressure switch
+                    {
+                        MemoryPressure.Low => InvokersHolderManager_LowAfterMilliseconds,
+                        MemoryPressure.Medium => InvokersHolderManager_MediumAfterMilliseconds,
+                        _ => 0,
+                    };
+
+                    for (; count > 0; count--)
+                    {
+                        if ((state & IS_CANCELLATION_REQUESTED) == 0)
+                        {
+                            if (managersPerType_.TryGetFromIndex(purgeIndex_, out InvokersHolderManager? manager)
+                                && manager.Purge(out Type? key, currentMilliseconds, trimMilliseconds, hasHighMemoryPressure))
+                                managersPerType_.Remove(key);
+                            purgeIndex_++;
+                            if (purgeIndex_ == end)
+                                purgeIndex_ = 0;
+                        }
+                        else
+                        {
+                            purgePhase = PurgePhase_PurgeInvokersHolderManager;
+                            goto exit;
+                        }
+                    }
+
+                    purgeIndex_ = 0;
+                    managersPerType_.TryShrink();
+                    purgePhase = PurgePhase_PurgeInvokersHolder;
+                    break;
+                }
+            }
+
+        exit:
+            purgeIndex = purgeIndex_;
+            holdersPerType = holdersPerType_;
+            managersPerType = managersPerType_;
+
+            Lock(ref stateLock);
+            {
+                state_ = state;
+                state = 0;
+            }
+            Unlock(ref stateLock);
+
+            WriteEnd();
+
+            if ((state_ & IS_CANCELLATION_REQUESTED) != 0)
+            {
+                if (!Thread.Yield())
+                    Thread.Sleep(PurgeSleepMilliseconds);
+                continue;
+            }
+
+            return true;
         }
 
         Debug.Fail("Impossible state.");

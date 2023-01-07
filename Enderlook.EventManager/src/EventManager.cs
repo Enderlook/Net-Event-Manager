@@ -347,4 +347,11 @@ public sealed partial class EventManager : IDisposable
 
     [DoesNotReturn]
     private static void ThrowObjectDisposedException() => throw new ObjectDisposedException("Event Manager");
+
+    [DoesNotReturn]
+    private void ThrowObjectDisposedExceptionAndUnlockGlobal()
+    {
+        Unlock(ref globalLock);
+        throw new ObjectDisposedException("Event Manager");
+    }
 }

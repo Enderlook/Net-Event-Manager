@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Enderlook.EventManager;
@@ -23,41 +24,60 @@ public sealed partial class EventManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ReadBegin()
     {
-        if (state != 0)
-            TryRequestPurgeCancellation();
-
-        Lock(ref globalLock);
+        while (true)
         {
-            if (state == IS_DISPOSED_OR_DISPOSING)
-                ThrowObjectDisposedException();
-
-            readers++;
+            if (TryLock(ref globalLock))
+                break;
+            else if (state != 0)
+            {
+                Work();
+                break;
+            }
         }
-        Unlock(ref globalLock);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void TryRequestPurgeCancellation()
-    {
-        int state = this.state;
 
         if (state == IS_DISPOSED_OR_DISPOSING)
+            ThrowObjectDisposedExceptionAndUnlockGlobal();
+        // We don't check if it's purging because that requires a global lock that we already have.
+        readers++;
+        Unlock(ref globalLock);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        void Work()
+        {
+            while (true)
+            {
+                RequestPurgeCancellation();
+                if (TryLock(ref globalLock))
+                    return;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void RequestPurgeCancellation()
+    {
+        int state_ = state;
+
+        if (state_ == IS_DISPOSED_OR_DISPOSING)
             ThrowObjectDisposedException();
 
-        if ((state & IS_PURGING) != 0)
+        if ((state_ & IS_PURGING) != 0)
         {
+            if ((state_ & IS_CANCELLATION_REQUESTED) != 0)
+                return;
+
             Lock(ref stateLock);
             {
-                state = this.state;
+                state_ = state;
 
-                if (state == IS_DISPOSED_OR_DISPOSING)
+                if (state_ == IS_DISPOSED_OR_DISPOSING)
                 {
                     Unlock(ref stateLock);
                     ThrowObjectDisposedException();
                 }
 
-                if ((state & IS_PURGING) != 0)
-                    this.state = state | IS_CANCELLATION_REQUESTED;
+                if ((state_ & IS_PURGING) != 0)
+                    state = state_ | IS_CANCELLATION_REQUESTED;
             }
             Unlock(ref stateLock);
         }
@@ -66,6 +86,7 @@ public sealed partial class EventManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ReadEnd()
     {
+        // Purging nor disposing can start while it's reading, so we ignore those checks.
         Lock(ref globalLock);
         readers--;
         Unlock(ref globalLock);
@@ -74,6 +95,7 @@ public sealed partial class EventManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void FromReadToWrite()
     {
+        // Purging nor disposing can start while it's reading, so we ignore those checks.
         Lock(ref globalLock);
         int readers_ = --readers;
 
@@ -85,23 +107,42 @@ public sealed partial class EventManager
 
         while (true)
         {
-            Lock(ref globalLock);
-            if (readers > 0)
-            {
-                reserved--;
-                Unlock(ref globalLock);
-            }
-            else
+            if (TryLock(ref globalLock))
                 break;
+            else if (state != 0)
+            {
+                Work();
+                break;
+            }
+        }
+
+        reserved--;
+        if (state == IS_DISPOSED_OR_DISPOSING)
+            ThrowObjectDisposedExceptionAndUnlockGlobal();
+        // We don't check if it's purging because that requires a global lock that we already have.
+        Unlock(ref globalLock);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        void Work()
+        {
+            while (true)
+            {
+                RequestPurgeCancellation();
+                if (TryLock(ref globalLock))
+                    return;
+            }
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void FromReadToInHolder()
     {
+        // Purging nor disposing can start while it's reading, so we ignore those checks.
         Lock(ref globalLock);
-        readers--;
-        Interlocked.Increment(ref inHolders);
+        {
+            readers--;
+            Interlocked.Increment(ref inHolders);
+        }
         Unlock(ref globalLock);
     }
 
@@ -113,15 +154,19 @@ public sealed partial class EventManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void MassiveWriteBegin()
+    private bool TryMassiveWriteBegin()
     {
         while (true)
         {
-            Lock(ref globalLock);
-            if (readers + reserved + inHolders > 0)
-                Unlock(ref globalLock);
-            else
-                break;
+            if (TryLock(ref globalLock))
+            {
+                if (readers + reserved + inHolders > 0)
+                    Unlock(ref globalLock);
+                else
+                    return true;
+            }
+            else if (state != 0)
+                return false;
         }
     }
 
@@ -136,6 +181,9 @@ public sealed partial class EventManager
     {
         while (Interlocked.Exchange(ref @lock, LOCK) != UNLOCK) ;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryLock(ref int @lock) => Interlocked.Exchange(ref @lock, LOCK) != UNLOCK;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Unlock(ref int @lock) => @lock = UNLOCK;

@@ -1,9 +1,12 @@
 # Changelog
 
-##
+## 
+
+## v0.4.6
 
 - Prevent `.Shared.Dispose()` from actually disposing the manager.
 - Fix bug when calling `Raise<TEvent>(TEvent @event)` method with an unregistered `TEvent` type.
+- Fix deadlock produced by the auto purging.
 
 ## v0.4.5
 
