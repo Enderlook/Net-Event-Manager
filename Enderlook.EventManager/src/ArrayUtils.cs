@@ -111,7 +111,7 @@ internal static class ArrayUtils
 #if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
                     if (RuntimeHelpers.IsReferenceOrContainsReferences<TElement>())
 #endif
-                    takenArray[count] = default!;
+                        takenArray[count] = default!;
                     count = count_ - 1;
                     Utils.Untake(ref array, takenArray);
                     return;

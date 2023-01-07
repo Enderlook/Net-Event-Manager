@@ -216,7 +216,7 @@ public sealed partial class EventManager : IDisposable
                     }
                 }
             }
-            exit:
+        exit:
             FromWriteToInHolder();
             {
                 holder_.Subscribe(callback);
