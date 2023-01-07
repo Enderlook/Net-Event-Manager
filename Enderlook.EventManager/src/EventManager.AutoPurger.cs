@@ -30,11 +30,12 @@ public sealed partial class EventManager
 
         for (int j = 0; j < PurgeAttempts; j++)
         {
+            int state_ = state;
             // Check if callback was called before finishing the previous purge or if dictionaries were not used.
-            if ((state & IS_PURGING) != 0 || holdersPerType.EndIndex + managersPerType.EndIndex == 0)
+            if ((state_ & IS_PURGING) != 0 || holdersPerType.EndIndex + managersPerType.EndIndex == 0)
                 return true;
 
-            if (state == IS_DISPOSED_OR_DISPOSING)
+            if (state_ == IS_DISPOSED_OR_DISPOSING)
                 return false;
 
             MassiveWriteBegin();
@@ -43,7 +44,7 @@ public sealed partial class EventManager
                 // If neither, set as purging.
                 Lock(ref stateLock);
                 {
-                    int state_ = state;
+                    state_ = state;
                     if ((state_ & IS_PURGING) != 0 || state_ == IS_DISPOSED_OR_DISPOSING)
                     {
                         Unlock(ref stateLock);
@@ -92,7 +93,7 @@ public sealed partial class EventManager
                                     && holder.Purge(out InvokersHolderTypeKey holderType, currentMilliseconds, trimMilliseconds, hasHighMemoryPressure))
                                     // Note: We could also remove this holder from the manager instead of wait to the next phase for doing that.
                                     holdersPerType_.Remove(holderType);
-                                    purgeIndex_++;
+                                purgeIndex_++;
                                 if (purgeIndex_ == end)
                                     purgeIndex_ = 0;
                             }
@@ -155,13 +156,14 @@ public sealed partial class EventManager
 
                 Lock(ref stateLock);
                 {
+                    state_ = state;
                     state = 0;
                 }
                 Unlock(ref stateLock);
 
                 WriteEnd();
 
-                if ((state & IS_CANCELLATION_REQUESTED) != 0)
+                if ((state_ & IS_CANCELLATION_REQUESTED) != 0)
                 {
                     if (!Thread.Yield())
                         Thread.Sleep(PurgeSleepMilliseconds);
