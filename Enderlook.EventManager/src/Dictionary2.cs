@@ -125,6 +125,7 @@ internal struct Dictionary2<TKey, TValue>
                 buckets_ = buckets;
                 Debug.Assert(buckets_ is not null, "buckets should have been initialized by Resize method.");
                 entries_ = entries;
+                entries_Root = ref Utils.GetArrayDataReference(entries_);
                 Debug.Assert(entries_ is not null, "entries should have been initialized by Resize method.");
                 bucket = ref GetBucket(hashCode, buckets_);
             }
@@ -651,7 +652,8 @@ internal struct Dictionary2<TKey, TValue>
         Entry[]? entries_ = entries;
         Debug.Assert(entries_ is not null, "Check if Count > 0 property before using this method.");
         ref Entry entries_Root = ref Utils.GetArrayDataReference(entries_);
-        while (index < count)
+        int count_ = count;
+        while ((uint)index < (uint)count_)
         {
             Debug.Assert(index < entries_.Length, "Index out of range.");
             ref Entry entry = ref Unsafe.Add(ref entries_Root, index++);
@@ -664,6 +666,7 @@ internal struct Dictionary2<TKey, TValue>
                 return true;
             }
         }
+        index = count_ + 1;
 #if NET5_0_OR_GREATER
         Unsafe.SkipInit(out key);
         Unsafe.SkipInit(out value);

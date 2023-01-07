@@ -3,6 +3,7 @@
 ##
 
 - Prevent `.Shared.Dispose()` from actually disposing the manager.
+- Fix bug when calling `Raise<TEvent>(TEvent @event)` method with an unregistered `TEvent` type.
 
 ## v0.4.5
 
