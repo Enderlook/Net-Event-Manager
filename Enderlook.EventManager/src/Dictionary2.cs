@@ -94,7 +94,7 @@ internal struct Dictionary2<TKey, TValue>
                     Debug.Assert(i < size, "Accessing index outside prime range.");
 
                     entry = ref Unsafe.Add(ref entries_Root, i);
-                    Debug.Assert(entry.HashCode != hashCode || !defaultComparer.Equals(entry.Key, key), "Key is already found.");
+                    Debug.Assert(entry.HashCode != hashCode && !defaultComparer.Equals(entry.Key, key), "Key is already found.");
 
                     i = entry.Next;
 
