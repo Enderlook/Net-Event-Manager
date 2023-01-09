@@ -45,7 +45,7 @@ internal abstract class InvokersHolder<TEvent> : InvokersHolder
 }
 
 internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce> : InvokersHolder<TEvent>
-    where TCallbackHelper : ICallbackExecuter<TEvent, TCallback>
+    where TCallbackHelper : struct, ICallbackExecuter<TEvent, TCallback>
 {
     private TCallback[]? callbacks = ArrayUtils.InitialArray<TCallback>();
     private int count;
@@ -100,6 +100,8 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce
             ArrayUtils.ReturnArray(callbacks_, slice.Count);
 #if NET7_0_OR_GREATER
             TCallbackHelper
+#elif UNITY
+            new TCallbackHelper()
 #else
             Utils.NullRef<TCallbackHelper>()
 #endif
@@ -112,6 +114,8 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce
         TCallback[] callbacks_ = Utils.ExpectExactType<TCallback[]>(slice.Array);
 #if NET7_0_OR_GREATER
         TCallbackHelper
+#elif UNITY
+        new TCallbackHelper()
 #else
         Utils.NullRef<TCallbackHelper>()
 #endif
@@ -128,6 +132,8 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce
         TCallback[] callbacks_ = Utils.ExpectExactType<TCallback[]>(slice.Array);
 #if NET7_0_OR_GREATER
         TCallbackHelper
+#elif UNITY
+        new TCallbackHelper()
 #else
         Utils.NullRef<TCallbackHelper>()
 #endif
@@ -149,6 +155,8 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce
         {
 #if NET7_0_OR_GREATER
             TCallbackHelper
+#elif UNITY
+            new TCallbackHelper()
 #else
             Utils.NullRef<TCallbackHelper>()
 #endif
@@ -195,6 +203,8 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce
             Debug.Assert(array is not null);
 #if NET7_0_OR_GREATER
             TCallbackHelper
+#elif UNITY
+            new TCallbackHelper()
 #else
             Utils.NullRef<TCallbackHelper>()
 #endif

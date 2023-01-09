@@ -2,6 +2,9 @@
 
 ## 
 
+- Fix `NullReferenceException` produced in Unity platform when `Raise` method is executed.
+
+
 ## v0.4.6
 
 - Prevent `.Shared.Dispose()` from actually disposing the manager.
