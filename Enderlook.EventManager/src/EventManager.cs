@@ -126,7 +126,7 @@ public sealed partial class EventManager : IDisposable
     }
 
     internal void Unsubscribe<TEvent, TCallbackHelper, TIsOnce, TPredicator, TCallback>(TPredicator predicator, bool listenToAssignableEvents)
-        where TCallbackHelper : ICallbackExecuter<TEvent, TCallback>
+        where TCallbackHelper : struct, ICallbackExecuter<TEvent, TCallback>
         where TPredicator : IPredicator<TCallback>
     {
         ReadBegin();
@@ -146,7 +146,7 @@ public sealed partial class EventManager : IDisposable
     }
 
     internal void Subscribe<TEvent, TCallbackHelper, TIsOnce, TCallback>(TCallback callback, bool listenToAssignableEvents)
-        where TCallbackHelper : ICallbackExecuter<TEvent, TCallback>
+        where TCallbackHelper : struct, ICallbackExecuter<TEvent, TCallback>
     {
         ReadBegin();
         {
