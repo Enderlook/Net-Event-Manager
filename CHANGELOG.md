@@ -1,9 +1,9 @@
 # Changelog
 
-## 
+## v0.4.7
 
 - Fix `NullReferenceException` produced in Unity platform when `Raise` method is executed.
-
+- Fix error when using raising listeners subscribed with `WeakSubscribe` and garbage being produced by non-`RaiseOnce` listeners.
 
 ## v0.4.6
 

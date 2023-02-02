@@ -97,7 +97,6 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce
 
         if (Utils.IsToggled<TIsOnce>())
         {
-            ArrayUtils.ReturnArray(callbacks_, slice.Count);
 #if NET7_0_OR_GREATER
             TCallbackHelper
 #elif UNITY
@@ -107,6 +106,7 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce
 #endif
                 .Dispose(callbacks_, slice.Count);
         }
+        ArrayUtils.ReturnArray(callbacks_, slice.Count);
     }
 
     public override void Raise(Slice slice, TEvent argument)
