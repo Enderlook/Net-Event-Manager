@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Enderlook.EventManager;
 
@@ -17,7 +19,7 @@ internal struct StrongActionArgument<TEvent> : ICallbackExecuterSingle<TEvent, I
     static
 #endif
     public void Invoke(TEvent argument, InvariantObject callback)
-        => Utils.ExecuteAction(callback.Unwrap(), argument);
+        => Utils.ExpectExactType<Action<TEvent>>(callback.Unwrap())(argument);
 }
 
 internal struct StrongActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObject>
@@ -27,7 +29,7 @@ internal struct StrongActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, Invar
     static
 #endif
     public void Invoke(TEvent argument, InvariantObject callback)
-        => Utils.ExecuteAction(callback.Unwrap());
+        => Utils.ExpectExactType<Action>(callback.Unwrap())();
 }
 
 internal struct StrongInvariantObjectAndTArgument<TClosure, TClosureReal, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndT<TClosure>>
@@ -37,7 +39,7 @@ internal struct StrongInvariantObjectAndTArgument<TClosure, TClosureReal, TEvent
     static
 #endif
     public void Invoke(TEvent argument, InvariantObjectAndT<TClosure> callback)
-        => Utils.ExecuteAction(callback.Value, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
+        => Utils.ExpectExactType<Action<TClosureReal, TEvent>>(callback.Value)(Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
 }
 
 internal struct StrongInvariantObjectAndTVoid<TClosure, TClosureReal, TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndT<TClosure>>
@@ -47,7 +49,7 @@ internal struct StrongInvariantObjectAndTVoid<TClosure, TClosureReal, TEvent> : 
     static
 #endif
     public void Invoke(TEvent argument, InvariantObjectAndT<TClosure> callback)
-        => Utils.ExecuteAction(callback.Value, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        => Utils.ExpectExactType<Action<TClosureReal>>(callback.Value)(Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
 }
 
 internal struct WeakActionArgument<TEvent> : ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandle>, ICallbackExecuterSingle<TEvent, InvariantObjectAndGCHandleTrackResurrection>
@@ -60,10 +62,15 @@ internal struct WeakActionArgument<TEvent> : ICallbackExecuterSingle<TEvent, Inv
     {
 #if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        Utils.WeakExecuteAction(tuple.Target, tuple.Dependent, argument);
+        if (tuple.Target is not null)
+        {
+            Debug.Assert(tuple.Dependent is not null);
+            Utils.ExpectExactType<Action<TEvent>>(tuple.Dependent)(argument);
+        }
 #else
         object? target = callback.Handle.Target;
-        Utils.WeakExecuteAction(target, callback.Value, argument);
+        if (target is not null)
+            Utils.ExpectExactType<Action<TEvent>>(callback.Value)(argument);
 #endif
     }
 
@@ -74,7 +81,8 @@ internal struct WeakActionArgument<TEvent> : ICallbackExecuterSingle<TEvent, Inv
     public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
     {
         object? target = callback.Handle.Target;
-        Utils.WeakExecuteAction(target, callback.Value, argument);
+        if (target is not null)
+            Utils.ExpectExactType<Action<TEvent>>(callback.Value)(argument);
     }
 }
 
@@ -88,10 +96,15 @@ internal struct WeakActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, Invaria
     {
 #if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        Utils.WeakExecuteAction(tuple.Target, tuple.Dependent);
+        if (tuple.Target is not null)
+        {
+            Debug.Assert(tuple.Dependent is not null);
+            Utils.ExpectExactType<Action>(tuple.Dependent)();
+        }
 #else
         object? target = callback.Handle.Target;
-        Utils.WeakExecuteAction(target, callback.Value);
+        if (target is not null)
+            Utils.ExpectExactType<Action>(callback.Value)();
 #endif
     }
 
@@ -102,7 +115,8 @@ internal struct WeakActionVoid<TEvent> : ICallbackExecuterSingle<TEvent, Invaria
     public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
     {
         object? target = callback.Handle.Target;
-        Utils.WeakExecuteAction(target, callback.Value);
+        if (target is not null)
+            Utils.ExpectExactType<Action>(callback.Value)();
     }
 }
 
@@ -116,12 +130,19 @@ internal struct WeakActionHandleVoid<THandle, TEvent> : ICallbackExecuterSingle<
     {
 #if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(tuple.Target);
-        Utils.WeakExecuteAction(handle, tuple.Dependent, handle);
+        if (tuple.Target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(tuple.Target);
+            Debug.Assert(tuple.Dependent is not null);
+            Utils.ExpectExactType<Action<THandle>>(tuple.Dependent)(handle);
+        }
 #else
         object? target = callback.Handle.Target;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
-        Utils.WeakExecuteAction(handle, callback.Value, handle);
+        if (target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
+            Utils.ExpectExactType<Action<THandle>>(callback.Value)(handle);
+        }
 #endif
     }
 
@@ -132,8 +153,11 @@ internal struct WeakActionHandleVoid<THandle, TEvent> : ICallbackExecuterSingle<
     public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
     {
         object? target = callback.Handle.Target;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
-        Utils.WeakExecuteAction(handle, callback.Value, handle);
+        if (target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
+            Utils.ExpectExactType<Action<THandle>>(callback.Value)(handle);
+        }
     }
 }
 
@@ -147,12 +171,19 @@ internal struct WeakActionHandleArgument<THandle, TEvent> : ICallbackExecuterSin
     {
 #if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(tuple.Target);
-        Utils.WeakExecuteAction(handle, tuple.Dependent, handle, argument);
+        if (tuple.Target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(tuple.Target);
+            Debug.Assert(tuple.Dependent is not null);
+            Utils.ExpectExactType<Action<THandle, TEvent>>(tuple.Dependent)(handle, argument);
+        }
 #else
         object? target = callback.Handle.Target;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
-        Utils.WeakExecuteAction(handle, callback.Value, handle, argument);
+        if (target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
+            Utils.ExpectExactType<Action<THandle, TEvent>>(callback.Value)(handle, argument);
+        }
 #endif
     }
 
@@ -163,8 +194,11 @@ internal struct WeakActionHandleArgument<THandle, TEvent> : ICallbackExecuterSin
     public void Invoke(TEvent argument, InvariantObjectAndGCHandleTrackResurrection callback)
     {
         object? target = callback.Handle.Target;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
-        Utils.WeakExecuteAction(handle, callback.Value, handle, argument);
+        if (target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
+            Utils.ExpectExactType<Action<THandle, TEvent>>(callback.Value)(handle, argument);
+        }
     }
 }
 
@@ -178,10 +212,15 @@ internal struct WeakInvariantObjectAndTArgument<TClosure, TClosureReal, TEvent> 
     {
 #if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        Utils.WeakExecuteAction(tuple.Target, tuple.Dependent, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
+        if (tuple.Target is not null)
+        {
+            Debug.Assert(tuple.Dependent is not null);
+            Utils.ExpectExactType<Action<TClosureReal, TEvent>>(tuple.Dependent)(Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
+        }
 #else
         object? target = callback.Handle.Target;
-        Utils.WeakExecuteAction(target, callback.Value, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
+        if (target is not null)
+            Utils.ExpectExactType<Action<TClosureReal, TEvent>>(callback.Value)(Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
 #endif
     }
 
@@ -192,7 +231,8 @@ internal struct WeakInvariantObjectAndTArgument<TClosure, TClosureReal, TEvent> 
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
     {
         object? target = callback.Handle.Target;
-        Utils.WeakExecuteAction(target, callback.Value, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
+        if (target is not null)
+            Utils.ExpectExactType<Action<TClosureReal, TEvent>>(callback.Value)(Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
     }
 }
 
@@ -206,10 +246,15 @@ internal struct WeakInvariantObjectAndTVoid<TClosure, TClosureReal, TEvent> : IC
     {
 #if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        Utils.WeakExecuteAction(tuple.Target, tuple.Dependent, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        if (tuple.Target is not null)
+        {
+            Debug.Assert(tuple.Dependent is not null);
+            Utils.ExpectExactType<Action<TClosureReal>>(tuple.Dependent)(Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        }
 #else
         object? target = callback.Handle.Target;
-        Utils.WeakExecuteAction(target, callback.Value, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        if (target is not null)
+            Utils.ExpectExactType<Action<TClosureReal>>(callback.Value)(Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
 #endif
     }
 
@@ -220,7 +265,8 @@ internal struct WeakInvariantObjectAndTVoid<TClosure, TClosureReal, TEvent> : IC
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
     {
         object? target = callback.Handle.Target;
-        Utils.WeakExecuteAction(target, callback.Value, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        if (target is not null)
+            Utils.ExpectExactType<Action<TClosureReal>>(callback.Value)(Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
     }
 }
 
@@ -234,12 +280,19 @@ internal struct WeakInvariantObjectAndTArgumentWithHandle<TClosure, TClosureReal
     {
 #if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(tuple.Target);
-        Utils.WeakExecuteAction(handle, tuple.Dependent, handle, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
+        if (tuple.Target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(tuple.Target);
+            Debug.Assert(tuple.Dependent is not null);
+            Utils.ExpectExactType<Action<TClosureReal, TEvent>>(tuple.Dependent)(Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
+        }
 #else
         object? target = callback.Handle.Target;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
-        Utils.WeakExecuteAction(handle, callback.Value, handle, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
+        if (target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
+            Utils.ExpectExactType<Action<TClosureReal, TEvent>>(callback.Value)(Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
+        }
 #endif
     }
 
@@ -250,8 +303,11 @@ internal struct WeakInvariantObjectAndTArgumentWithHandle<TClosure, TClosureReal
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
     {
         object? target = callback.Handle.Target;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
-        Utils.WeakExecuteAction<object, TClosureReal, TEvent>(handle, callback.Value, handle, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
+        if (target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
+            Utils.ExpectExactType<Action<TClosureReal, TEvent>>(callback.Value)(Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT), argument);
+        }
     }
 }
 
@@ -265,12 +321,19 @@ internal struct WeakInvariantObjectAndTVoidWithHandle<TClosure, TClosureReal, TH
     {
 #if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(tuple.Target);
-        Utils.WeakExecuteAction(handle, tuple.Dependent, handle, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        if (tuple.Target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(tuple.Target);
+            Debug.Assert(tuple.Dependent is not null);
+            Utils.ExpectExactType<Action<THandle, TClosureReal>>(tuple.Dependent)(handle, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        }
 #else
         object? target = callback.Handle.Target;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
-        Utils.WeakExecuteAction(handle, callback.Value, handle, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        if (target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
+            Utils.ExpectExactType<Action<THandle, TClosureReal>>(callback.Value)(handle, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        }
 #endif
     }
 
@@ -281,8 +344,11 @@ internal struct WeakInvariantObjectAndTVoidWithHandle<TClosure, TClosureReal, TH
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
     {
         object? target = callback.Handle.Target;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
-        Utils.WeakExecuteAction(handle, callback.Value, handle, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        if (target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
+            Utils.ExpectExactType<Action<THandle, TClosureReal>>(callback.Value)(handle, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        }
     }
 }
 
@@ -296,12 +362,19 @@ internal struct WeakInvariantObjectAndTArgumentWithHandleWithoutClosure<TClosure
     {
 #if NET6_0_OR_GREATER
         (object? Target, object? Dependent) tuple = callback.Token.TargetAndDependent;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(tuple.Target);
-        Utils.WeakExecuteAction(handle, tuple.Dependent, handle, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        if (tuple.Target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(tuple.Target);
+            Debug.Assert(tuple.Dependent is not null);
+            Utils.ExpectExactType<Action<THandle, TEvent>>(tuple.Dependent)(handle, argument);
+        }
 #else
         object? target = callback.Handle.Target;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
-        Utils.WeakExecuteAction(handle, callback.Value, handle, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        if (target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
+            Utils.ExpectExactType<Action<THandle, TEvent>>(callback.Value)(handle, argument);
+        }
 #endif
     }
 
@@ -312,7 +385,10 @@ internal struct WeakInvariantObjectAndTArgumentWithHandleWithoutClosure<TClosure
     public void Invoke(TEvent argument, InvariantObjectAndTAndGCHandleTrackResurrection<TClosure> callback)
     {
         object? target = callback.Handle.Target;
-        THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
-        Utils.WeakExecuteAction(handle, callback.Value, handle, Utils.ExpectAssignableTypeOrNull<TClosure, TClosureReal>(callback.ValueT));
+        if (target is not null)
+        {
+            THandle handle = Utils.ExpectAssignableTypeOrNull<THandle>(target);
+            Utils.ExpectExactType<Action<THandle, TEvent>>(callback.Value)(handle, argument);
+        }
     }
 }
