@@ -1,7 +1,10 @@
 # Changelog
 
 ##
-- Stop using implementation details of runtimes in order to make the code more safe and compatible with other runtimes.
+
+## v0.4.8
+- Stop using implementation details of runtimes in order to make the code safer and more compatible with other runtimes.
+- Fix nullability annotations.
 
 ## v0.4.7
 
