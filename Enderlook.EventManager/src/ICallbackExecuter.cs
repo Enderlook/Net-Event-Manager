@@ -103,10 +103,8 @@ internal static class CallbackExecuterHelper
         {
 #if NET7_0_OR_GREATER
             TCallbackExecuter
-#elif UNITY
-            new TCallbackExecuter()
 #else
-            Utils.NullRef<TCallbackExecuter>()
+            new TCallbackExecuter()
 #endif
                 .Invoke(argument, current);
             current = ref Unsafe.Add(ref current, 1);

@@ -1,5 +1,8 @@
 # Changelog
 
+##
+- Stop using implementation details of runtimes in order to make the code more safe and compatible with other runtimes.
+
 ## v0.4.7
 
 - Fix `NullReferenceException` produced in Unity platform when `Raise` method is executed.

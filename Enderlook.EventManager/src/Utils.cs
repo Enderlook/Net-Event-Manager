@@ -62,6 +62,15 @@ internal static class Utils
         return Unsafe.As<object?, TTo>(ref obj)!;
     }
 
+    [return: NotNull]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ref readonly TTo? ExpectAssignableTypeOrNull<TFrom, TTo>(in TFrom? obj)
+    {
+        Debug.Assert(typeof(TFrom).IsAssignableFrom(typeof(TTo)));
+        Debug.Assert(obj is null || typeof(TTo).IsAssignableFrom(obj.GetType()));
+        return ref Unsafe.As<TFrom?, TTo?>(ref Unsafe.AsRef(obj))!;
+    }
+
     [return: NotNullIfNotNull("obj")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TTo ExpectExactTypeOrNull<TTo>(object? obj)
@@ -72,84 +81,69 @@ internal static class Utils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ExecuteActionLike<T1>(object action, T1 t1)
+    public static void ExecuteAction<T1>(object action, T1 t1)
     {
-#if DEBUG
-        Type type = action.GetType();
-        Debug.Assert(action is not null && type.GetGenericTypeDefinition() == typeof(Action<>));
-        type = type.GenericTypeArguments[0];
-        Debug.Assert(type == typeof(T1) || (!type.IsValueType && (t1 is null || type.IsAssignableFrom(t1.GetType()))));
-#endif
+        Debug.Assert(action is Action<T1>);
+        Debug.Assert(t1 is null || t1 is T1);
         Unsafe.As<Action<T1>>(action)(t1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ExecuteActionLike<T1, T2>(object action, T1 t1, T2 t2)
+    public static void ExecuteAction<T1, T2>(object action, T1 t1, T2 t2)
     {
-#if DEBUG
-        Type type = action.GetType();
-        Debug.Assert(action is not null && type.GetGenericTypeDefinition() == typeof(Action<,>));
-        type = type.GenericTypeArguments[0];
-        Debug.Assert(type == typeof(T1) || (!type.IsValueType && (t1 is null || type.IsAssignableFrom(t1.GetType()))));
-        type = type.GenericTypeArguments[1];
-        Debug.Assert(type == typeof(T2) || (!type.IsValueType && (t2 is null || type.IsAssignableFrom(t2.GetType()))));
-#endif
+        Debug.Assert(action is Action<T1, T2>);
+        Debug.Assert(t1 is null || t1 is T1);
+        Debug.Assert(t2 is null || t2 is T2);
         Unsafe.As<Action<T1, T2>>(action)(t1, t2);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ExecuteActionLike<T1, T2, T3>(object action, T1 t1, T2 t2, T3 t3)
+    public static void ExecuteAction<T1, T2, T3>(object action, T1 t1, T2 t2, T3 t3)
     {
-#if DEBUG
-        Type type = action.GetType();
-        Debug.Assert(action is not null && type.GetGenericTypeDefinition() == typeof(Action<,>));
-        type = type.GenericTypeArguments[0];
-        Debug.Assert(type == typeof(T1) || (!type.IsValueType && (t1 is null || type.IsAssignableFrom(t1.GetType()))));
-        type = type.GenericTypeArguments[1];
-        Debug.Assert(type == typeof(T2) || (!type.IsValueType && (t2 is null || type.IsAssignableFrom(t2.GetType()))));
-        type = type.GenericTypeArguments[2];
-        Debug.Assert(type == typeof(T3) || (!type.IsValueType && (t3 is null || type.IsAssignableFrom(t3.GetType()))));
-#endif
+        Debug.Assert(action is Action<T1, T2, T3>);
+        Debug.Assert(t1 is null || t1 is T1);
+        Debug.Assert(t2 is null || t2 is T2);
+        Debug.Assert(t3 is null || t3 is T3);
         Unsafe.As<Action<T1, T2, T3>>(action)(t1, t2, t3);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ExecuteActionLike(object action) => ExpectExactType<Action>(action)();
+    public static void ExecuteAction(object action) => ExpectExactType<Action>(action)();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WeakExecuteActionLike<T1>(object? handle, object? action, T1 t1)
+    public static void WeakExecuteAction<T1>(object? handle, object? action, T1 t1)
     {
         if (handle is null)
             return;
         Debug.Assert(action is not null);
-        ExecuteActionLike(action, t1);
+        ExecuteAction(action, t1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WeakExecuteActionLike<T1, T2>(object? handle, object? action, T1 t1, T2 t2)
+    public static void WeakExecuteAction<T1, T2>(object? handle, object? action, T1 t1, T2 t2)
     {
         if (handle is null)
             return;
         Debug.Assert(action is not null);
-        ExecuteActionLike(action, t1, t2);
+        ExecuteAction(action, t1, t2);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WeakExecuteActionLike<T1, T2, T3>(object? handle, object? action, T1 t1, T2 t2, T3 t3)
+    public static void WeakExecuteAction<T1, T2, T3>(object? handle, object? action, T1 t1, T2 t2, T3 t3)
     {
         if (handle is null)
             return;
         Debug.Assert(action is not null);
-        ExecuteActionLike(action, t1, t2, t3);
+        ExecuteAction(action, t1, t2, t3);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WeakExecuteActionLike(object? handle, object? action)
+    public static void WeakExecuteAction(object? handle, object? action)
     {
         if (handle is null)
             return;
         Debug.Assert(action is not null);
-        ExecuteActionLike(action);
+        ExecuteAction(action);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

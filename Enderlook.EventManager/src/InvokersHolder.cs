@@ -99,10 +99,8 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce
         {
 #if NET7_0_OR_GREATER
             TCallbackHelper
-#elif UNITY
-            new TCallbackHelper()
 #else
-            Utils.NullRef<TCallbackHelper>()
+            new TCallbackHelper()
 #endif
                 .Dispose(callbacks_, slice.Count);
         }
@@ -114,10 +112,8 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce
         TCallback[] callbacks_ = Utils.ExpectExactType<TCallback[]>(slice.Array);
 #if NET7_0_OR_GREATER
         TCallbackHelper
-#elif UNITY
-        new TCallbackHelper()
 #else
-        Utils.NullRef<TCallbackHelper>()
+        new TCallbackHelper()
 #endif
             .Invoke(argument, callbacks_, slice.Count);
     }
@@ -132,10 +128,8 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce
         TCallback[] callbacks_ = Utils.ExpectExactType<TCallback[]>(slice.Array);
 #if NET7_0_OR_GREATER
         TCallbackHelper
-#elif UNITY
-        new TCallbackHelper()
 #else
-        Utils.NullRef<TCallbackHelper>()
+        new TCallbackHelper()
 #endif
             .Invoke(Utils.ExpectAssignableTypeOrNull<TEvent>(argument), callbacks_, slice.Count);
     }
@@ -155,10 +149,8 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce
         {
 #if NET7_0_OR_GREATER
             TCallbackHelper
-#elif UNITY
-            new TCallbackHelper()
 #else
-            Utils.NullRef<TCallbackHelper>()
+            new TCallbackHelper()
 #endif
                 .Purge(array, ref count_);
             ArrayUtils.TryShrink(ref array, count_);
@@ -203,10 +195,8 @@ internal sealed class InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce
             Debug.Assert(array is not null);
 #if NET7_0_OR_GREATER
             TCallbackHelper
-#elif UNITY
-            new TCallbackHelper()
 #else
-            Utils.NullRef<TCallbackHelper>()
+            new TCallbackHelper()
 #endif
                 .Dispose(array, count_);
             ArrayUtils.ReturnArray(array, count_);
