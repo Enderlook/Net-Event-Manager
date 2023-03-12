@@ -9,68 +9,92 @@ Also, it support and respect (if configured to do so) inheritance of event types
 Even more, it support raising event dynamically when the type is not know at compile-time.  
 Finally, it has support for weak-refence listeners.
 
-The following example show some of the functions of the event manager:
+The following example show some of the most basics functions of the event manager:
 ```cs
-public static class Player
+public class GameManager
 {
-    private static EventManager eventManager = new EventManager();
+    public static readonly EventManager Manager = new();
 
-    public static void Main()
+    private int score;
+
+    private GameManager()
     {
-        eventManager.Subscribe<PlayerHurtEvent>("Ouch", OnPlayerHurt);
-
-        eventManager.Subscribe<PlayerPickedUpItemEvent>(OnPlayerPickedUpItem);
-
-        eventManager.Subscribe<PlayerPickedUpItemEvent>(("Excalibur", "Mimic"), OnPlayerPickedUpItem2);
-  
-        eventManager.Subscribe<object>(OnAnyEvent, SubscribeFlags.ListenAssignableEvents);
-
-        eventManager.Raise(new PlayerPickedUpItemEvent("Excalibur"));
-
-        eventManager.Subscribe<PlayerPickedUpItemEvent>(OnPlayerPickedUpItemOnce, SubscribeFlags.RaiseOnce);
-
-        eventManager.Raise(new PlayerPickedUpItemEvent("Pencil"));
-
-        eventManager.Raise(new PlayerPickedUpItemEvent("Mimic"));
-
-        eventManager.Unsubscribe<PlayerPickedUpItemEvent>(OnPlayerPickedUpItem2);
-
-        eventManager.Raise(new PlayerPickedUpItemEvent("Mimic"));
-
-        object obj = new PlayerPickedUpItemEvent("Mimic");
-        eventManager.DynamicRaise(obj); // Note that we assign `object` instead of `PlayerPickedUpItemEvent`.
+        Manager.Subscribe((EnemyKilled @event) => score += @event.Enemy.Score);
+        Manager.Subscribe<PlayerDied>(GameOver);
+        Manager.Subscribe((IEvent @event) => Console.WriteLine(@event.Log()), SubscribeFlags.ListenAssignableEvents);
     }
 
-    private static void OnPlayerHurt(string closure)
-        => Console.WriteLine(closure);
+    private void GameOver() { }
+}
 
-    private static void OnPlayerPickedUpItem(PlayerPickedUpItemEvent @event)
-        => Console.WriteLine($"Picked {@event.Item}");
+public interface IEvent
+{
+    string Log();
+}
 
-    private static void OnPlayerPickedUpItem2((string, string) closure, PlayerPickedUpItemEvent @event)
+public readonly class EnemyKilled : IEvent
+{
+    public readonly Enemy Enemy;
+
+    public EnemyKilled(Enemy enemy) => Enemy = enemy;
+
+    string IEvent.Log() => $"Enemy {Enemy} of score {Enemy.Score} was killed.";
+}
+
+public class PlayerDied : IEvent
+{
+    string IEvent.Log() => "Player has died.";
+}
+
+public class Enemy
+{
+    // We store it in an static method and pass the instance as a parameter to save allocations.
+    private static readonly Action<Enemy> OnPlayerDead = self => self.Patrol();
+
+    private int health;
+
+    public int Score = 10;
+
+    private Enemy()
     {
-        if (@event.Item == closure.Item1)
-            Console.WriteLine("Player picked up legendary sword!");
-        else if (@event.Item == closure.Item2)
+        GameManager.Manager.Subscribe<PlayerDied, Enemy>(this, OnPlayerDead);
+    }
+
+    public void Hurt(int damage)
+    {
+        if (health > 0)
         {
-            Console.WriteLine("Oh no! You picked up a mimic!");
-            eventManager.RaiseExactly(new PlayerHurtEvent());
+            health -= damage;
+            if (health <= 0)
+            {
+                Die();
+            }
         }
     }
 
-    private static void OnPlayerPickedUpItemOnce(PlayerPickedUpItemEvent @event)
-        => Console.WriteLine($"This was registered to only execute once.");
-
-   private static void OnAnyEvent(object @event)
-        => Console.WriteLine(@event.GetType());
-
-    public readonly struct PlayerHurtEvent { }
-
-    public readonly struct PlayerPickedUpItemEvent
+    private void Die()
     {
-        public readonly string Item;
+        GameManager.Manager.Unsubscribe<PlayerDied, Enemy>(this, OnPlayerDead);
+        GameManager.Manager.Raise(new EnemyKilled(this));
+    }
 
-        public PlayerPickedUpItemEvent(string item) => Item = item;
+    private void Patrol() { }
+}
+
+public class Player
+{
+    private int health;
+
+    public void Hurt(int damage)
+    {
+        if (health > 0)
+        {
+            health -= damage;
+            if (health <= 0)
+            {
+                GameManager.Manager.Raise<PlayerDied>();
+            }
+        }
     }
 }
 ```
