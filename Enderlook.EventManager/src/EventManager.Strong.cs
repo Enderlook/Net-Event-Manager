@@ -54,7 +54,7 @@ public sealed partial class EventManager
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Subscribe<TEvent, TClosure>(TClosure? closure, Action<TClosure?, TEvent> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default)
+    public void Subscribe<TEvent, TClosure>(TClosure closure, Action<TClosure, TEvent> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default)
     {
         if (callback is null) ThrowNullCallbackException();
 
@@ -62,19 +62,19 @@ public sealed partial class EventManager
         bool multipleRaises = (subscribeAttributes & SubscribeFlags.RaiseOnce) == 0;
         if (typeof(TClosure).IsValueType)
         {
-            InvariantObjectAndT<TClosure?> callback_ = new(callback, closure);
+            InvariantObjectAndT<TClosure> callback_ = new(callback, closure);
             if (multipleRaises)
-                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTArgument<TClosure?, TClosure?, TEvent>>, No, InvariantObjectAndT<TClosure?>>(callback_, listenToAssignableEvents);
+                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure>, StrongInvariantObjectAndTArgument<TClosure, TClosure, TEvent>>, No, InvariantObjectAndT<TClosure>>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTArgument<TClosure?, TClosure?, TEvent>>, Yes, InvariantObjectAndT<TClosure?>>(callback_, listenToAssignableEvents);
+                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure>, StrongInvariantObjectAndTArgument<TClosure, TClosure, TEvent>>, Yes, InvariantObjectAndT<TClosure>>(callback_, listenToAssignableEvents);
         }
         else
         {
             InvariantObjectAndT<object?> callback_ = new(callback, closure);
             if (multipleRaises)
-                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TClosure?, TEvent>>, No, InvariantObjectAndT<object?>>(callback_, listenToAssignableEvents);
+                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TClosure, TEvent>>, No, InvariantObjectAndT<object?>>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TClosure?, TEvent>>, Yes, InvariantObjectAndT<object?>>(callback_, listenToAssignableEvents);
+                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TClosure, TEvent>>, Yes, InvariantObjectAndT<object?>>(callback_, listenToAssignableEvents);
         }
     }
 
@@ -87,7 +87,7 @@ public sealed partial class EventManager
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Subscribe<TEvent, TClosure>(TClosure? closure, Action<TClosure?> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default)
+    public void Subscribe<TEvent, TClosure>(TClosure closure, Action<TClosure> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default)
     {
         if (callback is null) ThrowNullCallbackException();
 
@@ -95,19 +95,19 @@ public sealed partial class EventManager
         bool multipleRaises = (subscribeAttributes & SubscribeFlags.RaiseOnce) == 0;
         if (typeof(TClosure).IsValueType)
         {
-            InvariantObjectAndT<TClosure?> callback_ = new(callback, closure);
+            InvariantObjectAndT<TClosure> callback_ = new(callback, closure);
             if (multipleRaises)
-                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTVoid<TClosure?, TClosure?, TEvent>>, No, InvariantObjectAndT<TClosure?>>(callback_, listenToAssignableEvents);
+                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure>, StrongInvariantObjectAndTVoid<TClosure, TClosure, TEvent>>, No, InvariantObjectAndT<TClosure>>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTVoid<TClosure?, TClosure?, TEvent>>, Yes, InvariantObjectAndT<TClosure?>>(callback_, listenToAssignableEvents);
+                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure>, StrongInvariantObjectAndTVoid<TClosure, TClosure, TEvent>>, Yes, InvariantObjectAndT<TClosure>>(callback_, listenToAssignableEvents);
         }
         else
         {
             InvariantObjectAndT<object?> callback_ = new(callback, closure);
             if (multipleRaises)
-                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TClosure?, TEvent>>, No, InvariantObjectAndT<object?>>(callback_, listenToAssignableEvents);
+                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TClosure, TEvent>>, No, InvariantObjectAndT<object?>>(callback_, listenToAssignableEvents);
             else
-                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TClosure?, TEvent>>, Yes, InvariantObjectAndT<object?>>(callback_, listenToAssignableEvents);
+                Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TClosure, TEvent>>, Yes, InvariantObjectAndT<object?>>(callback_, listenToAssignableEvents);
         }
     }
 
@@ -160,7 +160,7 @@ public sealed partial class EventManager
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Unsubscribe<TEvent, TClosure>(TClosure? closure, Action<TClosure?, TEvent> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default)
+    public void Unsubscribe<TEvent, TClosure>(TClosure closure, Action<TClosure, TEvent> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default)
     {
         if (callback is null) ThrowNullCallbackException();
 
@@ -168,19 +168,19 @@ public sealed partial class EventManager
         bool multipleRaises = (subscribeAttributes & SubscribeFlags.RaiseOnce) == 0;
         if (typeof(TClosure).IsValueType)
         {
-            StrongValueClosureActionComparer<TClosure?, TEvent> predicator = new(new(callback, closure));
+            StrongValueClosureActionComparer<TClosure, TEvent> predicator = new(new(callback, closure));
             if (multipleRaises)
-                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTArgument<TClosure?, TClosure?, TEvent>>, No, StrongValueClosureActionComparer<TClosure?, TEvent>, InvariantObjectAndT<TClosure?>>(predicator, listenToAssignableEvents);
+                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure>, StrongInvariantObjectAndTArgument<TClosure, TClosure, TEvent>>, No, StrongValueClosureActionComparer<TClosure, TEvent>, InvariantObjectAndT<TClosure>>(predicator, listenToAssignableEvents);
             else
-                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTArgument<TClosure?, TClosure?, TEvent>>, Yes, StrongValueClosureActionComparer<TClosure?, TEvent>, InvariantObjectAndT<TClosure?>>(predicator, listenToAssignableEvents);
+                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure>, StrongInvariantObjectAndTArgument<TClosure, TClosure, TEvent>>, Yes, StrongValueClosureActionComparer<TClosure, TEvent>, InvariantObjectAndT<TClosure>>(predicator, listenToAssignableEvents);
         }
         else
         {
-            StrongReferenceClosureActionComparer<TClosure?, TEvent> predicator = new(new(callback, closure));
+            StrongReferenceClosureActionComparer<TClosure, TEvent> predicator = new(new(callback, closure));
             if (multipleRaises)
-                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TClosure?, TEvent>>, No, StrongReferenceClosureActionComparer<TClosure?, TEvent>, InvariantObjectAndT<object?>>(predicator, listenToAssignableEvents);
+                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TClosure, TEvent>>, No, StrongReferenceClosureActionComparer<TClosure, TEvent>, InvariantObjectAndT<object?>>(predicator, listenToAssignableEvents);
             else
-                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TClosure?, TEvent>>, Yes, StrongReferenceClosureActionComparer<TClosure?, TEvent>, InvariantObjectAndT<object?>>(predicator, listenToAssignableEvents);
+                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTArgument<object?, TClosure, TEvent>>, Yes, StrongReferenceClosureActionComparer<TClosure, TEvent>, InvariantObjectAndT<object?>>(predicator, listenToAssignableEvents);
         }
     }
 
@@ -193,7 +193,7 @@ public sealed partial class EventManager
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Unsubscribe<TEvent, TClosure>(TClosure? closure, Action<TClosure?> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default)
+    public void Unsubscribe<TEvent, TClosure>(TClosure closure, Action<TClosure> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default)
     {
         if (callback is null) ThrowNullCallbackException();
 
@@ -201,19 +201,19 @@ public sealed partial class EventManager
         bool multipleRaises = (subscribeAttributes & SubscribeFlags.RaiseOnce) == 0;
         if (typeof(TClosure).IsValueType)
         {
-            StrongValueClosureActionComparer<TClosure?> predicator = new(new(callback, closure));
+            StrongValueClosureActionComparer<TClosure> predicator = new(new(callback, closure));
             if (multipleRaises)
-                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTVoid<TClosure?, TClosure?, TEvent>>, No, StrongValueClosureActionComparer<TClosure?>, InvariantObjectAndT<TClosure?>>(predicator, listenToAssignableEvents);
+                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure>, StrongInvariantObjectAndTVoid<TClosure, TClosure, TEvent>>, No, StrongValueClosureActionComparer<TClosure>, InvariantObjectAndT<TClosure>>(predicator, listenToAssignableEvents);
             else
-                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure?>, StrongInvariantObjectAndTVoid<TClosure?, TClosure?, TEvent>>, Yes, StrongValueClosureActionComparer<TClosure?>, InvariantObjectAndT<TClosure?>>(predicator, listenToAssignableEvents);
+                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<TClosure>, StrongInvariantObjectAndTVoid<TClosure, TClosure, TEvent>>, Yes, StrongValueClosureActionComparer<TClosure>, InvariantObjectAndT<TClosure>>(predicator, listenToAssignableEvents);
         }
         else
         {
-            StrongReferenceClosureActionComparer<TClosure?> predicator = new(new(callback, closure));
+            StrongReferenceClosureActionComparer<TClosure> predicator = new(new(callback, closure));
             if (multipleRaises)
-                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TClosure?, TEvent>>, No, StrongReferenceClosureActionComparer<TClosure?>, InvariantObjectAndT<object?>>(predicator, listenToAssignableEvents);
+                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TClosure, TEvent>>, No, StrongReferenceClosureActionComparer<TClosure>, InvariantObjectAndT<object?>>(predicator, listenToAssignableEvents);
             else
-                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TClosure?, TEvent>>, Yes, StrongReferenceClosureActionComparer<TClosure?>, InvariantObjectAndT<object?>>(predicator, listenToAssignableEvents);
+                Unsubscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObjectAndT<object?>, StrongInvariantObjectAndTVoid<object?, TClosure, TEvent>>, Yes, StrongReferenceClosureActionComparer<TClosure>, InvariantObjectAndT<object?>>(predicator, listenToAssignableEvents);
         }
     }
 }
