@@ -105,6 +105,9 @@ public class Player
 /// Type safe event manager where each type represent an event type.
 public sealed class EventManager : IDisposable
 {
+    /// Shared global instance of an EventManager.
+    public static EventManager Shared { get; }
+
     /// Subscribes an action to run when the event `TEvent` is raised.
     public void Subscribe<TEvent>(Action<TEvent> callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
     public void Subscribe<TEvent>(Action callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default);
