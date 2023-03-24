@@ -7,7 +7,7 @@ Due the use of generic, this event manager doesn't suffer for boxing and unboxin
 Additionaly, closures of delegates can be stored apart in order to reuse the delegate and reduce allocations (i.e: `Action<T>` instead of `Action`, so you can pass a value that works as closure).  
 Also, it support and respect (if configured to do so) inheritance of event types which can be used to categorize events by hierarchy. For example, if you raise an event of type `ConcreteEvent`, both delegates subscribed to `ConcreteEvent` **and** `BaseEvent` are run (and `IEvent` if it does implement it). For receiving **all** events, just subscribe to `Object` and configure that specific subscription to listen to all assignable types.  
 Even more, it support raising event dynamically when the type is not know at compile-time.  
-Finally, it has support for weak-refence listeners.
+Finally, it has support for weak-reference listeners.
 
 The following example show some of the most basics functions of the event manager:
 ```cs
