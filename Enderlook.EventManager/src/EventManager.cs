@@ -185,6 +185,7 @@ public sealed partial class EventManager : IDisposable
                         AutoPurger _ = new(this);
                     }
 
+                    Dictionary2<Type, InvokersHolderManager> managersPerType = this.managersPerType;
                     if (!managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? manager))
                     {
                         manager = new InvokersHolderManager<TEvent>();
@@ -214,6 +215,7 @@ public sealed partial class EventManager : IDisposable
                                 value.AddDerived(holder_, typeof(TEvent));
                         }
                     }
+                    this.managersPerType = managersPerType;
                 }
             }
         exit:
@@ -316,6 +318,7 @@ public sealed partial class EventManager : IDisposable
         InvokersHolderManager? manager;
         FromReadToWrite();
         {
+            Dictionary2<Type, InvokersHolderManager> managersPerType = this.managersPerType;
             if (!managersPerType.TryGetValue(typeof(TEvent), out manager))
             {
                 manager = new InvokersHolderManager<TEvent>();
@@ -334,6 +337,7 @@ public sealed partial class EventManager : IDisposable
                 }
                 managersPerType.Add(typeof(TEvent), manager);
             }
+            this.managersPerType = managersPerType;
         }
         FromWriteToInHolder();
         return Utils.ExpectExactType<InvokersHolderManager<TEvent>>(manager);
