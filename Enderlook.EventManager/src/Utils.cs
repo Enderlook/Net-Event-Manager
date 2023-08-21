@@ -83,11 +83,15 @@ internal static class Utils
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Take<T>(ref T? obj) where T : class
     {
+        SpinWait spinWait = new();
         T? obj_;
-        do
+        while (true)
         {
             obj_ = Interlocked.Exchange(ref obj, null);
-        } while (obj_ is null);
+            if (obj_ is not null)
+                break;
+            spinWait.SpinOnce();
+        }
         return obj_;
     }
 

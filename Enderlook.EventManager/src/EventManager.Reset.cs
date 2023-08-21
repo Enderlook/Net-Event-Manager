@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Enderlook.EventManager;
 
@@ -9,11 +10,12 @@ public sealed partial class EventManager
     /// </summary>
     public void Reset()
     {
-        if (!TryMassiveWriteBegin())
-            Work();
+        SpinWait spinWait = new();
+        if (!TryMassiveWriteBegin(ref spinWait))
+            Work(ref spinWait);
 
-        if (state == IS_DISPOSED_OR_DISPOSING)
-            ThrowObjectDisposedExceptionAndUnlockGlobal();
+        if (Volatile.Read(ref state) == IS_DISPOSED_OR_DISPOSING)
+            RunAndThrowObjectDisposedException<UnlockGlobal>();
 
         Dictionary2<InvokersHolderTypeKey, InvokersHolder> holdersPerType_ = holdersPerType;
         for (int i = 0; i < holdersPerType_.EndIndex; i++)
@@ -30,12 +32,12 @@ public sealed partial class EventManager
         WriteEnd();
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        void Work()
+        void Work(ref SpinWait spinWait)
         {
             while (true)
             {
-                RequestPurgeCancellation();
-                if (TryMassiveWriteBegin())
+                RequestPurgeCancellation<Nothing>(ref spinWait);
+                if (TryMassiveWriteBegin(ref spinWait))
                     return;
             }
         }

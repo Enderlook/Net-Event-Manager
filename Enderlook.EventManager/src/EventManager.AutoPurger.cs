@@ -30,17 +30,19 @@ public sealed partial class EventManager
 
         for (int j = 0; j < PurgeAttempts; j++)
         {
+            SpinWait spinWait = new();
             int state_;
-            while (!TryMassiveWriteBegin())
+            while (!TryMassiveWriteBegin(ref spinWait))
             {
-                state_ = state;
+                state_ = Volatile.Read(ref state);
                 if ((state_ & IS_PURGING) != 0)
                     return true;
                 if (state_ == IS_DISPOSED_OR_DISPOSING)
                     return false;
+                spinWait.SpinOnce();
             }
 
-            state_ = state;
+            state_ = Volatile.Read(ref state);
             // Check if callback was called before finishing the previous purge or if dictionaries were not used.
             if ((state_ & IS_PURGING) != 0 || holdersPerType.EndIndex + managersPerType.EndIndex == 0)
                 return true;
@@ -50,25 +52,50 @@ public sealed partial class EventManager
 
             // Check if is already purging or disposing, or is disposed.
             // If neither, set as purging.
-            Lock(ref stateLock);
+            while (true)
             {
-                state_ = state;
                 if ((state_ & IS_PURGING) != 0)
                 {
-                    Unlock(ref stateLock);
                     WriteEnd();
                     return true;
                 }
                 if (state_ == IS_DISPOSED_OR_DISPOSING)
                 {
-                    Unlock(ref stateLock);
                     WriteEnd();
                     return false;
                 }
-                state = IS_PURGING;
+                int oldState = Interlocked.CompareExchange(ref state, IS_PURGING, state_);
+                if (oldState != state_)
+                {
+                    state_ = oldState;
+                    spinWait.SpinOnce();
+                    continue;
+                }
+                break;
             }
-            Unlock(ref stateLock);
 
+            Purge();
+
+            state_ = Interlocked.Exchange(ref state, 0);
+
+            WriteEnd();
+
+            if ((state_ & IS_CANCELLATION_REQUESTED) != 0)
+            {
+                if (!Thread.Yield())
+                    Thread.Sleep(PurgeSleepMilliseconds);
+                continue;
+            }
+
+            return true;
+        }
+
+        Debug.Fail("Impossible state.");
+
+        return true;
+
+        void Purge()
+        {
             int currentMilliseconds = Environment.TickCount;
 
             MemoryPressure memoryPressure = Utils.GetMemoryPressure();
@@ -101,7 +128,7 @@ public sealed partial class EventManager
 
                     for (; count > 0; count--)
                     {
-                        if ((state & IS_CANCELLATION_REQUESTED) == 0)
+                        if ((Volatile.Read(ref state) & IS_CANCELLATION_REQUESTED) == 0)
                         {
                             if (holdersPerType_.TryGetFromIndex(purgeIndex_, out InvokersHolder? holder)
                                 && holder.Purge(out InvokersHolderTypeKey holderType, currentMilliseconds, trimMilliseconds, hasHighMemoryPressure))
@@ -140,7 +167,7 @@ public sealed partial class EventManager
 
                     for (; count > 0; count--)
                     {
-                        if ((state & IS_CANCELLATION_REQUESTED) == 0)
+                        if ((Volatile.Read(ref state) & IS_CANCELLATION_REQUESTED) == 0)
                         {
                             if (managersPerType_.TryGetFromIndex(purgeIndex_, out InvokersHolderManager? manager)
                                 && manager.Purge(out Type? key, currentMilliseconds, trimMilliseconds, hasHighMemoryPressure))
@@ -163,33 +190,11 @@ public sealed partial class EventManager
                 }
             }
 
-        exit:
+        exit:;
             purgeIndex = purgeIndex_;
             holdersPerType = holdersPerType_;
             managersPerType = managersPerType_;
-
-            Lock(ref stateLock);
-            {
-                state_ = state;
-                state = 0;
-            }
-            Unlock(ref stateLock);
-
-            WriteEnd();
-
-            if ((state_ & IS_CANCELLATION_REQUESTED) != 0)
-            {
-                if (!Thread.Yield())
-                    Thread.Sleep(PurgeSleepMilliseconds);
-                continue;
-            }
-
-            return true;
         }
-
-        Debug.Fail("Impossible state.");
-
-        return true;
     }
 
     private sealed class AutoPurger
@@ -230,6 +235,7 @@ public sealed partial class EventManager
             const int LowAfterMilliseconds = 240 * 1000; // Trim after 240 seconds for low pressure.
             const int MediumAfterMilliseconds = 120 * 1000; // Trim after 120 seconds for medium pressure.
 
+            SpinWait spinWait = new();
             for (int j = 0; j < PurgeAttempts; j++)
             {
                 // Check if dictionary was not used.
@@ -237,13 +243,13 @@ public sealed partial class EventManager
                     return;
 
                 // Get write lock.
-                Lock(ref invokersHolderManagerCreatorsLock);
+                Lock(ref invokersHolderManagerCreatorsLock, ref spinWait);
                 if (invokersHolderManagerCreatorsReaders != 0)
                 {
                     Unlock(ref invokersHolderManagerCreatorsLock);
                     while (true)
                     {
-                        Lock(ref invokersHolderManagerCreatorsLock);
+                        Lock(ref invokersHolderManagerCreatorsLock, ref spinWait);
                         if (invokersHolderManagerCreatorsReaders > 0)
                             Unlock(ref invokersHolderManagerCreatorsLock);
                         else
@@ -253,7 +259,7 @@ public sealed partial class EventManager
                     }
                 }
 
-                Lock(ref invokersHolderManagerCreatorsStateLock);
+                Lock(ref invokersHolderManagerCreatorsStateLock, ref spinWait);
                 {
                     if (invokersHolderManagerCreatorsStateLock == IS_CANCELLATION_REQUESTED)
                     {

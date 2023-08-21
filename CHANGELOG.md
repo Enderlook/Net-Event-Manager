@@ -3,6 +3,7 @@
 ##
 
 - Fix nullability annotations.
+- Fix and improve multithreading support.
 
 ## v0.4.8
 

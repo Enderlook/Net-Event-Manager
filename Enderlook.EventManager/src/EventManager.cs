@@ -353,9 +353,14 @@ public sealed partial class EventManager : IDisposable
     private static void ThrowObjectDisposedException() => throw new ObjectDisposedException("Event Manager");
 
     [DoesNotReturn]
-    private void ThrowObjectDisposedExceptionAndUnlockGlobal()
+    private void RunAndThrowObjectDisposedException<TCallback>()
+        where TCallback : struct, ICallback
     {
-        Unlock(ref globalLock);
+#if NET7_0_OR_GREATER
+        TCallback.Invoke(this);
+#else
+        new TCallback().Invoke(this);
+#endif
         throw new ObjectDisposedException("Event Manager");
     }
 }

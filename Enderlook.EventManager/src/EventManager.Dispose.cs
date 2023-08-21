@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Enderlook.EventManager;
 
@@ -12,19 +13,16 @@ public sealed partial class EventManager : IDisposable
         if (ReferenceEquals(this, Shared))
             return;
 
-        if (state == IS_DISPOSED_OR_DISPOSING)
+        if (Volatile.Read(ref state) == IS_DISPOSED_OR_DISPOSING)
             return;
 
-        if (!TryMassiveWriteBegin())
-            Work();
+        SpinWait spinWait = new();
+        if (!TryMassiveWriteBegin(ref spinWait))
+            Work(ref spinWait);
 
-        if (state != IS_DISPOSED_OR_DISPOSING)
+        if (Volatile.Read(ref state) != IS_DISPOSED_OR_DISPOSING)
         {
-            Lock(ref stateLock);
-            {
-                state = IS_DISPOSED_OR_DISPOSING;
-            }
-            Unlock(ref stateLock);
+            Volatile.Write(ref state, IS_DISPOSED_OR_DISPOSING);
 
             Dictionary2<InvokersHolderTypeKey, InvokersHolder> holdersPerType_ = holdersPerType;
             Dictionary2<Type, InvokersHolderManager> managersPerType_ = managersPerType;
@@ -44,32 +42,30 @@ public sealed partial class EventManager : IDisposable
         WriteEnd();
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        void Work()
+        void Work(ref SpinWait spinWait)
         {
-            while (!TryMassiveWriteBegin())
+            while (!TryMassiveWriteBegin(ref spinWait))
             {
-                int state_ = state;
-                if (state_ == IS_DISPOSED_OR_DISPOSING)
-                    return;
-                if ((state_ & IS_PURGING) != 0)
+                int state_ = Volatile.Read(ref state);
+                while (true)
                 {
-                    if ((state_ & IS_CANCELLATION_REQUESTED) != 0)
-                        continue;
+                    if (state_ == IS_DISPOSED_OR_DISPOSING)
+                        return;
 
-                    Lock(ref stateLock);
+                    if ((state_ & IS_PURGING) != 0)
                     {
-                        state_ = state;
+                        if ((state_ & IS_CANCELLATION_REQUESTED) != 0)
+                            break;
 
-                        if (state_ == IS_DISPOSED_OR_DISPOSING)
+                        int oldState = Interlocked.CompareExchange(ref state, state_ | IS_CANCELLATION_REQUESTED, state_);
+                        if (oldState != state_)
                         {
-                            Unlock(ref stateLock);
-                            return;
+                            state_ = oldState;
+                            spinWait.SpinOnce();
+                            continue;
                         }
-
-                        if ((state_ & IS_PURGING) != 0)
-                            state = state_ | IS_CANCELLATION_REQUESTED;
                     }
-                    Unlock(ref stateLock);
+                    break;
                 }
             }
         }
