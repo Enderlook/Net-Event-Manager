@@ -68,10 +68,10 @@ internal static class Utils
     {
         Debug.Assert(typeof(TFrom).IsAssignableFrom(typeof(TTo)));
         Debug.Assert(obj is null || typeof(TTo).IsAssignableFrom(obj.GetType()));
-        return ref Unsafe.As<TFrom?, TTo?>(ref Unsafe.AsRef(obj))!;
+        return ref Unsafe.As<TFrom?, TTo?>(ref Unsafe.AsRef(in obj))!;
     }
 
-    [return: NotNullIfNotNull("obj")]
+    [return: NotNullIfNotNull(nameof(obj))]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TTo ExpectExactTypeOrNull<TTo>(object? obj)
     {
