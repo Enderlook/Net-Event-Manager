@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <PackageReference Include="Enderlook.Threading.Primitives" Version="0.2.1" />
+    <PackageReference Include="Enderlook.Delegates" Version="0.1.0" />
   </ItemGroup>
 
 </Project>
