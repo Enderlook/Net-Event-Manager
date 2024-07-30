@@ -17,7 +17,7 @@ public sealed partial class EventManager : IDisposable
             return;
 
         SpinWait spinWait = new();
-        if (!TryMassiveWriteBegin(ref spinWait))
+        if (!TryMassiveLock(ref spinWait))
             Work(ref spinWait);
 
         if (Volatile.Read(ref state) != IS_DISPOSED_OR_DISPOSING)
@@ -39,12 +39,12 @@ public sealed partial class EventManager : IDisposable
                 holder.Dispose();
         }
 
-        WriteEnd();
+        spinLock.Exit();
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         void Work(ref SpinWait spinWait)
         {
-            while (!TryMassiveWriteBegin(ref spinWait))
+            while (!TryMassiveLock(ref spinWait))
             {
                 int state_ = Volatile.Read(ref state);
                 while (true)

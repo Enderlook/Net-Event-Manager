@@ -1,4 +1,7 @@
-﻿using System.Runtime.CompilerServices;
+﻿using Enderlook.Threading.Primitives;
+
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Enderlook.EventManager;
@@ -12,45 +15,32 @@ public sealed partial class EventManager
     private const int IS_PURGING = 1 << 2;
     private const int IS_CANCELLATION_REQUESTED = 1 << 3;
 
-    private int globalLock;
-    private int readers;
-    private int reserved;
+    private SpinLockSlim spinLock;
+
     private int inHolders;
 
     private int state;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ReadBegin()
+    private void Lock()
     {
-        SpinWait spinWait = new();
-        while (true)
+        bool taken = false;
+        spinLock.TryEnter(ref taken);
+        if (taken)
         {
-            if (TryLock(ref globalLock))
-                break;
-            else if (Volatile.Read(ref state) != 0)
-            {
-                Work(spinWait);
-                break;
-            }
-            spinWait.SpinOnce();
+            if (Volatile.Read(ref state) == IS_DISPOSED_OR_DISPOSING)
+                RunAndThrowObjectDisposedException<UnlockGlobal>();
         }
-
-        if (Volatile.Read(ref state) == IS_DISPOSED_OR_DISPOSING)
-            RunAndThrowObjectDisposedException<UnlockGlobal>();
-        // We don't check if it's purging because that requires a global lock that we already have.
-        Volatile.Write(ref readers, Volatile.Read(ref readers) + 1);
-        Unlock(ref globalLock);
+        else
+            Work();
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        void Work(SpinWait spinWait)
+        void Work()
         {
-            while (true)
-            {
-                spinWait.SpinOnce();
-                RequestPurgeCancellation<Nothing>(ref spinWait);
-                if (TryLock(ref globalLock))
-                    return;
-            }
+            SpinWait spinWait = new();
+            RequestPurgeCancellation<Nothing>(ref spinWait);
+            bool taken = false;
+            spinLock.Enter(ref taken, ref spinWait);
         }
     }
 
@@ -85,85 +75,30 @@ public sealed partial class EventManager
     private void ReadEnd()
     {
         // Purging nor disposing can start while it's reading, so we ignore those checks.
-        Lock(ref globalLock);
-        Volatile.Write(ref readers, Volatile.Read(ref readers) - 1);
-        Unlock(ref globalLock);
+        Debug.Assert(spinLock.IsAcquired);
+        spinLock.Exit();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void FromReadToWrite()
-    {
-        SpinWait spinWait = new();
-        // Purging nor disposing can start while it's reading, so we ignore those checks.
-        Lock(ref globalLock, ref spinWait);
-        int readers_ = Volatile.Read(ref readers) - 1;
-        Volatile.Write(ref readers, readers_);
-
-        if (readers_ == 0)
-            return;
-
-        Volatile.Write(ref reserved, Volatile.Read(ref reserved) + 1);
-        Unlock(ref globalLock);
-
-        while (true)
-        {
-            if (TryLock(ref globalLock))
-                break;
-            else if (Volatile.Read(ref state) != 0)
-            {
-                Work(ref spinWait);
-                break;
-            }
-            spinWait.SpinOnce();
-        }
-
-        Volatile.Write(ref reserved, Volatile.Read(ref reserved) - 1);
-        if (Volatile.Read(ref state) == IS_DISPOSED_OR_DISPOSING)
-            RunAndThrowObjectDisposedException<UnlockGlobal>();
-        // We don't check if it's purging because that requires a global lock that we already have.
-        Unlock(ref globalLock);
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        void Work(ref SpinWait spinWait)
-        {
-            while (true)
-            {
-                RequestPurgeCancellation<DecrementReserved>(ref spinWait);
-                if (TryLock(ref globalLock))
-                    return;
-                spinWait.SpinOnce();
-            }
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void FromReadToInHolder()
+    private void FromLockToInHolder()
     {
         // Purging nor disposing can't start while it's reading, so we ignore those checks.
-        Lock(ref globalLock);
-        {
-            Volatile.Write(ref readers, Volatile.Read(ref readers) - 1);
-            Interlocked.Increment(ref inHolders);
-        }
-        Unlock(ref globalLock);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void FromWriteToInHolder()
-    {
         Interlocked.Increment(ref inHolders);
-        Unlock(ref globalLock);
+        Debug.Assert(spinLock.IsAcquired);
+        spinLock.Exit();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool TryMassiveWriteBegin(ref SpinWait spinWait)
+    private bool TryMassiveLock(ref SpinWait spinWait)
     {
         while (true)
         {
-            if (TryLock(ref globalLock))
+            bool enter = false;
+            spinLock.TryEnter(ref enter);
+            if (enter)
             {
-                if (Volatile.Read(ref readers) + Volatile.Read(ref reserved) + Volatile.Read(ref inHolders) > 0)
-                    Unlock(ref globalLock);
+                if (Volatile.Read(ref inHolders) > 0)
+                    spinLock.Exit();
                 else
                     return true;
             }
@@ -172,9 +107,6 @@ public sealed partial class EventManager
             spinWait.SpinOnce();
         }
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void WriteEnd() => Unlock(ref globalLock);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void InHolderEnd() => Interlocked.Decrement(ref inHolders);

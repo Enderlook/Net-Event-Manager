@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Enderlook.EventManager;
@@ -25,19 +26,6 @@ public sealed partial class EventManager
         }
     }
 
-    private struct DecrementReserved : ICallback
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public
-#if NET7_0_OR_GREATER
-        static
-# endif
-        void Invoke(EventManager manager)
-        {
-            Volatile.Write(ref manager.reserved, Volatile.Read(ref manager.reserved) - 1);
-        }
-    }
-
     private struct UnlockGlobal : ICallback
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -47,7 +35,8 @@ public sealed partial class EventManager
 # endif
         void Invoke(EventManager manager)
         {
-            Unlock(ref manager.globalLock);
+            Debug.Assert(manager.spinLock.IsAcquired);
+            manager.spinLock.Exit();
         }
     }
 }

@@ -32,7 +32,7 @@ public sealed partial class EventManager
         {
             SpinWait spinWait = new();
             int state_;
-            while (!TryMassiveWriteBegin(ref spinWait))
+            while (!TryMassiveLock(ref spinWait))
             {
                 state_ = Volatile.Read(ref state);
                 if ((state_ & IS_PURGING) != 0)
@@ -56,12 +56,12 @@ public sealed partial class EventManager
             {
                 if ((state_ & IS_PURGING) != 0)
                 {
-                    WriteEnd();
+                    spinLock.Exit();
                     return true;
                 }
                 if (state_ == IS_DISPOSED_OR_DISPOSING)
                 {
-                    WriteEnd();
+                    spinLock.Exit();
                     return false;
                 }
                 int oldState = Interlocked.CompareExchange(ref state, IS_PURGING, state_);
@@ -78,7 +78,7 @@ public sealed partial class EventManager
 
             state_ = Interlocked.Exchange(ref state, 0);
 
-            WriteEnd();
+            spinLock.Exit();
 
             if ((state_ & IS_CANCELLATION_REQUESTED) != 0)
             {
@@ -242,33 +242,18 @@ public sealed partial class EventManager
                 if (invokersHolderManagerCreators.EndIndex == 0)
                     return;
 
-                // Get write lock.
-                Lock(ref invokersHolderManagerCreatorsLock, ref spinWait);
-                if (invokersHolderManagerCreatorsReaders != 0)
-                {
-                    Unlock(ref invokersHolderManagerCreatorsLock);
-                    while (true)
-                    {
-                        Lock(ref invokersHolderManagerCreatorsLock, ref spinWait);
-                        if (invokersHolderManagerCreatorsReaders > 0)
-                            Unlock(ref invokersHolderManagerCreatorsLock);
-                        else
-                            break;
-                        if ((invokersHolderManagerCreatorsState & IS_CANCELLATION_REQUESTED) != 0)
-                            goto yield;
-                    }
-                }
+                bool taken = false;
+                invokersHolderManagerCreatorsLock.Enter(ref taken, ref spinWait);
 
-                Lock(ref invokersHolderManagerCreatorsStateLock, ref spinWait);
+                taken = false;
+                invokersHolderManagerCreatorsStateLock.Enter(ref taken, ref spinWait);
+
+                if (invokersHolderManagerCreatorsState == IS_CANCELLATION_REQUESTED)
                 {
-                    if (invokersHolderManagerCreatorsStateLock == IS_CANCELLATION_REQUESTED)
-                    {
-                        Unlock(ref invokersHolderManagerCreatorsStateLock);
-                        goto exit;
-                    }
-                    invokersHolderManagerCreatorsStateLock = IS_PURGING;
+                    invokersHolderManagerCreatorsStateLock.Exit();
+                    goto exit;
                 }
-                Unlock(ref invokersHolderManagerCreatorsStateLock);
+                invokersHolderManagerCreatorsState = IS_PURGING;
 
                 int currentMilliseconds = Environment.TickCount;
                 MemoryPressure memoryPressure = Utils.GetMemoryPressure();
@@ -294,7 +279,7 @@ public sealed partial class EventManager
                 {
                     if ((invokersHolderManagerCreatorsState & IS_CANCELLATION_REQUESTED) == 0)
                     {
-                        if (invokersHolderManagerCreators.TryGetFromIndex(purgeIndex_, out Type? key, out (Func<EventManager, InvokersHolderManager> Delegate, int MillisecondsTimestamp) value)
+                        if (invokersHolderManagerCreators.TryGetFromIndex(purgeIndex_, out Type? key, out (Func<EventManager, InvokersHolderManager>? Delegate, int MillisecondsTimestamp) value)
                             && (currentMilliseconds - value.MillisecondsTimestamp) > trimMilliseconds)
                         {
                             invokersHolderManagerCreators.Remove(key);
@@ -314,8 +299,7 @@ public sealed partial class EventManager
                 invokersHolderManagerCreatorsPurgeIndex = purgeIndex_;
 
             exit:
-                // Release write lock.
-                Unlock(ref invokersHolderManagerCreatorsLock);
+                invokersHolderManagerCreatorsLock.Exit();
 
                 if ((invokersHolderManagerCreatorsState & IS_CANCELLATION_REQUESTED) == 0)
                 {
@@ -323,7 +307,6 @@ public sealed partial class EventManager
                     break;
                 }
 
-            yield:
                 if (!Thread.Yield())
                     Thread.Sleep(PurgeSleepMilliseconds);
             }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Enderlook.Threading.Primitives;
+
+using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
@@ -12,12 +14,11 @@ namespace Enderlook.EventManager;
 /// </summary>
 public sealed partial class EventManager : IDisposable
 {
-    private static int invokersHolderManagerCreatorsLock;
-    private static int invokersHolderManagerCreatorsReaders;
+    private static SpinLockSlim invokersHolderManagerCreatorsLock;
     private static int invokersHolderManagerCreatorsState;
-    private static int invokersHolderManagerCreatorsStateLock;
+    private static SpinLockSlim invokersHolderManagerCreatorsStateLock;
     private static int invokersHolderManagerCreatorsPurgeIndex;
-    private static Dictionary2<Type, (Func<EventManager, InvokersHolderManager> Delegate, int MillisecondsTimestamp)> invokersHolderManagerCreators;
+    private static Dictionary2<Type, (Func<EventManager, InvokersHolderManager>? Delegate, int MillisecondsTimestamp)> invokersHolderManagerCreators;
     private static Type[]? one;
 
     // Value type is actually InvokersHolder<TEvent, TInvoke>.
@@ -50,11 +51,11 @@ public sealed partial class EventManager : IDisposable
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
     public void Raise<TEvent>(TEvent argument)
     {
-        ReadBegin();
+        Lock();
         {
             if (managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? manager))
             {
-                FromReadToInHolder();
+                FromLockToInHolder();
                 InvokersHolderManager<TEvent> manager_ = Utils.ExpectExactType<InvokersHolderManager<TEvent>>(manager);
                 manager_.StaticRaise(argument, this);
             }
@@ -74,11 +75,11 @@ public sealed partial class EventManager : IDisposable
     /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
     public void Raise<TEvent>() where TEvent : new()
     {
-        ReadBegin();
+        Lock();
         {
             if (managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? manager))
             {
-                FromReadToInHolder();
+                FromLockToInHolder();
                 InvokersHolderManager<TEvent> manager_ = Utils.ExpectExactType<InvokersHolderManager<TEvent>>(manager);
                 manager_.StaticRaise(new TEvent(), this);
             }
@@ -108,11 +109,11 @@ public sealed partial class EventManager : IDisposable
     public void DynamicRaise<TEvent>(TEvent argument)
     {
         Type key = argument?.GetType() ?? typeof(TEvent);
-        ReadBegin();
+        Lock();
         {
             if (managersPerType.TryGetValue(key, out InvokersHolderManager? manager))
             {
-                FromReadToInHolder();
+                FromLockToInHolder();
                 // TODO: This virtual call is actually only required if argument.GetType().IsValueType
                 // for reference-types we could use a direct call to StaticRaise if we tweaked a few debug assertions.
                 manager.DynamicRaise(argument, this);
@@ -129,11 +130,11 @@ public sealed partial class EventManager : IDisposable
         where TCallbackHelper : struct, ICallbackExecuter<TEvent, TCallback>
         where TPredicator : IPredicator<TCallback>
     {
-        ReadBegin();
+        Lock();
         {
             if (holdersPerType.TryGetValue(new(typeof(TCallbackHelper), listenToAssignableEvents), out InvokersHolder? holder))
             {
-                FromReadToInHolder();
+                FromLockToInHolder();
                 {
                     Utils.ExpectExactType<InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce>>(holder)
                         .Unsubscribe(predicator);
@@ -148,11 +149,11 @@ public sealed partial class EventManager : IDisposable
     internal void Subscribe<TEvent, TCallbackHelper, TIsOnce, TCallback>(TCallback callback, bool listenToAssignableEvents)
         where TCallbackHelper : struct, ICallbackExecuter<TEvent, TCallback>
     {
-        ReadBegin();
+        Lock();
         {
             if (holdersPerType.TryGetValue(new(typeof(TCallbackHelper), listenToAssignableEvents), out InvokersHolder? holder))
             {
-                FromReadToInHolder();
+                FromLockToInHolder();
                 {
                     Utils.ExpectExactType<InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce>>(holder).Subscribe(callback);
                 }
@@ -166,60 +167,57 @@ public sealed partial class EventManager : IDisposable
         void SlowPath()
         {
             InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce> holder_;
-            FromReadToWrite();
+            ref InvokersHolder holderSlot = ref holdersPerType.GetOrCreateValueSlot(new(typeof(TCallbackHelper), listenToAssignableEvents), out bool found);
+            if (found)
             {
-                ref InvokersHolder holderSlot = ref holdersPerType.GetOrCreateValueSlot(new(typeof(TCallbackHelper), listenToAssignableEvents), out bool found);
-                if (found)
+                holder_ = Utils.ExpectExactType<InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce>>(holderSlot);
+                goto exit;
+            }
+            else
+            {
+                holder_ = new(listenToAssignableEvents);
+                holderSlot = holder_;
+
+                if (purgePhase == PurgePhase_FinalizerNotConfigured)
                 {
-                    holder_ = Utils.ExpectExactType<InvokersHolder<TEvent, TCallbackHelper, TCallback, TIsOnce>>(holderSlot);
-                    goto exit;
+                    purgePhase = PurgePhase_PurgeInvokersHolder;
+                    AutoPurger _ = new(this);
                 }
-                else
+
+                Dictionary2<Type, InvokersHolderManager> managersPerType = this.managersPerType;
+                if (!managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? manager))
                 {
-                    holder_ = new(listenToAssignableEvents);
-                    holderSlot = holder_;
-
-                    if (purgePhase == PurgePhase_FinalizerNotConfigured)
-                    {
-                        purgePhase = PurgePhase_PurgeInvokersHolder;
-                        AutoPurger _ = new(this);
-                    }
-
-                    Dictionary2<Type, InvokersHolderManager> managersPerType = this.managersPerType;
-                    if (!managersPerType.TryGetValue(typeof(TEvent), out InvokersHolderManager? manager))
-                    {
-                        manager = new InvokersHolderManager<TEvent>();
-                        if (managersPerType.Count > 0)
-                        {
-                            int index = 0;
-                            while (managersPerType.MoveNext(ref index, out Type? key, out InvokersHolderManager? value))
-                            {
-                                if (key.IsAssignableFrom(typeof(TEvent)))
-                                {
-                                    Debug.Assert(key != typeof(TEvent));
-                                    value.AddTo(manager, typeof(TEvent));
-                                }
-                            }
-                        }
-                        managersPerType.Add(typeof(TEvent), manager);
-                    }
-
-                    manager.Add(holder_);
-
-                    if (listenToAssignableEvents && managersPerType.Count > 0)
+                    manager = new InvokersHolderManager<TEvent>();
+                    if (managersPerType.Count > 0)
                     {
                         int index = 0;
                         while (managersPerType.MoveNext(ref index, out Type? key, out InvokersHolderManager? value))
                         {
-                            if (typeof(TEvent).IsAssignableFrom(key) && key != typeof(TEvent))
-                                value.AddDerived(holder_, typeof(TEvent));
+                            if (key.IsAssignableFrom(typeof(TEvent)))
+                            {
+                                Debug.Assert(key != typeof(TEvent));
+                                value.AddTo(manager, typeof(TEvent));
+                            }
                         }
                     }
-                    this.managersPerType = managersPerType;
+                    managersPerType.Add(typeof(TEvent), manager);
                 }
+
+                manager.Add(holder_);
+
+                if (listenToAssignableEvents && managersPerType.Count > 0)
+                {
+                    int index = 0;
+                    while (managersPerType.MoveNext(ref index, out Type? key, out InvokersHolderManager? value))
+                    {
+                        if (typeof(TEvent).IsAssignableFrom(key) && key != typeof(TEvent))
+                            value.AddDerived(holder_, typeof(TEvent));
+                    }
+                }
+                this.managersPerType = managersPerType;
             }
         exit:
-            FromWriteToInHolder();
+            FromLockToInHolder();
             {
                 holder_.Subscribe(callback);
             }
@@ -230,116 +228,83 @@ public sealed partial class EventManager : IDisposable
     [MethodImpl(MethodImplOptions.NoInlining)]
     private InvokersHolderManager CreateInvokersHolderManagerDynamic(Type type)
     {
-        if (invokersHolderManagerCreatorsState != 0)
-            TryRequestCancellation();
-
-        // Get read lock.
-        Lock(ref invokersHolderManagerCreatorsLock);
-        invokersHolderManagerCreatorsReaders++;
-        Unlock(ref invokersHolderManagerCreatorsLock);
-
-        Func<EventManager, InvokersHolderManager>? creator;
-        ref (Func<EventManager, InvokersHolderManager> Delegate, int MillisecondsTimestamp) value = ref invokersHolderManagerCreators.TryFind(type, out bool found);
-        if (found)
+        int invokersHolderManagerCreatorsState_ = Volatile.Read(ref invokersHolderManagerCreatorsState);
+        if (invokersHolderManagerCreatorsState_ != 0)
         {
-            creator = value.Delegate;
-            // Atomic swap.
-            value.MillisecondsTimestamp = Environment.TickCount;
-
-            // Release read lock.
-            Lock(ref invokersHolderManagerCreatorsLock);
-            invokersHolderManagerCreatorsReaders--;
-            Unlock(ref invokersHolderManagerCreatorsLock);
-        }
-        else
-        {
-            // From read lock to write lock.
-            Lock(ref invokersHolderManagerCreatorsLock);
-            int invokersHolderManagerCreatorsReaders_ = --invokersHolderManagerCreatorsReaders;
-            if (invokersHolderManagerCreatorsReaders_ != 0)
+            // Request cancellation.
+            SpinWait spinWait = new();
+            while ((invokersHolderManagerCreatorsState_ & IS_PURGING) == 0)
             {
-                Unlock(ref invokersHolderManagerCreatorsLock);
-                while (true)
+                int oldState = Interlocked.CompareExchange(ref invokersHolderManagerCreatorsState, invokersHolderManagerCreatorsState_ | IS_CANCELLATION_REQUESTED, invokersHolderManagerCreatorsState_);
+                if (oldState != invokersHolderManagerCreatorsState_)
                 {
-                    Lock(ref invokersHolderManagerCreatorsLock);
-                    if (invokersHolderManagerCreatorsReaders > 0)
-                        Unlock(ref invokersHolderManagerCreatorsLock);
-                    else
-                        break;
+                    invokersHolderManagerCreatorsState_ = oldState;
+                    spinWait.SpinOnce();
                 }
             }
+        }
 
-            ref (Func<EventManager, InvokersHolderManager> Delegate, int MillisecondsTimestamp) value2 = ref invokersHolderManagerCreators.GetOrCreateValueSlot(type, out found);
-            if (!found)
-            {
-                MethodInfo? methodInfo = typeof(EventManager).GetMethod(nameof(CreateInvokersHolderManager), BindingFlags.NonPublic | BindingFlags.Instance);
-                Debug.Assert(methodInfo is not null);
-                Type[] array = Interlocked.Exchange(ref one, null) ?? new Type[1];
-                array[0] = type;
-                MethodInfo methodInfoFull = methodInfo.MakeGenericMethod(array);
-                array[0] = null!;
-                one = array;
-                value2.Delegate = creator = (Func<EventManager, InvokersHolderManager>)methodInfoFull.CreateDelegate(typeof(Func<EventManager, InvokersHolderManager>));
-                value2.MillisecondsTimestamp = Environment.TickCount;
-            }
-            else
-            {
-                creator = value.Delegate;
-                value2.MillisecondsTimestamp = Environment.TickCount;
-            }
+        bool enter = false;
+        ref (Func<EventManager, InvokersHolderManager>? Delegate, int MillisecondsTimestamp) value = ref Utils.NullRef<(Func<EventManager, InvokersHolderManager>? Delegate, int MillisecondsTimestamp)>();
+        try
+        {
+            invokersHolderManagerCreatorsLock.Enter(ref enter);
+            value = ref invokersHolderManagerCreators.GetOrCreateValueSlot(type, out _);
+        }
+        finally
+        {
+            if (enter)
+                invokersHolderManagerCreatorsLock.Exit();
+        }
 
-            // Release write lock.
-            Unlock(ref invokersHolderManagerCreatorsLock);
+        Func<EventManager, InvokersHolderManager>? creator = value.Delegate;
+
+        // Atomic swap.
+        // Multiple threads can set it at the same time, but it's just an timestamp, so we don't worry about race conditions.
+        value.MillisecondsTimestamp = Environment.TickCount;
+
+        if (creator is null)
+        {
+            MethodInfo? methodInfo = typeof(EventManager).GetMethod(nameof(CreateInvokersHolderManager), BindingFlags.NonPublic | BindingFlags.Instance);
+            Debug.Assert(methodInfo is not null);
+            Type[] array = Interlocked.Exchange(ref one, null) ?? new Type[1];
+            array[0] = type;
+            MethodInfo methodInfoFull = methodInfo.MakeGenericMethod(array);
+            array[0] = null!;
+            one = array;
+            creator = (Func<EventManager, InvokersHolderManager>)methodInfoFull.CreateDelegate(typeof(Func<EventManager, InvokersHolderManager>));
+            Func<EventManager, InvokersHolderManager>? old = Interlocked.CompareExchange(ref value.Delegate, creator, null);
+            creator = old ?? creator;
         }
 
         return creator(this);
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static void TryRequestCancellation()
-        {
-            int invokersHolderManagerCreatorsState_ = invokersHolderManagerCreatorsState;
-            if ((invokersHolderManagerCreatorsState_ & IS_PURGING) != 0)
-            {
-                Lock(ref invokersHolderManagerCreatorsStateLock);
-                {
-                    invokersHolderManagerCreatorsState_ = invokersHolderManagerCreatorsState;
-
-                    if ((invokersHolderManagerCreatorsState_ & IS_PURGING) != 0)
-                        invokersHolderManagerCreatorsState = invokersHolderManagerCreatorsState_ | IS_CANCELLATION_REQUESTED;
-                }
-                Unlock(ref invokersHolderManagerCreatorsStateLock);
-            }
-        }
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private InvokersHolderManager<TEvent> CreateInvokersHolderManager<TEvent>()
     {
         InvokersHolderManager? manager;
-        FromReadToWrite();
+        Dictionary2<Type, InvokersHolderManager> managersPerType = this.managersPerType;
+        if (!managersPerType.TryGetValue(typeof(TEvent), out manager))
         {
-            Dictionary2<Type, InvokersHolderManager> managersPerType = this.managersPerType;
-            if (!managersPerType.TryGetValue(typeof(TEvent), out manager))
-            {
-                manager = new InvokersHolderManager<TEvent>();
+            manager = new InvokersHolderManager<TEvent>();
 
-                if (managersPerType.Count > 0)
+            if (managersPerType.Count > 0)
+            {
+                int index = 0;
+                while (managersPerType.MoveNext(ref index, out Type? key, out InvokersHolderManager? value))
                 {
-                    int index = 0;
-                    while (managersPerType.MoveNext(ref index, out Type? key, out InvokersHolderManager? value))
+                    if (key.IsAssignableFrom(typeof(TEvent)))
                     {
-                        if (key.IsAssignableFrom(typeof(TEvent)))
-                        {
-                            Debug.Assert(key != typeof(TEvent));
-                            value.AddTo(manager, typeof(TEvent));
-                        }
+                        Debug.Assert(key != typeof(TEvent));
+                        value.AddTo(manager, typeof(TEvent));
                     }
                 }
-                managersPerType.Add(typeof(TEvent), manager);
             }
-            this.managersPerType = managersPerType;
+            managersPerType.Add(typeof(TEvent), manager);
         }
-        FromWriteToInHolder();
+        this.managersPerType = managersPerType;
+        FromLockToInHolder();
         return Utils.ExpectExactType<InvokersHolderManager<TEvent>>(manager);
     }
 

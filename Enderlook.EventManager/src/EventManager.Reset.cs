@@ -11,7 +11,7 @@ public sealed partial class EventManager
     public void Reset()
     {
         SpinWait spinWait = new();
-        if (!TryMassiveWriteBegin(ref spinWait))
+        if (!TryMassiveLock(ref spinWait))
             Work(ref spinWait);
 
         if (Volatile.Read(ref state) == IS_DISPOSED_OR_DISPOSING)
@@ -29,7 +29,7 @@ public sealed partial class EventManager
         managersPerType.Dispose();
         holdersPerType.Dispose();
 
-        WriteEnd();
+        spinLock.Exit();
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         void Work(ref SpinWait spinWait)
@@ -37,7 +37,7 @@ public sealed partial class EventManager
             while (true)
             {
                 RequestPurgeCancellation<Nothing>(ref spinWait);
-                if (TryMassiveWriteBegin(ref spinWait))
+                if (TryMassiveLock(ref spinWait))
                     return;
             }
         }
