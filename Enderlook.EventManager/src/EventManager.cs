@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Enderlook.Delegates;
+
+using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
@@ -6,6 +8,8 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Enderlook.EventManager;
+
+// https://github.com/CommunityToolkit/dotnet/blob/main/src/CommunityToolkit.Mvvm/Messaging/StrongReferenceMessenger.cs
 
 /// <summary>
 /// Represent a type safe event manager where types are used as events types.
@@ -89,6 +93,36 @@ public sealed partial class EventManager : IDisposable
         [MethodImpl(MethodImplOptions.NoInlining)]
         void SlowPath() => CreateInvokersHolderManager<TEvent>().StaticRaise(new TEvent(), this);
     }
+
+    /// <summary>
+    /// Subscribes the callback <paramref name="callback"/> to execute when the event type <typeparamref name="TEvent"/> is raised.
+    /// </summary>
+    /// <param name="callback">Callback to execute.</param>
+    /// <param name="subscribeAttributes">Configures the callback subscription.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="callback"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SubscribeSimple<TCallback, TEvent>(TCallback callback, SubscribeFlags subscribeAttributes = SubscribeFlags.Default)
+        where TCallback : IAction
+    {
+        if (callback is null) ThrowNullCallbackException();
+        bool listenToAssignableEvents = (subscribeAttributes & SubscribeFlags.ListenAssignableEvents) != 0;
+
+        if (typeof(TCallback).IsValueType)
+        {
+            if ((subscribeAttributes & SubscribeFlags.RaiseOnce) == 0)
+                Subscribe<TEvent, StrongCallbackExecuter<TEvent, TCallback, StrongActionArgument<TEvent>>, No, TCallback>(callback, listenToAssignableEvents);
+            else
+                Subscribe<TEvent, StrongCallbackExecuter<TEvent, TCallback, StrongActionArgument<TEvent>>, Yes, TCallback>(callback, listenToAssignableEvents);
+        }
+
+        InvariantObject callback_ = callback.Wrap();
+        if ((subscribeAttributes & SubscribeFlags.RaiseOnce) == 0)
+            Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObject, StrongActionArgument<TEvent>>, No, InvariantObject>(callback_, listenToAssignableEvents);
+        else
+            Subscribe<TEvent, StrongCallbackExecuter<TEvent, InvariantObject, StrongActionArgument<TEvent>>, Yes, InvariantObject>(callback_, listenToAssignableEvents);
+    }
+
 
     /// <summary>
     /// If <c><paramref name="argument"/> <see langword="is"/> <see langword="null"/></c>, it does the same as <see cref="Raise{TEvent}(TEvent)"/> passing <see langword="null"/>.<br/>
