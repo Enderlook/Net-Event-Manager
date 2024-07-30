@@ -139,7 +139,7 @@ public sealed partial class EventManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void FromReadToInHolder()
     {
-        // Purging nor disposing can start while it's reading, so we ignore those checks.
+        // Purging nor disposing can't start while it's reading, so we ignore those checks.
         Lock(ref globalLock);
         {
             Volatile.Write(ref readers, Volatile.Read(ref readers) - 1);
